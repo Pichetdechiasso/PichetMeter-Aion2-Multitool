@@ -1,0 +1,110 @@
+﻿PICHETMETER — version 1.4.0
+Compagnon pour Aion 2 : armurerie, classement, tâches, timers, DPS meter de groupe, cooldowns,
+viseur et carte, affichés par-dessus le jeu.
+Créateur : @atomedims · Discord : https://discord.gg/KrkJrjrDJt
+Code source et nouvelles versions : https://github.com/Pichetdechiasso/PichetMeter-Aion2-Multitool
+===========================================================================================
+
+INSTALLER
+---------
+1. Clic droit sur le zip > « Extraire tout… », puis ouvre le dossier extrait.
+   (Ne lance rien directement depuis l'intérieur du zip.)
+2. Double-clique sur Installer.cmd.
+   Si Windows affiche « Windows a protégé votre ordinateur » : l'application n'est pas signée
+   par un éditeur payant. Clique « Informations complémentaires » puis « Exécuter quand même ».
+3. La première fois, l'installation télécharge le moteur Electron officiel depuis GitHub
+   (environ 150 Mo) et vérifie son empreinte SHA-256 publiée par Electron.
+   Elle installe ensuite PichetMeter.exe dans %LOCALAPPDATA%\Programs\PichetMeter,
+   crée un raccourci « PichetMeter » sur le Bureau et dans le menu Démarrer, puis lance l'application.
+4. Mise à jour : relance Installer.cmd de la nouvelle version. Le moteur déjà installé est
+   conservé, seule l'application est remplacée. Tes comptes et réglages restent.
+
+Tu avais « Aion 2 Companion HUD » ? L'installation le remplace automatiquement par PichetMeter :
+moteur, comptes, réglages et historique sont repris, l'ancien raccourci est retiré.
+
+DANS LE JEU
+-----------
+- Mets Aion 2 en mode « Fenêtré » ou « Plein écran fenêtré » (sans bordure).
+  En plein écran exclusif, Windows ne laisse rien s'afficher par-dessus le jeu.
+- Alt + C : afficher / masquer l'overlay (modifiable dans Paramètres). Échap le masque aussi.
+- Ctrl + Maj + V : afficher / masquer le viseur (modifiable dans l'onglet Viseur).
+- Quand l'overlay est masqué, les modules réglés sur « Afficher en jeu » (timers, ping, DPS,
+  cooldowns, carte, viseur) restent à l'écran. Taille, opacité, position et clic à travers
+  se règlent dans l'onglet de chaque module ; Paramètres > Modules en jeu les regroupe tous.
+- Option « Seulement quand le jeu est au premier plan » (Paramètres > Modules en jeu) :
+  les widgets se cachent dès que tu passes sur Discord, ton navigateur, etc.
+- L'icône dans la zone de notification (près de l'horloge) permet aussi d'afficher l'overlay ou de quitter.
+
+NOUVEAUTÉS 1.4.0
+----------------
+- Nouveau nom : PichetMeter, avec un onglet Infos (créateur, Discord, mentions légales, licences).
+- Icônes de classe officielles dans l'armurerie, le classement et le DPS meter.
+- DPS meter : bouton loupe à côté de chaque joueur pour ouvrir sa fiche dans la recherche
+  (dans l'onglet et dans le widget, au survol du nom).
+- Animations d'ouverture et de fermeture, transitions entre les onglets (désactivables :
+  Paramètres > Affichage > Animations de l'interface).
+- Widget ping allégé (sans la ligne macro).
+
+TIMERS ET SERVEURS
+------------------
+Onglet Timers > Serveur : choisis ta région et ton serveur. Les horaires des serveurs Europe
+viennent de relevés de la communauté ; si un événement démarre à une autre heure chez toi,
+clique « Recaler » au moment où il commence : le timer se cale dessus.
+
+DPS METER (TOUT LE GROUPE)
+--------------------------
+Il lit passivement le trafic réseau du jeu avec Npcap : DPS, dégâts, part, critiques, coups
+parfaits, attaques de dos, morts et détail des compétences de chaque joueur. Rien n'est envoyé
+au jeu ni modifié.
+1. Installe Npcap (https://npcap.com, options par défaut) si ce n'est pas déjà fait.
+2. Onglet DPS meter : la source « Réseau » démarre seule. Lance Aion 2 ; si l'état reste
+   « Recherche du trafic », change de zone ou téléporte-toi.
+3. Options : « Boss uniquement », « Hors combat » (visible / transparent / masqué).
+Une mise à jour du jeu peut changer le format des paquets : il faudra alors une mise à jour.
+
+COOLDOWNS
+---------
+Ajoute tes compétences (depuis ta fiche officielle ou à la main), indique leur temps de recharge
+et la touche utilisée en jeu. Le compte à rebours démarre quand tu appuies sur cette touche.
+La carte « Test de détection » de l'onglet montre si la touche est bien vue.
+Si rien n'est détecté alors que le jeu tourne en administrateur, lance aussi PichetMeter
+en administrateur (clic droit sur le raccourci).
+
+VISEUR
+------
+Il s'affiche quand l'overlay est masqué. Il est dessiné par défaut en « mode compatibilité »
+(fenêtre Windows native) ; l'onglet Viseur indique en direct s'il est affiché ou pourquoi il est masqué.
+
+CARTE INTERACTIVE
+-----------------
+AION2.run (en français) par défaut, ou Aion2 Interactive Map, Wikily.gg, ou l'adresse de ton choix.
+Le widget carte se déplace par sa barre de titre (coupe « Clic à travers » pour l'utiliser).
+
+EN CAS DE SOUCI
+---------------
+Onglet Paramètres > Diagnostic : état du module Windows, de la lecture de l'écran,
+de la détection des touches, des raccourcis et du jeu.
+Réglages et journal : %APPDATA%\PichetMeter (bouton dans Diagnostic).
+Pour tout remettre à zéro : quitte l'application et supprime ce dossier.
+Questions et bugs : sur le Discord (https://discord.gg/KrkJrjrDJt).
+
+Si l'installation échoue au téléchargement (pare-feu, proxy d'entreprise) : télécharge
+electron-v44.5.1-win32-x64.zip sur https://github.com/electron/electron/releases/tag/v44.5.1,
+puis lance dans PowerShell, depuis le dossier « fichiers » :
+  powershell -ExecutionPolicy Bypass -File installer.ps1 -RuntimeZip "C:\chemin\electron-v44.5.1-win32-x64.zip"
+
+DÉSINSTALLER
+------------
+Paramètres Windows > Applications installées > PichetMeter > Désinstaller,
+ou double-clique sur Desinstaller.cmd. Il propose de conserver ou de supprimer tes comptes et réglages.
+
+MENTIONS LÉGALES
+----------------
+PichetMeter est un outil communautaire gratuit et non officiel, ni développé ni approuvé par NCSOFT.
+AION et AION 2 sont des marques de NCSOFT Corporation ; icônes et images du jeu © NCSOFT.
+Le logo est un fan art ; Sonic the Hedgehog est une marque de SEGA, sans lien avec ce logiciel.
+Les règles de l'éditeur sur les outils tiers peuvent évoluer : chacun utilise PichetMeter sous sa
+propre responsabilité. Logiciel fourni « tel quel », sans garantie.
+Aucune donnée n'est collectée ni envoyée à l'auteur : tout reste sur ton PC.
+Licence : GNU GPL version 3 (texte complet : resources\app\COPYING.txt dans le dossier d'installation).
+Décodage réseau du DPS meter d'après RATmeter (github.com/Kuroukihime/AIon2-Dps-Meter, GPL-3.0).

@@ -1,0 +1,30 @@
+name: Vérifications
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verifier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Tests Node
+        run: for t in test/*.test.js; do node "$t"; done
+      - name: Scripts PowerShell (analyse + C# embarqué)
+        shell: pwsh
+        run: ./tools/pscheck.ps1 -Files ((Get-ChildItem app/*.ps1, setup/fichiers/*.ps1).FullName)
+      - name: Paquet d'installation
+        run: python3 tools/build.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PichetMeter-paquet
+          path: dist/*.zip
+          retention-days: 14

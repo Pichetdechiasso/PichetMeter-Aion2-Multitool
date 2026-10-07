@@ -1,0 +1,9 @@
+# Paquets générés par tools/build.py
+dist/
+*.zip
+# Électron et dépendances de développement
+node_modules/
+# Divers
+.DS_Store
+Thumbs.db
+*.log

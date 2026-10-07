@@ -1,0 +1,39 @@
+name: Publication
+
+# Pousser un tag vX.Y.Z (même version que app/package.json) publie la release avec le zip d'installation.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  publier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Version du tag
+        run: |
+          v=$(node -p "require('./app/package.json').version")
+          if [ "v$v" != "$GITHUB_REF_NAME" ]; then echo "::error::Le tag $GITHUB_REF_NAME ne correspond pas à la version $v de app/package.json"; exit 1; fi
+          echo "VERSION=$v" >> "$GITHUB_ENV"
+      - name: Tests Node
+        run: for t in test/*.test.js; do node "$t"; done
+      - name: Scripts PowerShell
+        shell: pwsh
+        run: ./tools/pscheck.ps1 -Files ((Get-ChildItem app/*.ps1, setup/fichiers/*.ps1).FullName)
+      - name: Paquet d'installation
+        run: |
+          python3 tools/build.py
+          cp "dist/PichetMeter-$VERSION-Installation.zip" dist/PichetMeter-Installation.zip
+          python3 tools/notes.py "$VERSION" > dist/notes.md
+      - name: Release GitHub
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" "dist/PichetMeter-$VERSION-Installation.zip" dist/PichetMeter-Installation.zip \
+            --title "PichetMeter $VERSION" --notes-file dist/notes.md --latest

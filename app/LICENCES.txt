@@ -1,0 +1,16 @@
+PichetMeter — logiciel libre distribué sous licence GNU GPL version 3 (texte complet : COPYING.txt).
+Auteur : @atomedims (Discord : https://discord.gg/KrkJrjrDJt).
+Code source : https://github.com/Pichetdechiasso/PichetMeter-Aion2-Multitool
+
+Composants et données tiers :
+- Décodage des paquets du DPS meter (reseau.js, capture.ps1) et table des noms de monstres (mobs.json) :
+  d'après RATmeter (https://github.com/Kuroukihime/AIon2-Dps-Meter), licence GNU GPL-3.0.
+- Electron : licence MIT.
+- rcedit (installeur) : licence MIT, voir rcedit-LICENSE.txt.
+- Npcap (installé séparément) : soumis à sa propre licence (https://npcap.com).
+- Polices Sora, Nunito Sans, JetBrains Mono (Google Fonts) : SIL Open Font License.
+- Icônes de classe et images du jeu : © NCSOFT. AION et AION 2 sont des marques de NCSOFT Corporation.
+- Logo : fan art ; Sonic the Hedgehog est une marque de SEGA, sans lien avec ce logiciel.
+
+PichetMeter est un outil communautaire non officiel, ni développé ni approuvé par NCSOFT.
+Il est fourni « tel quel », sans aucune garantie.

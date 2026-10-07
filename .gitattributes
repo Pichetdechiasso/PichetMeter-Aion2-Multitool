@@ -1,0 +1,9 @@
+* text=auto
+# Scripts Windows : fins de ligne CRLF (PowerShell 5.1 et cmd)
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+LISEZ-MOI.txt text eol=crlf
+# Binaires
+*.png binary
+*.ico binary
+*.exe binary

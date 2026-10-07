@@ -1,0 +1,11 @@
+name: Proposer une idée
+description: Une fonctionnalité ou une amélioration
+labels: [idée]
+body:
+  - type: textarea
+    id: idee
+    attributes:
+      label: Ton idée
+      description: Qu'aimerais-tu voir dans PichetMeter, et pourquoi ?
+    validations:
+      required: true
