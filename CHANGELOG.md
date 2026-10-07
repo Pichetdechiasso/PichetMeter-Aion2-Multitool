@@ -1,5 +1,17 @@
 # Journal des versions
 
+## 1.5.0
+
+- Nouveau module **Macros** (clavier et souris), désactivé par défaut avec un avertissement à accepter :
+  - modes **Une fois**, **N fois**, **Maintenir** (en boucle tant que la touche est enfoncée) et **On / Off** ;
+  - délai en ms entre chaque action, réglable pour toute la macro ou action par action, avec le délai conseillé d'après le ping ;
+  - actions : sorts choisis par leur icône, touches (avec Ctrl / Alt / Maj), clics de souris (appui, maintien, enfoncer, relâcher), pauses ;
+  - plusieurs macros sur la même touche s'enchaînent dans l'ordre de la liste ;
+  - menu **Sorts & touches** pour assigner la touche de chaque sort (import depuis la fiche officielle ou les cooldowns) ;
+  - déclenchement par le clavier, le clic molette ou les boutons 4 / 5 de la souris, option pour bloquer la touche ;
+  - sécurité : jeu au premier plan uniquement, rien quand l'interface est ouverte, touche d'arrêt d'urgence, bouton « Tester (3 s) ».
+- L'onglet « Ping & macros » devient « Ping ».
+
 ## 1.4.0
 
 - Nouveau nom : **PichetMeter** (anciennement « Aion 2 Companion HUD »). L'installation reprend automatiquement l'ancienne version : moteur, comptes, réglages et historique.

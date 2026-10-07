@@ -1,6 +1,6 @@
-﻿PICHETMETER — version 1.4.0
+﻿PICHETMETER — version 1.5.0
 Compagnon pour Aion 2 : armurerie, classement, tâches, timers, DPS meter de groupe, cooldowns,
-viseur et carte, affichés par-dessus le jeu.
+viseur, carte et macros, affichés par-dessus le jeu.
 Créateur : @atomedims · Discord : https://discord.gg/KrkJrjrDJt
 Code source et nouvelles versions : https://github.com/Pichetdechiasso/PichetMeter-Aion2-Multitool
 ===========================================================================================
@@ -34,6 +34,13 @@ DANS LE JEU
 - Option « Seulement quand le jeu est au premier plan » (Paramètres > Modules en jeu) :
   les widgets se cachent dès que tu passes sur Discord, ton navigateur, etc.
 - L'icône dans la zone de notification (près de l'horloge) permet aussi d'afficher l'overlay ou de quitter.
+
+NOUVEAUTÉS 1.5.0
+----------------
+- Nouveau module Macros (clavier et souris) : modes Une fois, N fois, Maintenir et On / Off,
+  délai en ms entre chaque action, plusieurs macros sur la même touche, choix des sorts par
+  leur icône, menu « Sorts & touches » pour assigner la touche de chaque sort, arrêt d'urgence.
+- L'onglet « Ping & macros » s'appelle maintenant « Ping » (le délai conseillé s'applique aux macros).
 
 NOUVEAUTÉS 1.4.0
 ----------------
@@ -70,6 +77,27 @@ La carte « Test de détection » de l'onglet montre si la touche est bien vue.
 Si rien n'est détecté alors que le jeu tourne en administrateur, lance aussi PichetMeter
 en administrateur (clic droit sur le raccourci).
 
+MACROS
+------
+Désactivées par défaut. C'est le seul module qui envoie quelque chose au jeu : des appuis de touches
+et des clics simulés. Les règles d'Aion 2 peuvent interdire l'automatisation des actions (risque de
+sanction) : un avertissement est à accepter avant la première activation.
+1. « Sorts & touches » : importe tes compétences (ou ajoute-les à la main) et donne à chacune
+   la touche réglée dans ta barre en jeu (bouton « Touches des cooldowns » pour les reprendre).
+2. « Nouvelle macro » : choisis la touche de déclenchement (clavier, clic molette, souris 4 / 5)
+   et le mode : Une fois, N fois, Maintenir (en boucle tant que la touche est enfoncée)
+   ou On / Off (un appui lance la boucle, un second l'arrête).
+3. Ajoute les actions : sorts (choisis par leur icône), touches, clics de souris (appui, maintien,
+   enfoncer, relâcher) et pauses. Le délai entre deux actions se règle pour toute la macro ou
+   action par action ; « Délai conseillé » reprend la valeur calculée d'après ton ping.
+4. Plusieurs macros sur la même touche s'enchaînent dans l'ordre de la liste.
+- « Bloquer la touche » : la touche de déclenchement n'est pas transmise au jeu.
+- Les macros ne jouent que lorsque le jeu est au premier plan (réglable) et jamais quand
+  l'interface PichetMeter est ouverte. La touche Pause (modifiable) arrête tout instantanément.
+- « Tester (3 s) » joue la macro une fois après 3 secondes : clique dans le jeu, ou dans un bloc-notes.
+- Si Aion 2 tourne en administrateur, Windows bloque les appuis simulés : lance aussi PichetMeter
+  en administrateur. Le jeu peut aussi choisir d'ignorer les appuis simulés.
+
 VISEUR
 ------
 Il s'affiche quand l'overlay est masqué. Il est dessiné par défaut en « mode compatibilité »
@@ -104,7 +132,7 @@ PichetMeter est un outil communautaire gratuit et non officiel, ni développé n
 AION et AION 2 sont des marques de NCSOFT Corporation ; icônes et images du jeu © NCSOFT.
 Le logo est un fan art ; Sonic the Hedgehog est une marque de SEGA, sans lien avec ce logiciel.
 Les règles de l'éditeur sur les outils tiers peuvent évoluer : chacun utilise PichetMeter sous sa
-propre responsabilité. Logiciel fourni « tel quel », sans garantie.
+propre responsabilité, en particulier le module Macros, qui automatise des actions. Logiciel fourni « tel quel », sans garantie.
 Aucune donnée n'est collectée ni envoyée à l'auteur : tout reste sur ton PC.
 Licence : GNU GPL version 3 (texte complet : resources\app\COPYING.txt dans le dossier d'installation).
 Décodage réseau du DPS meter d'après RATmeter (github.com/Kuroukihime/AIon2-Dps-Meter, GPL-3.0).

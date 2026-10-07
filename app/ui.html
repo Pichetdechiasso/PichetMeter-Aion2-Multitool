@@ -968,6 +968,98 @@ input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.18); }
 .wtoast.pop { animation: popUp .45s var(--ease-spring); }
 .badge { transition: color .3s; }
 .note.warn-note { color: var(--amber); font-weight: 600; }
+/* ════════ Macros ════════ */
+.mc-bar { padding: 0; }
+.mc-bar > label { display: flex; align-items: center; gap: 16px; padding: 14px 20px; cursor: pointer; }
+.mc-bar .mi { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; background: var(--well); color: var(--muted); flex: none; border: 1px solid var(--edge); transition: background .25s, color .25s, box-shadow .25s; }
+.mc-bar.on .mi { color: #fff; background: linear-gradient(135deg, #ff8a3d, #e63946); box-shadow: 0 0 16px rgba(230, 57, 70, .45); }
+.mc-bar .mi svg { width: 21px; height: 21px; }
+.mc-bar .tx { min-width: 0; flex: 1; display: grid; gap: 2px; }
+.mc-bar .tx b { font: 700 15.5px var(--f-body); }
+.mc-bar .tx span { font-size: 12.5px; color: var(--muted); }
+.mc-run { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 20px 14px 78px; }
+.mc-run:empty { display: none; }
+.mc-chip { display: inline-flex; align-items: center; gap: 6px; font: 700 12px var(--f-body); padding: 4px 10px; border-radius: 99px; color: #fff; background: rgba(230, 57, 70, .25); border: 1px solid rgba(255, 120, 120, .5); }
+.mc-chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #ff5a6a; box-shadow: 0 0 8px #ff5a6a; animation: mcPulse 1s ease-in-out infinite; }
+@keyframes mcPulse { 50% { opacity: .35; } }
+.mc-warn { border: 1px solid rgba(251, 191, 36, .45) !important; }
+.mc-warn ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 13.5px; line-height: 1.5; }
+.mc-list { display: grid; gap: 8px; }
+.mc-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 16px; background: var(--bg); border: 1px solid var(--edge); box-shadow: var(--extruded-sm); cursor: pointer; transition: box-shadow .2s, transform .2s var(--ease-out), border-color .2s; }
+.mc-row:hover { transform: translateX(2px); }
+.mc-row.sel { border-color: color-mix(in srgb, var(--cyan-glow) 70%, transparent); box-shadow: var(--inset-sm), 0 0 0 1px color-mix(in srgb, var(--cyan-glow) 40%, transparent); }
+.mc-row.off { opacity: .55; }
+.mc-row.run { border-color: rgba(255, 90, 106, .7); }
+.mc-row .mc-key { font: 700 13px var(--f-data); min-width: 52px; text-align: center; padding: 7px 9px; border-radius: 10px; box-shadow: var(--inset-sm); color: var(--cyan); }
+.mc-row .mc-key.none { color: var(--amber); }
+.mc-row .tt { min-width: 0; display: grid; gap: 4px; }
+.mc-row .tt b { font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-row .acts { display: flex; gap: 4px; }
+.mc-mode { font: 800 9.5px var(--f-display); letter-spacing: .07em; text-transform: uppercase; padding: 2px 7px; border-radius: 6px; border: 1px solid var(--edge); color: var(--muted); margin-left: 6px; vertical-align: 2px; }
+.mc-mini { display: flex; align-items: center; gap: 3px; flex-wrap: wrap; min-height: 22px; }
+.mc-mini .t { width: 22px; height: 22px; border-radius: 5px; overflow: hidden; background: var(--game-cell); border: 1px solid var(--game-line); display: grid; place-items: center; font: 700 9px var(--f-data); color: var(--game-fg); }
+.mc-mini .t img { width: 100%; height: 100%; object-fit: cover; }
+.mc-mini .t svg { width: 13px; height: 13px; }
+.mc-mini .more { font: 700 11px var(--f-data); color: var(--muted); }
+.mc-editor .mc-top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: end; }
+.mc-modes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.mc-modes button { display: grid; gap: 3px; text-align: left; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--edge); background: var(--bg); color: var(--fg); cursor: pointer; box-shadow: var(--extruded-sm); font: 700 13.5px var(--f-body); transition: box-shadow .2s, transform .2s var(--ease-spring), border-color .2s; }
+.mc-modes button small { font: 500 11.5px var(--f-body); color: var(--muted); line-height: 1.35; }
+.mc-modes button[aria-pressed="true"] { box-shadow: var(--inset-sm); border-color: color-mix(in srgb, var(--cyan-glow) 60%, transparent); color: var(--cyan); }
+.mc-modes button:active { transform: scale(.97); }
+@container (max-width: 640px) { .mc-modes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.mc-editor { container-type: inline-size; }
+.mc-params { display: flex; flex-wrap: wrap; gap: 14px 18px; align-items: end; }
+.mc-params .form-row { min-width: 130px; }
+.mc-num { display: flex; align-items: center; gap: 6px; }
+.mc-num .field { width: 96px; font-family: var(--f-data); }
+.mc-num span { font-size: 12px; color: var(--muted); }
+.mc-steps { display: grid; gap: 6px; counter-reset: mcstep; }
+.mc-step { display: grid; grid-template-columns: 24px 38px minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 14px; background: var(--well); border: 1px solid var(--edge); }
+.mc-step .num { font: 700 12px var(--f-data); color: var(--muted); text-align: center; }
+.mc-step .ico { width: 38px; height: 38px; border-radius: 8px; overflow: hidden; background: var(--game-cell); border: 1px solid var(--game-line); display: grid; place-items: center; color: var(--game-fg); font: 700 11px var(--f-data); }
+.mc-step .ico img { width: 100%; height: 100%; object-fit: cover; }
+.mc-step .ico svg { width: 19px; height: 19px; }
+.mc-step .body { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-width: 0; }
+.mc-step .body .field { width: auto; padding: 7px 10px; font-size: 13.5px; border-radius: 10px; }
+.mc-step .body select.field { padding-right: 32px; }
+.mc-step .body .keycap { min-width: 120px; }
+.mc-step .dly { display: inline-flex; align-items: center; gap: 4px; font: 600 12px var(--f-data); color: var(--muted); }
+.mc-step .dly .field { width: 74px; padding: 6px 8px; font: 600 13px var(--f-data); border-radius: 9px; }
+.mc-step .acts { display: flex; gap: 2px; }
+.mc-spellbtn { display: inline-flex; align-items: center; gap: 8px; padding: 5px 10px 5px 5px; border-radius: 10px; border: 1px solid var(--edge); background: var(--bg); color: var(--fg); cursor: pointer; font: 700 13.5px var(--f-body); max-width: 100%; }
+.mc-spellbtn img { width: 26px; height: 26px; border-radius: 5px; }
+.mc-spellbtn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-spellbtn kbd, .mc-tile kbd { font: 700 11px var(--f-data); }
+.mc-nokey { color: var(--amber); font: 700 11.5px var(--f-body); }
+.mc-add { display: flex; flex-wrap: wrap; gap: 8px; }
+.mc-picker { border-radius: 16px; padding: 12px; background: var(--game-bg); border: 1px solid var(--game-line); display: grid; gap: 10px; }
+.mc-picker .head { display: flex; gap: 8px; align-items: center; }
+.mc-picker .head .field { flex: 1; padding: 8px 12px; font-size: 14px; }
+.mc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(66px, 1fr)); gap: 8px; max-height: 300px; overflow-y: auto; padding: 2px; }
+.mc-tile { position: relative; display: grid; justify-items: center; gap: 4px; padding: 6px 4px; border-radius: 10px; border: 1px solid transparent; background: none; color: var(--game-fg); cursor: pointer; transition: background .15s, border-color .15s, transform .15s var(--ease-spring); }
+.mc-tile:hover { background: rgba(255, 255, 255, .06); border-color: var(--game-line); transform: translateY(-2px); }
+.mc-tile .ic { width: 44px; height: 44px; border-radius: 8px; overflow: hidden; background: var(--game-cell); border: 1px solid var(--game-line); display: grid; place-items: center; font: 700 15px var(--f-display); color: var(--game-muted); }
+.mc-tile .ic img { width: 100%; height: 100%; object-fit: cover; }
+.mc-tile .nm { font-size: 10.5px; font-weight: 700; max-width: 100%; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-tile kbd { position: absolute; top: 2px; right: 2px; padding: 1px 4px; border-radius: 4px; background: rgba(0, 0, 0, .75); color: #9fd8ff; }
+.mc-tile.nokey .ic { opacity: .5; }
+.mc-tile.nokey kbd { color: var(--amber); }
+.mc-chain { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; padding: 12px; border-radius: 14px; background: var(--game-bg); border: 1px solid var(--game-line); min-height: 60px; }
+.mc-chain .t { width: 34px; height: 34px; border-radius: 6px; overflow: hidden; background: var(--game-cell); border: 1px solid var(--game-line); display: grid; place-items: center; color: var(--game-fg); font: 700 11px var(--f-data); }
+.mc-chain .t img { width: 100%; height: 100%; object-fit: cover; }
+.mc-chain .t svg { width: 17px; height: 17px; }
+.mc-chain .dl { font: 600 11.5px var(--f-data); color: #9fd8ff; }
+.mc-chain .loop { font: 700 11.5px var(--f-data); color: #ffb37a; }
+.mc-chain .vide { color: var(--game-muted); font-size: 13px; }
+.mc-spells { display: grid; gap: 6px; max-height: 520px; overflow-y: auto; padding: 2px; }
+.mc-spell { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 6px 8px; border-radius: 12px; background: var(--well); border: 1px solid var(--edge); }
+.mc-spell .ic { width: 34px; height: 34px; border-radius: 7px; overflow: hidden; background: var(--game-cell); display: grid; place-items: center; font: 700 13px var(--f-display); color: var(--game-muted); }
+.mc-spell .ic img { width: 100%; height: 100%; object-fit: cover; }
+.mc-spell .field { padding: 6px 9px; font-size: 13.5px; border-radius: 9px; }
+.mc-spell .keycap { min-width: 104px; }
+.mc-alerts { display: grid; gap: 6px; }
+.mc-alerts p { font-size: 13px; color: var(--amber); font-weight: 600; }
 body.no-anim *, body.no-anim *::before, body.no-anim *::after { transition: none !important; animation: none !important; }
 </style>
 </head>
@@ -1455,6 +1547,19 @@ body.no-anim *, body.no-anim *::before, body.no-anim *::after { transition: none
   </div>
 
   <!-- ═════════ Vue : Ping ═════════ -->
+  <div class="grid view" id="view-macros" hidden>
+    <section class="card neu-extruded span-12 mc-bar" id="mcBar"></section>
+    <section class="card neu-extruded span-12 mc-warn" id="mcWarn" hidden></section>
+    <div class="span-7 stack">
+      <section class="card neu-extruded" id="mcListCard"></section>
+      <section class="card neu-extruded mc-editor" id="mcEditor" hidden></section>
+    </div>
+    <div class="span-5 stack">
+      <section class="card neu-extruded" id="mcSpellCard"></section>
+      <section class="card neu-extruded" id="mcOptCard"></section>
+    </div>
+  </div>
+
   <div class="grid view" id="view-ping" hidden>
     <section class="card neu-extruded span-12 modbar" data-modbar="ping"></section>
     <div class="span-7 stack">
@@ -1565,6 +1670,7 @@ body.no-anim *, body.no-anim *::before, body.no-anim *::after { transition: none
 <div class="tip" id="tip" hidden></div>
 
 <script src="i18n.js"></script>
+<script src="macrologic.js"></script>
 <script>
 (() => {
 "use strict";
@@ -1595,6 +1701,7 @@ const DEFAULTS = {
   },
   dps: { v: 3, enabled: true, source: "reseau", demo: false, interval: 1, idle: 10, dot: true, bossOnly: false, zones: {},
     view: { layout: "bars", who: "all", rows: 8, cols: ["dps", "share", "dmg", "crit"], fmt: "short", tint: "class", graph: false, color: "#22d3ee", hors: "show", horsOp: 30 } },
+  macros: JSON.parse(JSON.stringify((window.MacroLogic || {}).DEFAUTS || {})),
   cd: { v: 2, skills: [], view: { orient: "row", hideReady: false, names: false, secs: true, glow: true } },
   crosshair: { enabled: false, hotkey: "Ctrl + Maj + V", shape: "crossdot", color: "#3dff8a", thick: 2, len: 8, gap: 4, dot: 2, radius: 12,
     outline: true, outlineColor: "#000000", outlineW: 1, opacity: 100, anchor: "screen", dx: 0, dy: 0, fgOnly: false, mode: "natif", v: 2 },
@@ -1736,13 +1843,14 @@ const NAV = [
   ["cd", "Cooldowns", '<path d="M7 3h10M7 21h10M8 3v3a4 4 0 0 0 8 0V3M8 21v-3a4 4 0 0 1 8 0v3"/>'],
   ["viseur", "Viseur", '<circle cx="12" cy="12" r="8"/><path d="M12 2v6M12 16v6M2 12h6M16 12h6"/>'],
   ["carte", "Carte", '<path d="m9 4-6 2v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>'],
-  ["ping", "Ping & macros", '<path d="M3 12h4l3-8 4 16 3-8h4"/>'],
+  ["macros", "Macros", '<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6 10h1M10 10h1M14 10h1M18 10h0M7 14h10"/>'],
+  ["ping", "Ping", '<path d="M3 12h4l3-8 4 16 3-8h4"/>'],
   ["params", "Paramètres", '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>'],
   ["infos", "Infos", '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.6v.2"/>']
 ];
 const MOD_VIEWS = ["timers", "dps", "cd", "viseur", "carte", "ping"];
 $("#sideNav").innerHTML = '<i class="glider" aria-hidden="true"></i>' + NAV.map(([v, t, ic], i) => `<button role="tab" data-view="${v}" aria-selected="${i === 0}">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ic}</svg>${esc(t)}${v === "taches" ? '<span class="nbadge" id="taskBadge" hidden></span>' : ""}${MOD_VIEWS.includes(v) ? `<i class="mdot" data-mdot="${v}" aria-hidden="true"></i>` : ""}</button>`).join("") +
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ic}</svg>${esc(t)}${v === "taches" ? '<span class="nbadge" id="taskBadge" hidden></span>' : ""}${MOD_VIEWS.includes(v) ? `<i class="mdot" data-mdot="${v}" aria-hidden="true"></i>` : v === "macros" ? '<i class="mdot" data-mcdot aria-hidden="true"></i>' : ""}</button>`).join("") +
   `<div class="side-foot"><span>Masquer l'overlay</span><span><kbd>Échap</kbd> ou <kbd id="hkFoot">Alt + C</kbd></span>
   <button type="button" class="sig" id="sigBtn" title="PichetMeter · Infos" aria-label="PichetMeter · Infos"><img src="img/logo.png" alt="" draggable="false"><span>PichetMeter<small>@atomedims</small></span></button></div>`;
 // Surbrillance glissante de la navigation
@@ -2342,7 +2450,8 @@ const ICONS = {
   copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/>',
   chat: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1.2-4.6A8 8 0 1 1 21 12z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/>',
   book: '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5M8 7h7"/>',
-  code: '<path d="m8 8-5 4 5 4M16 8l5 4-5 4M14 4l-4 16"/>'
+  code: '<path d="m8 8-5 4 5 4M16 8l5 4-5 4M14 4l-4 16"/>',
+  up: '<path d="m6 15 6-6 6 6"/>', down: '<path d="m6 9 6 6 6-6"/>'
 };
 const svg = (k, sw = 2) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${ICONS[k]}</svg>`;
 const ib = (act, icon, label, extra = "") => `<button class="btn icon sm${act === "del" ? " danger" : ""}" data-act="${act}" title="${label}" aria-label="${label}" ${extra}>${svg(icon)}</button>`;
@@ -2530,7 +2639,9 @@ const TONES = {
   carillon: [[880, 0, 1.2, 3], [1318.5, .18, 1.2, 3]],
   cristal: [[1318.5, 0, .8, 5], [1568, .1, .8, 5], [2093, .2, 1, 4]],
   gong: [[196, 0, 2, 1.5], [294, 0, 2, 2], [392, 0, 1.5, 2.5]],
-  bip: [[1000, 0, .12, 6], [1000, .2, .12, 6], [1000, .4, .12, 6]]
+  bip: [[1000, 0, .12, 6], [1000, .2, .12, 6], [1000, .4, .12, 6]],
+  macroOn: [[988, 0, .09, 9], [1480, .08, .12, 9]],
+  macroOff: [[1480, 0, .09, 9], [880, .08, .12, 9]]
 };
 let actx;
 function playTone(name = S.alerts.tone, vol = S.alerts.volume) {
@@ -3246,7 +3357,7 @@ $$("[data-cdv]").forEach(seg => seg.addEventListener("click", e => { const b = e
 
 /* Capture d'une touche de compétence (clavier ou boutons de souris) */
 const NUMPAD_OPS = { NumpadAdd: [107, "Pavé +"], NumpadSubtract: [109, "Pavé −"], NumpadMultiply: [106, "Pavé ×"], NumpadDivide: [111, "Pavé ÷"], NumpadDecimal: [110, "Pavé ."] };
-const SPECIAL = { Space: [32, "Espace"], Tab: [9, "Tab"], Insert: [45, "Inser"], Delete: [46, "Suppr"], Home: [36, "Début"], End: [35, "Fin"], PageUp: [33, "Page ↑"], PageDown: [34, "Page ↓"],
+const SPECIAL = { Space: [32, "Espace"], Tab: [9, "Tab"], Enter: [13, "Entrée"], Pause: [19, "Pause"], ScrollLock: [145, "Arrêt défil"], Insert: [45, "Inser"], Delete: [46, "Suppr"], Home: [36, "Début"], End: [35, "Fin"], PageUp: [33, "Page ↑"], PageDown: [34, "Page ↓"],
   ArrowUp: [38, "↑"], ArrowDown: [40, "↓"], ArrowLeft: [37, "←"], ArrowRight: [39, "→"], CapsLock: [20, "Verr. maj"] };
 function vkFromEvent(e) {
   const c = e.code || "", k = e.key || "";
@@ -3257,16 +3368,16 @@ function vkFromEvent(e) {
   return NUMPAD_OPS[c] || SPECIAL[c] || null;
 }
 let capture = null;
-function startKeyCapture(btn, skill) {
+function startKeyCapture(btn, skill, prop = "key", done = null) {
   stopKeyCapture();
-  capture = { btn, skill };
+  capture = { btn, skill, prop, done };
   btn.classList.add("listening");
   btn.textContent = "Appuie sur une touche…";
 }
-function stopKeyCapture() { if (!capture) return; capture.btn.classList.remove("listening"); capture = null; renderCdList(); }
+function stopKeyCapture() { if (!capture) return; capture.btn.classList.remove("listening"); const done = capture.done; capture = null; if (done) done(); else renderCdList(); }
 function finishKey(vk, label, mods) {
   const s = capture.skill;
-  s.key = { vk, mods, label: [mods & 1 && "Ctrl", mods & 2 && "Alt", mods & 4 && "Maj", label].filter(Boolean).join(" + ") };
+  s[capture.prop || "key"] = { vk, mods, label: [mods & 1 && "Ctrl", mods & 2 && "Alt", mods & 4 && "Maj", label].filter(Boolean).join(" + ") };
   saveNow(); stopKeyCapture(); renderKeyTest();
 }
 
@@ -3311,7 +3422,7 @@ document.addEventListener("keydown", e => {
   e.preventDefault(); e.stopPropagation();
   if (["Control", "Alt", "Shift", "Meta", "AltGraph"].includes(e.key)) return;
   if (e.key === "Escape") return stopKeyCapture();
-  if (e.key === "Backspace") { capture.skill.key = null; saveNow(); return stopKeyCapture(); }
+  if (e.key === "Backspace") { capture.skill[capture.prop || "key"] = null; saveNow(); return stopKeyCapture(); }
   const r = vkFromEvent(e);
   if (!r) { capture.btn.textContent = "Touche non prise en charge"; return; }
   finishKey(r[0], r[1], (e.ctrlKey ? 1 : 0) | (e.altKey ? 2 : 0) | (e.shiftKey ? 4 : 0));
@@ -3322,7 +3433,7 @@ document.addEventListener("mousedown", e => {
   const r = { 1: [4, "Clic molette"], 3: [5, "Souris 4"], 4: [6, "Souris 5"] }[e.button];
   if (r) finishKey(r[0], r[1], (e.ctrlKey ? 1 : 0) | (e.altKey ? 2 : 0) | (e.shiftKey ? 4 : 0));
 }, true);
-document.addEventListener("click", e => { if (capture && !e.target.closest("[data-key]")) stopKeyCapture(); }, true);
+document.addEventListener("click", e => { if (capture && !e.target.closest("[data-key]") && !e.target.closest(".listening")) stopKeyCapture(); }, true);
 
 /* ════════ Viseur ════════ */
 function crossSVG(c, T = 300) {
@@ -3521,6 +3632,7 @@ function onView(v) {
   if (v === "viseur") { renderXhControls(); if (DESKTOP) api().crosshair_state().then(st => { if (st) { VISEUR = { ...VISEUR, ...st }; renderXhState(); } }); }
   if (v === "params") loadDiag();
   if (v === "timers") renderSrv();
+  if (v === "macros") { renderMacros(); if (DESKTOP) api().macro_state().then(st => { if (st) { MC_STATE = st; renderMcBar(); renderMcList(); renderMcOpts(); } }); }
 }
 
 /* ════════ Mode widget (fenêtre épinglée) ════════ */
@@ -3605,6 +3717,344 @@ function bootWidget(kind) {
   setTimeout(fit, 60);
 }
 
+/* ════════ Macros : éditeur, sorts & touches, réglages ════════ */
+const ML = window.MacroLogic;
+let MC_STATE = { actives: [], alertes: [], erreur: null };
+let MC_EDIT = null, MC_PICK = null, MC_FILTRE = "";
+const mc = () => S.macros;
+const mcMacro = id => mc().list.find(m => m.id === id);
+const mcSort = id => mc().spells.find(x => x.id === id);
+const MC_MODES = () => [
+  ["once", L("Une fois", "Once"), L("Un appui = la séquence une fois", "One press = the sequence once")],
+  ["count", L("N fois", "N times"), L("Un appui = la séquence répétée N fois", "One press = the sequence repeated N times")],
+  ["hold", L("Maintenir", "Hold"), L("En boucle tant que la touche est enfoncée", "Loops while the key is held")],
+  ["toggle", L("On / Off", "On / Off"), L("Un appui lance la boucle, un second l'arrête", "One press starts the loop, another stops it")]
+];
+const MC_ACTS = () => [["tap", L("Appui", "Press")], ["hold", L("Maintenir", "Hold")], ["down", L("Enfoncer", "Press down")], ["up", L("Relâcher", "Release")]];
+const MC_BTNS = () => [[1, L("Clic gauche", "Left click")], [2, L("Clic droit", "Right click")], [4, L("Clic molette", "Middle click")], [5, L("Souris 4", "Mouse 4")], [6, L("Souris 5", "Mouse 5")]];
+const ICO = {
+  key: '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h1M11 10h1M15 10h2M8 14h8"/>',
+  mouse: '<rect x="6" y="3" width="12" height="18" rx="6"/><path d="M12 7v4"/>',
+  wait: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/>',
+  up: '<path d="m6 15 6-6 6 6"/>', down: '<path d="m6 9 6 6 6-6"/>', copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/>'
+};
+const ico = (k, sw = 2) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICO[k]}</svg>`;
+const modeNom = m => (MC_MODES().find(x => x[0] === m) || MC_MODES()[0])[1];
+const btnNom = b => (MC_BTNS().find(x => x[0] === +b) || [0, "?"])[1];
+const kbdTxt = k => k && k.vk ? k.label : "—";
+function mcSaveLater() { clearTimeout(mcSaveLater.t); mcSaveLater.t = setTimeout(() => { saveNow(); }, 350); }
+function mcSave() { clearTimeout(mcSaveLater.t); saveNow(); }
+
+// Apparence d'une étape (icône + texte court) pour les aperçus
+function etapeVue(e) {
+  if (e.t === "spell") { const sp = mcSort(e.spell); return { ic: sp ? img(sp.icon, sp.name, initial(sp.name)) : "?", nom: sp ? sp.name : L("Sort supprimé", "Deleted spell"), k: sp && sp.key ? sp.key.label : "" }; }
+  if (e.t === "key") return { ic: `<span>${esc(e.key ? e.key.label : "?")}</span>`, nom: (e.key ? e.key.label : "?"), k: "" };
+  if (e.t === "mouse") return { ic: ico("mouse"), nom: btnNom(e.btn), k: "" };
+  return { ic: ico("wait"), nom: `${e.ms || 0} ms`, k: "" };
+}
+function mcMini(m) {
+  const st = m.steps.filter(e => e.t !== "wait");
+  return `<div class="mc-mini">${st.slice(0, 9).map(e => `<span class="t" title="${esc(etapeVue(e).nom)}">${etapeVue(e).ic}</span>`).join("")}${st.length > 9 ? `<span class="more">+${st.length - 9}</span>` : ""}${!st.length ? `<span class="more">${esc(L("Aucune action", "No action"))}</span>` : ""}</div>`;
+}
+
+function renderMacros() { if (WIDGET || !$("#view-macros")) return; renderMcBar(); renderMcList(); renderMcEditor(); renderMcSpells(); renderMcOpts(); }
+
+function renderMcBar() {
+  const bar = $("#mcBar"); if (!bar) return;
+  const c = mc(), on = !!(c.enabled && c.accepted), r = ML.compiler(c);
+  const nb = r.groupes.filter(g => g.etapes.length).length;
+  let det;
+  if (!on) det = L("Désactivées : aucune touche n'est simulée.", "Off: no key is simulated.");
+  else if (!nb) det = L("Actives, mais aucune macro complète (touche + actions).", "On, but no complete macro (key + actions).");
+  else det = L(`Actives · ${nb} touche(s) · arrêt d'urgence : ${kbdTxt(c.panic)}${c.fgOnly !== false ? " · seulement jeu au premier plan" : ""} · en pause quand l'interface est ouverte`,
+    `On · ${nb} key(s) · emergency stop: ${kbdTxt(c.panic)}${c.fgOnly !== false ? " · game in front only" : ""} · paused while the interface is open`);
+  bar.classList.toggle("on", on);
+  const actives = (MC_STATE.actives || []).map(mcMacro).filter(Boolean);
+  bar.innerHTML = `<label><span class="mi">${navIcon("macros")}</span><span class="tx"><b>${esc(L("Macros clavier et souris", "Keyboard and mouse macros"))}</b><span>${esc(det)}</span></span>
+    <span class="switch lg"><input type="checkbox" role="switch" id="mcOn" ${on ? "checked" : ""} aria-label="${esc(L("Activer les macros", "Turn macros on"))}"><span class="track"></span><span class="knob"></span></span></label>
+    <div class="mc-run">${actives.map(m => `<span class="mc-chip">${esc(m.name)}</span>`).join("")}</div>`;
+  $("[data-mcdot]")?.classList.toggle("on", on);
+  $("#mcOn").addEventListener("change", e => {
+    if (e.target.checked && !mc().accepted) { e.target.checked = false; renderMcWarn(true); return; }
+    mc().enabled = e.target.checked; mcSave(); renderMcBar();
+  });
+}
+function renderMcWarn(voir) {
+  const w = $("#mcWarn"); if (!w) return;
+  w.hidden = !voir;
+  if (!voir) return;
+  w.innerHTML = `<div class="card-head"><div><h2>${esc(L("Avant d'activer les macros", "Before turning macros on"))}</h2></div></div>
+    <ul>
+      <li>${esc(L("Les macros envoient au jeu des appuis de touches et de clics simulés. C'est le seul module de PichetMeter qui agit sur le jeu.", "Macros send simulated key presses and clicks to the game. It is the only PichetMeter module that acts on the game."))}</li>
+      <li>${esc(L("Les règles d'Aion 2 peuvent interdire l'automatisation des actions : leur utilisation peut entraîner une sanction sur ton compte. PichetMeter ne contourne aucune protection du jeu, et le jeu peut aussi ignorer les appuis simulés.", "Aion 2 rules may forbid automating actions: using them can get your account sanctioned. PichetMeter does not bypass any game protection, and the game may also ignore simulated input."))}</li>
+      <li>${esc(L("Tu les utilises sous ta seule responsabilité. La touche d'arrêt d'urgence (Pause par défaut) coupe tout instantanément.", "You use them at your own risk. The emergency stop key (Pause by default) stops everything at once."))}</li>
+    </ul>
+    <div class="mc-add"><button type="button" class="btn primary" id="mcAccept">${esc(L("J'ai compris, activer les macros", "I understand, turn macros on"))}</button><button type="button" class="btn" id="mcRefuse">${esc(L("Annuler", "Cancel"))}</button></div>`;
+  $("#mcAccept").onclick = () => { mc().accepted = true; mc().enabled = true; mcSave(); renderMcWarn(false); renderMcBar(); };
+  $("#mcRefuse").onclick = () => renderMcWarn(false);
+}
+
+function renderMcList() {
+  const card = $("#mcListCard"); if (!card) return;
+  const c = mc(), actives = new Set(MC_STATE.actives || []);
+  const comptes = {};
+  for (const m of c.list) if (m.enabled !== false && m.trigger && m.trigger.vk) comptes[ML.cleTouche(m.trigger)] = (comptes[ML.cleTouche(m.trigger)] || 0) + 1;
+  card.innerHTML = `<div class="card-head"><div><h2>${esc(L("Mes macros", "My macros"))}</h2><span class="sub">${esc(L("Clique une macro pour la modifier · plusieurs macros sur une même touche s'enchaînent dans l'ordre", "Click a macro to edit it · several macros on the same key run one after the other"))}</span></div>
+    <button type="button" class="btn sm primary" id="mcNew">${svg("plus")}${esc(L("Nouvelle macro", "New macro"))}</button></div>
+    <div class="mc-list">${c.list.length ? c.list.map((m, i) => {
+      const cle = m.trigger && m.trigger.vk ? ML.cleTouche(m.trigger) : "", partage = cle && comptes[cle] > 1;
+      return `<div class="mc-row${MC_EDIT === m.id ? " sel" : ""}${m.enabled === false ? " off" : ""}${actives.has(m.id) ? " run" : ""}" data-mc="${esc(m.id)}" tabindex="0">
+        <span class="mc-key${m.trigger && m.trigger.vk ? "" : " none"}" title="${esc(L("Touche de déclenchement", "Trigger key"))}">${esc(m.trigger && m.trigger.vk ? m.trigger.label : "?")}</span>
+        <span class="tt"><b>${esc(m.name)}<span class="mc-mode">${esc(modeNom(m.mode))}</span>${partage ? `<span class="mc-mode" title="${esc(L("Même touche qu'une autre macro : elles s'enchaînent", "Same key as another macro: they chain"))}">⛓ ${comptes[cle]}</span>` : ""}</b>${mcMini(m)}</span>
+        <span class="acts">${ib("mcup", "up", L("Monter", "Move up"), i === 0 ? "disabled" : "")}${ib("mcdup", "plus", L("Dupliquer", "Duplicate"))}${ib("mcdel", "trash", L("Supprimer", "Delete"))}</span>
+        <label class="switch sm" title="${esc(L("Activée", "Enabled"))}"><input type="checkbox" role="switch" data-mcon ${m.enabled !== false ? "checked" : ""} aria-label="${esc(L("Activer ", "Enable ") + m.name)}"><span class="track"></span><span class="knob"></span></label>
+      </div>`; }).join("") : `<p class="note">${esc(L("Aucune macro. Crée la première : choisis une touche, un mode, puis ajoute des sorts, des touches, des clics et des pauses.", "No macro yet. Create one: pick a key, a mode, then add spells, keys, clicks and pauses."))}</p>`}</div>
+    ${MC_STATE.alertes && MC_STATE.alertes.length || ML.compiler(c).alertes.length ? `<div class="mc-alerts">${ML.compiler(c).alertes.map(a => `<p>⚠ ${esc(a.texte)}</p>`).join("")}</div>` : ""}`;
+  $("#mcNew").onclick = () => { const m = ML.nouvelleMacro(c.list.length + 1); m.name = L("Macro ", "Macro ") + (c.list.length + 1); c.list.push(m); MC_EDIT = m.id; MC_PICK = null; mcSave(); renderMcList(); renderMcEditor(); setTimeout(() => $("#mcName")?.select(), 30); };
+}
+$("#view-macros")?.addEventListener("change", e => {
+  const t = e.target.closest("[data-mcon]"); if (!t) return;
+  const m = mcMacro(t.closest("[data-mc]").dataset.mc); if (!m) return;
+  m.enabled = t.checked; mcSave(); renderMcList(); renderMcBar();
+});
+$("#view-macros")?.addEventListener("click", e => {
+  const row = e.target.closest("#mcListCard [data-mc]"); if (!row) return;
+  if (e.target.closest(".switch")) return;
+  const m = mcMacro(row.dataset.mc), c = mc(); if (!m) return;
+  const a = e.target.closest("[data-act]");
+  if (a) {
+    const i = c.list.indexOf(m);
+    if (a.dataset.act === "mcup" && i > 0) { c.list.splice(i, 1); c.list.splice(i - 1, 0, m); }
+    if (a.dataset.act === "mcdup") { const d = JSON.parse(JSON.stringify(m)); d.id = ML.nouvelleMacro().id; d.name = m.name + " (2)"; c.list.splice(i + 1, 0, d); MC_EDIT = d.id; }
+    if (a.dataset.act === "mcdel") { c.list.splice(i, 1); if (MC_EDIT === m.id) MC_EDIT = null; }
+    mcSave(); renderMcList(); renderMcEditor(); renderMcBar(); return;
+  }
+  MC_EDIT = MC_EDIT === m.id ? null : m.id; MC_PICK = null; renderMcList(); renderMcEditor();
+});
+
+function renderMcChain(m) {
+  const box = $("#mcChain"); if (!box) return;
+  const c = mc(), d = m.delay == null || m.delay === "" ? c.delay : +m.delay;
+  const parts = m.steps.map((e, i) => {
+    const v = etapeVue(e), pause = e.t === "wait" ? null : (e.delay == null || e.delay === "" ? d : +e.delay);
+    const fin = i === m.steps.length - 1;
+    return e.t === "wait" ? `<span class="t" title="${esc(L("Pause", "Pause"))}">${ico("wait")}</span><span class="dl">${+e.ms || 0} ms</span>`
+      : `<span class="t" title="${esc(v.nom)}">${v.ic}</span>${fin && pause === 0 ? "" : `<span class="dl">↓${pause} ms</span>`}`;
+  }).join("");
+  const boucle = m.mode === "hold" || m.mode === "toggle" ? `<span class="loop">⟲ ${+m.loop || 0} ms</span>` : m.mode === "count" ? `<span class="loop">× ${+m.count || 1}</span>` : "";
+  const ms = ML.duree(m, c);
+  box.innerHTML = m.steps.length ? parts + boucle : `<span class="vide">${esc(L("Ajoute des actions ci-dessous : elles s'afficheront ici, dans l'ordre.", "Add actions below: they show up here, in order."))}</span>`;
+  const t = $("#mcDur"); if (t) t.textContent = m.steps.length ? L(`Un passage : ${(ms / 1000).toFixed(2).replace(".", ",")} s`, `One pass: ${(ms / 1000).toFixed(2)} s`) : "";
+}
+function renderMcEditor() {
+  const box = $("#mcEditor"); if (!box) return;
+  const m = MC_EDIT && mcMacro(MC_EDIT);
+  box.hidden = !m;
+  if (!m) return;
+  const c = mc(), cle = m.trigger && m.trigger.vk ? ML.cleTouche(m.trigger) : "";
+  const freres = cle ? c.list.filter(o => o.enabled !== false && o.trigger && ML.cleTouche(o.trigger) === cle) : [];
+  const sortSurTouche = cle ? c.spells.find(x => x.key && ML.cleTouche(x.key) === cle) : null;
+  const rec = typeof macroCalc === "function" && macroCalc();
+  const stepRow = (e, i) => {
+    const v = etapeVue(e);
+    let body = "";
+    if (e.t === "spell") {
+      const sp = mcSort(e.spell);
+      body = `<button type="button" class="mc-spellbtn" data-pick="${i}" title="${esc(L("Changer de sort", "Change spell"))}">${sp ? img(sp.icon, sp.name, initial(sp.name)) : ""}<span>${esc(v.nom)}</span>${sp && sp.key ? `<kbd>${esc(sp.key.label)}</kbd>` : `<span class="mc-nokey">${esc(L("pas de touche", "no key"))}</span>`}</button>`;
+    } else if (e.t === "key" || e.t === "mouse") {
+      const sel = MC_ACTS().map(([k, t]) => `<option value="${k}"${(e.act || "tap") === k ? " selected" : ""}>${esc(t)}</option>`).join("");
+      body = (e.t === "key" ? `<button type="button" class="btn sm keycap" data-key data-skey="${i}">${esc(e.key ? e.key.label : L("Choisir la touche", "Choose the key"))}</button>`
+        : `<select class="field" data-sf="btn" aria-label="${esc(L("Bouton", "Button"))}">${MC_BTNS().map(([b, t]) => `<option value="${b}"${+e.btn === b ? " selected" : ""}>${esc(t)}</option>`).join("")}</select>`)
+        + `<select class="field" data-sf="act" aria-label="Action">${sel}</select>`
+        + ((e.act || "tap") === "hold" ? `<span class="mc-num"><input class="field" type="number" min="10" max="60000" step="10" data-sf="hold" value="${+e.hold || 200}" aria-label="${esc(L("Durée de maintien", "Hold duration"))}"><span>ms</span></span>` : "");
+    } else body = `<span class="mc-num"><input class="field" type="number" min="0" max="600000" step="10" data-sf="ms" value="${+e.ms || 0}" aria-label="${esc(L("Durée de la pause", "Pause length"))}"><span>${esc(L("ms de pause", "ms pause"))}</span></span>`;
+    const dly = e.t === "wait" ? "<span></span>" : `<label class="dly" title="${esc(L("Délai avant l'action suivante (vide = délai de la macro)", "Delay before the next action (empty = macro delay)"))}">↓<input class="field" type="number" min="0" max="600000" step="10" data-sf="delay" value="${e.delay == null ? "" : +e.delay}" placeholder="${m.delay == null || m.delay === "" ? c.delay : +m.delay}">ms</label>`;
+    return `<div class="mc-step" data-st="${i}"><span class="num">${i + 1}</span><span class="ico">${v.ic}</span><div class="body">${body}</div>${dly}
+      <span class="acts"><button type="button" class="btn icon xs" data-sa="up" ${i === 0 ? "disabled" : ""} aria-label="${esc(L("Monter", "Move up"))}">${ico("up")}</button><button type="button" class="btn icon xs" data-sa="down" ${i === m.steps.length - 1 ? "disabled" : ""} aria-label="${esc(L("Descendre", "Move down"))}">${ico("down")}</button><button type="button" class="btn icon xs danger" data-sa="del" aria-label="${esc(L("Retirer", "Remove"))}">${svg("x")}</button></span></div>`;
+  };
+  box.innerHTML = `<div class="card-head"><div><h2>${esc(L("Modifier la macro", "Edit macro"))}</h2><span class="sub" id="mcDur"></span></div>
+      <span style="display:flex;gap:8px"><button type="button" class="btn sm" id="mcTest" title="${esc(L("Joue la macro une fois, 3 secondes après le clic : clique dans le jeu (ou un bloc-notes) entre-temps", "Plays the macro once, 3 seconds after the click: click into the game (or a notepad) meanwhile"))}">${svg("play")}${esc(L("Tester (3 s)", "Test (3 s)"))}</button>
+      <button type="button" class="btn sm" id="mcClose">${esc(L("Fermer", "Close"))}</button></span></div>
+    <div class="mc-top">
+      <div class="form-row"><label class="label" for="mcName">${esc(L("Nom", "Name"))}</label><input class="field sm" id="mcName" maxlength="40" value="${esc(m.name)}"></div>
+      <div class="form-row"><span class="label">${esc(L("Touche de déclenchement", "Trigger key"))}</span><button type="button" class="btn keycap" data-key id="mcTrig">${esc(m.trigger && m.trigger.vk ? m.trigger.label : L("Choisir la touche", "Choose the key"))}</button></div>
+    </div>
+    ${freres.length > 1 ? `<p class="note warn-note">⛓ ${esc(L(`Même touche que ${freres.filter(o => o.id !== m.id).map(o => "« " + o.name + " »").join(", ")} : les macros s'enchaînent dans l'ordre de la liste (${freres.map(o => o.name).join(" → ")}). Le mode, la répétition et le blocage de la touche sont ceux de « ${freres[0].name} ».`,
+      `Same key as ${freres.filter(o => o.id !== m.id).map(o => "“" + o.name + "”").join(", ")}: the macros run in list order (${freres.map(o => o.name).join(" → ")}). Mode, repeat and key blocking come from “${freres[0].name}”.`))}</p>` : ""}
+    ${sortSurTouche && !m.block ? `<p class="note warn-note">${esc(L(`Cette touche lance aussi « ${sortSurTouche.name} » en jeu. Active « Bloquer la touche » pour que seul la macro réagisse.`, `This key also casts “${sortSurTouche.name}” in game. Turn on “Block the key” so only the macro reacts.`))}</p>` : ""}
+    <div class="form-row"><span class="label">${esc(L("Mode", "Mode"))}</span>
+      <div class="mc-modes" role="group">${MC_MODES().map(([k, t, d]) => `<button type="button" data-mode="${k}" aria-pressed="${m.mode === k}">${esc(t)}<small>${esc(d)}</small></button>`).join("")}</div></div>
+    <div class="mc-params">
+      <div class="form-row"><span class="label">${esc(L("Délai entre deux actions", "Delay between actions"))}</span><span class="mc-num"><input class="field sm" type="number" min="0" max="600000" step="10" id="mcDelay" value="${m.delay == null ? "" : +m.delay}" placeholder="${c.delay}"><span>ms</span></span></div>
+      ${m.mode === "count" ? `<div class="form-row"><span class="label">${esc(L("Nombre de passages", "Number of passes"))}</span><span class="mc-num"><input class="field sm" type="number" min="1" max="999" id="mcCount" value="${+m.count || 3}"><span>×</span></span></div>` : ""}
+      ${m.mode !== "once" ? `<div class="form-row"><span class="label">${esc(L("Pause entre deux passages", "Pause between passes"))}</span><span class="mc-num"><input class="field sm" type="number" min="0" max="600000" step="10" id="mcLoop" value="${+m.loop || 0}"><span>ms</span></span></div>` : ""}
+      ${rec ? `<button type="button" class="btn sm" id="mcRec" title="${esc(L("Délai calculé d'après ton ping (onglet Ping)", "Delay computed from your ping (Ping tab)"))}">${esc(L(`Délai conseillé : ${rec.rec} ms`, `Suggested delay: ${rec.rec} ms`))}</button>` : ""}
+      <label class="opt-sw"><span class="switch sm"><input type="checkbox" id="mcBlock" ${m.block ? "checked" : ""}><span class="track"></span><span class="knob"></span></span>${esc(L("Bloquer la touche (non transmise au jeu)", "Block the key (not sent to the game)"))}</label>
+    </div>
+    <div class="form-row"><span class="label">${esc(L("Séquence", "Sequence"))}</span><div class="mc-chain" id="mcChain"></div></div>
+    <div class="mc-steps" id="mcSteps">${m.steps.map(stepRow).join("")}</div>
+    <div class="mc-add">
+      <button type="button" class="btn sm primary" data-addst="spell">${svg("plus")}${esc(L("Sort", "Spell"))}</button>
+      <button type="button" class="btn sm" data-addst="key">${ico("key")}${esc(L("Touche", "Key"))}</button>
+      <button type="button" class="btn sm" data-addst="mouse">${ico("mouse")}${esc(L("Clic souris", "Mouse click"))}</button>
+      <button type="button" class="btn sm" data-addst="wait">${ico("wait")}${esc(L("Pause", "Pause"))}</button>
+    </div>
+    <div id="mcPicker"></div>`;
+  renderMcChain(m);
+  renderMcPicker();
+  $("#mcClose").onclick = () => { MC_EDIT = null; MC_PICK = null; renderMcList(); renderMcEditor(); };
+  $("#mcTest").onclick = async () => {
+    if (!DESKTOP) return;
+    mcSave(); await saveNow();
+    const ok = await api().macro_test(m.id);
+    const b = $("#mcTest"); if (!b) return;
+    b.textContent = ok ? L("Dans 3 s…", "In 3 s…") : L("Active les macros d'abord", "Turn macros on first");
+    setTimeout(() => renderMcEditor(), 3000);
+  };
+  $("#mcName").addEventListener("input", e => { m.name = e.target.value || "Macro"; mcSaveLater(); const r = $(`#mcListCard [data-mc="${m.id}"] .tt b`); if (r && r.firstChild) r.firstChild.textContent = m.name; });
+  $("#mcTrig").addEventListener("click", e => startKeyCapture(e.currentTarget, m, "trigger", () => { mcSave(); renderMcList(); renderMcEditor(); renderMcBar(); }));
+  $$("#mcEditor [data-mode]").forEach(b => b.addEventListener("click", () => { m.mode = b.dataset.mode; mcSave(); renderMcList(); renderMcEditor(); }));
+  $("#mcDelay").addEventListener("input", e => { m.delay = e.target.value === "" ? null : Math.max(0, +e.target.value); mcSaveLater(); renderMcChain(m); $$("#mcSteps [data-sf=delay]").forEach(x => x.placeholder = m.delay == null ? c.delay : m.delay); });
+  $("#mcCount")?.addEventListener("input", e => { m.count = Math.max(1, +e.target.value || 1); mcSaveLater(); renderMcChain(m); });
+  $("#mcLoop")?.addEventListener("input", e => { m.loop = Math.max(0, +e.target.value || 0); mcSaveLater(); renderMcChain(m); });
+  $("#mcRec")?.addEventListener("click", () => { m.delay = rec.rec; mcSave(); renderMcEditor(); });
+  $("#mcBlock").addEventListener("change", e => { m.block = e.target.checked; mcSave(); renderMcEditor(); });
+  const steps = $("#mcSteps");
+  steps.addEventListener("input", e => {
+    const row = e.target.closest("[data-st]"), f = e.target.dataset.sf; if (!row || !f) return;
+    const st = m.steps[+row.dataset.st]; if (!st) return;
+    if (f === "delay") st.delay = e.target.value === "" ? null : Math.max(0, +e.target.value);
+    if (f === "hold") st.hold = Math.max(10, +e.target.value || 10);
+    if (f === "ms") st.ms = Math.max(0, +e.target.value || 0);
+    mcSaveLater(); renderMcChain(m);
+  });
+  steps.addEventListener("change", e => {
+    const row = e.target.closest("[data-st]"), f = e.target.dataset.sf; if (!row || !f) return;
+    const st = m.steps[+row.dataset.st]; if (!st) return;
+    if (f === "act") { st.act = e.target.value; if (st.act === "hold" && !st.hold) st.hold = 200; mcSave(); renderMcEditor(); }
+    if (f === "btn") { st.btn = +e.target.value; mcSave(); renderMcChain(m); renderMcList(); }
+  });
+  steps.addEventListener("click", e => {
+    const row = e.target.closest("[data-st]"); if (!row) return;
+    const i = +row.dataset.st, st = m.steps[i];
+    const a = e.target.closest("[data-sa]");
+    if (a) {
+      if (a.dataset.sa === "del") m.steps.splice(i, 1);
+      if (a.dataset.sa === "up" && i > 0) [m.steps[i - 1], m.steps[i]] = [m.steps[i], m.steps[i - 1]];
+      if (a.dataset.sa === "down" && i < m.steps.length - 1) [m.steps[i + 1], m.steps[i]] = [m.steps[i], m.steps[i + 1]];
+      MC_PICK = null; mcSave(); renderMcList(); renderMcEditor(); return;
+    }
+    if (e.target.closest("[data-pick]")) { MC_PICK = MC_PICK === i ? null : i; renderMcPicker(); return; }
+    const k = e.target.closest("[data-skey]");
+    if (k) startKeyCapture(k, st, "key", () => { mcSave(); renderMcEditor(); renderMcList(); });
+  });
+  $$("#mcEditor [data-addst]").forEach(b => b.addEventListener("click", () => {
+    const t = b.dataset.addst;
+    if (t === "spell") { MC_PICK = MC_PICK === "add" ? null : "add"; renderMcPicker(); return; }
+    m.steps.push(t === "key" ? { t, key: null, act: "tap", hold: 200, delay: null } : t === "mouse" ? { t, btn: 1, act: "tap", hold: 200, delay: null } : { t: "wait", ms: 500 });
+    MC_PICK = null; mcSave(); renderMcList(); renderMcEditor();
+    if (t === "key") setTimeout(() => { const k = $$("#mcSteps [data-skey]").pop(); if (k) k.click(); }, 30);
+  }));
+}
+// Sélecteur de sort : grille d'icônes avec la touche assignée
+function renderMcPicker() {
+  const box = $("#mcPicker"); if (!box) return;
+  const m = MC_EDIT && mcMacro(MC_EDIT);
+  if (!m || MC_PICK == null) { box.innerHTML = ""; return; }
+  const c = mc(), f = MC_FILTRE.trim().toLowerCase();
+  const sorts = c.spells.filter(x => !f || x.name.toLowerCase().includes(f));
+  box.innerHTML = `<div class="mc-picker"><div class="head"><input class="field" id="mcFiltre" placeholder="${esc(L("Rechercher un sort…", "Search a spell…"))}" value="${esc(MC_FILTRE)}" aria-label="${esc(L("Rechercher un sort", "Search a spell"))}">
+      <button type="button" class="btn sm" id="mcPickClose">${esc(L("Fermer", "Close"))}</button></div>
+    ${c.spells.length ? `<div class="mc-grid">${sorts.map(x => `<button type="button" class="mc-tile${x.key && x.key.vk ? "" : " nokey"}" data-sp="${esc(x.id)}" title="${esc(x.name + (x.key ? " · " + x.key.label : " · " + L("pas de touche", "no key")))}">
+        <span class="ic">${img(x.icon, x.name, initial(x.name))}</span><span class="nm">${esc(x.name)}</span><kbd>${esc(x.key && x.key.vk ? x.key.label : "?")}</kbd></button>`).join("") || `<p class="gm">${esc(L("Aucun sort ne correspond.", "No matching spell."))}</p>`}</div>`
+      : `<p class="gm">${esc(L("Aucun sort enregistré : importe tes compétences dans « Sorts & touches » (à droite), ou ajoute-les à la main.", "No spell saved: import your skills in “Spells & keys” (right), or add them by hand."))}</p>`}
+    <p class="gm">${esc(L("Les sorts sans touche (?) sont joués dès que tu leur assignes une touche dans « Sorts & touches ».", "Spells without a key (?) play once you assign them a key in “Spells & keys”."))}</p></div>`;
+  $("#mcPickClose").onclick = () => { MC_PICK = null; renderMcPicker(); };
+  const fi = $("#mcFiltre");
+  fi.addEventListener("input", e => { MC_FILTRE = e.target.value; const pos = e.target.selectionStart; renderMcPicker(); const n = $("#mcFiltre"); n.focus(); n.setSelectionRange(pos, pos); });
+  box.querySelector(".mc-grid")?.addEventListener("click", e => {
+    const t = e.target.closest("[data-sp]"); if (!t) return;
+    if (MC_PICK === "add") m.steps.push({ t: "spell", spell: t.dataset.sp, delay: null });
+    else if (m.steps[MC_PICK]) { m.steps[MC_PICK].spell = t.dataset.sp; MC_PICK = null; }
+    mcSave(); renderMcList(); renderMcEditor();
+  });
+}
+
+// « Sorts & touches » : la touche de chaque sort en jeu, utilisée par les macros
+function renderMcSpells() {
+  const card = $("#mcSpellCard"); if (!card) return;
+  const c = mc();
+  card.innerHTML = `<div class="card-head"><div><h2>${esc(L("Sorts & touches", "Spells & keys"))}</h2><span class="sub">${esc(L("Indique la touche de chaque sort, comme dans ta barre en jeu", "Set each spell's key, as on your in-game bar"))}</span></div></div>
+    <div class="mc-add"><button type="button" class="btn sm primary" id="mcImport">${esc(L("Importer mes compétences", "Import my skills"))}</button>
+      <button type="button" class="btn sm" id="mcFromCd" title="${esc(L("Reprend les touches choisies dans l'onglet Cooldowns", "Reuses the keys set in the Cooldowns tab"))}">${esc(L("Touches des cooldowns", "Cooldown keys"))}</button></div>
+    <form class="mc-add" id="mcSpellForm" autocomplete="off"><input class="field sm" id="mcSpellName" placeholder="${esc(L("Nom d'un sort", "Spell name"))}" style="flex:1;min-width:140px" aria-label="${esc(L("Nom d'un sort", "Spell name"))}"><button type="submit" class="btn sm">${svg("plus")}${esc(L("Ajouter", "Add"))}</button></form>
+    <p class="note" id="mcSpellNote"></p>
+    <div class="mc-spells">${c.spells.map(x => `<div class="mc-spell" data-sid="${esc(x.id)}"><span class="ic">${img(x.icon, x.name, initial(x.name))}</span>
+      <input class="field" data-sn value="${esc(x.name)}" aria-label="${esc(L("Nom du sort", "Spell name"))}">
+      <button type="button" class="btn sm keycap" data-key data-spk>${esc(x.key && x.key.vk ? x.key.label : L("Choisir la touche", "Choose the key"))}</button>
+      ${ib("spdel", "trash", L("Retirer", "Remove"))}</div>`).join("") || `<p class="note">${esc(L("Aucun sort. Importe tes compétences depuis ta fiche officielle, ou ajoute-les à la main.", "No spell. Import your skills from your official profile, or add them by hand."))}</p>`}</div>`;
+  const note = t => { const n = $("#mcSpellNote"); if (n) n.textContent = t; };
+  $("#mcImport").onclick = () => {
+    const list = (mine?.equipment?.skill?.skillList || []).filter(sk => (+sk.acquired !== 0 || sk.skillLevel) && !/passive/i.test(sk.category || ""));
+    if (!list.length) { note(activeAcct() ? L("Fiche non chargée : ouvre l'onglet Personnage puis réessaie.", "Profile not loaded: open the Character tab and try again.") : L("Enregistre d'abord ton personnage.", "Save your character first.")); return; }
+    const deja = new Set(c.spells.map(x => x.name.toLowerCase()));
+    let n = 0;
+    for (const sk of list) if (!deja.has(String(sk.name).toLowerCase())) { c.spells.push({ id: "s" + Date.now().toString(36) + (n++) + Math.random().toString(36).slice(2, 4), name: sk.name, icon: sk.icon || "", key: null }); }
+    mcSave(); renderMcSpells(); note(L(`${n} sort(s) ajouté(s). Assigne maintenant leurs touches.`, `${n} spell(s) added. Now assign their keys.`));
+  };
+  $("#mcFromCd").onclick = () => {
+    let n = 0;
+    for (const s of cdSkills().filter(s => s.key && s.key.vk)) {
+      let x = c.spells.find(y => y.name.toLowerCase() === s.name.toLowerCase());
+      if (!x) { x = { id: "s" + Date.now().toString(36) + n + Math.random().toString(36).slice(2, 4), name: s.name, icon: s.icon || "", key: null }; c.spells.push(x); }
+      x.key = { ...s.key }; n++;
+    }
+    mcSave(); renderMcSpells(); renderMcEditor(); note(n ? L(`${n} touche(s) reprise(s) des cooldowns.`, `${n} key(s) taken from cooldowns.`) : L("Aucune touche choisie dans l'onglet Cooldowns.", "No key set in the Cooldowns tab."));
+  };
+  $("#mcSpellForm").onsubmit = e => {
+    e.preventDefault(); const nom = $("#mcSpellName").value.trim(); if (!nom) return;
+    c.spells.push({ id: "s" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), name: nom, icon: "", key: null });
+    mcSave(); renderMcSpells(); setTimeout(() => $$("#mcSpellCard [data-spk]").pop()?.click(), 30);
+  };
+  const liste = card.querySelector(".mc-spells");
+  liste.addEventListener("input", e => { const r = e.target.closest("[data-sid]"); if (!r || !e.target.matches("[data-sn]")) return; const x = mcSort(r.dataset.sid); if (x) { x.name = e.target.value; mcSaveLater(); } });
+  liste.addEventListener("change", e => { if (e.target.matches("[data-sn]")) { renderMcEditor(); renderMcList(); } });
+  liste.addEventListener("click", e => {
+    const r = e.target.closest("[data-sid]"); if (!r) return; const x = mcSort(r.dataset.sid); if (!x) return;
+    if (e.target.closest("[data-act=spdel]")) { c.spells = c.spells.filter(y => y.id !== x.id); mcSave(); renderMcSpells(); renderMcEditor(); renderMcList(); return; }
+    const k = e.target.closest("[data-spk]");
+    if (k) startKeyCapture(k, x, "key", () => { mcSave(); renderMcSpells(); renderMcEditor(); renderMcList(); });
+  });
+}
+
+function renderMcOpts() {
+  const card = $("#mcOptCard"); if (!card) return;
+  const c = mc(), st = MC_STATE || {};
+  const diag = [];
+  if (DESKTOP && st.windows === false) diag.push(L("Les macros fonctionnent uniquement sous Windows.", "Macros only work on Windows."));
+  if (DESKTOP && (st.erreurModule || st.erreur)) diag.push(L("Module : ", "Module: ") + (st.erreurModule || st.erreur));
+  if (DESKTOP && c.enabled && c.accepted && c.fgOnly !== false && st.jeu && !st.jeu.detecte) diag.push(L("Jeu non détecté : les macros attendent qu'Aion 2 soit au premier plan.", "Game not detected: macros wait for Aion 2 to be in front."));
+  card.innerHTML = `<div class="card-head"><div><h2>${esc(L("Réglages des macros", "Macro settings"))}</h2></div></div>
+    <div class="mc-params">
+      <div class="form-row"><span class="label">${esc(L("Délai par défaut entre deux actions", "Default delay between actions"))}</span><span class="mc-num"><input class="field sm" type="number" min="0" max="10000" step="10" id="mcDefDelay" value="${+c.delay}"><span>ms</span></span></div>
+      <div class="form-row"><span class="label">${esc(L("Durée d'un appui", "Press duration"))}</span><span class="mc-num"><input class="field sm" type="number" min="10" max="500" step="5" id="mcTap" value="${+c.tap}"><span>ms</span></span></div>
+    </div>
+    <div class="form-row"><span class="label">${esc(L("Arrêt d'urgence", "Emergency stop"))}</span><button type="button" class="btn keycap" data-key id="mcPanic">${esc(kbdTxt(c.panic))}</button>
+      <span class="note">${esc(L("Arrête aussitôt toutes les macros en cours et relâche les touches maintenues.", "Instantly stops every running macro and releases held keys."))}</span></div>
+    <label class="set-item" for="mcFg"><span><span class="t">${esc(L("Seulement quand le jeu est au premier plan", "Only when the game is in front"))}</span><span class="d">${esc(L("Sinon, les macros jouent dans n'importe quelle fenêtre.", "Otherwise macros play in any window."))}</span></span>
+      <span class="switch"><input type="checkbox" id="mcFg" role="switch" ${c.fgOnly !== false ? "checked" : ""}><span class="track"></span><span class="knob"></span></span></label>
+    <label class="set-item" for="mcSnd"><span><span class="t">${esc(L("Son des macros On / Off", "On / Off macro sound"))}</span><span class="d">${esc(L("Petit bip au démarrage et à l'arrêt d'une boucle.", "Short beep when a loop starts and stops."))}</span></span>
+      <span class="switch"><input type="checkbox" id="mcSnd" role="switch" ${c.sound !== false ? "checked" : ""}><span class="track"></span><span class="knob"></span></span></label>
+    ${diag.map(t => `<p class="note warn-note">${esc(t)}</p>`).join("")}
+    ${DESKTOP && st.admin === false ? `<p class="note">${esc(L("Si Aion 2 tourne en administrateur, Windows bloque les appuis simulés : relance alors PichetMeter en administrateur.", "If Aion 2 runs as administrator, Windows blocks simulated input: relaunch PichetMeter as administrator then."))} <button type="button" class="btn sm" data-relaunch>${esc(L("Relancer en administrateur", "Relaunch as administrator"))}</button></p>` : ""}`;
+  $("#mcDefDelay").addEventListener("input", e => { c.delay = Math.max(0, +e.target.value || 0); mcSaveLater(); });
+  $("#mcDefDelay").addEventListener("change", () => renderMcEditor());
+  $("#mcTap").addEventListener("input", e => { c.tap = Math.max(10, Math.min(500, +e.target.value || 30)); mcSaveLater(); });
+  $("#mcPanic").addEventListener("click", e => startKeyCapture(e.currentTarget, c, "panic", () => { mcSave(); renderMcOpts(); renderMcBar(); }));
+  $("#mcFg").addEventListener("change", e => { c.fgOnly = e.target.checked; mcSave(); renderMcBar(); renderMcOpts(); });
+  $("#mcSnd").addEventListener("change", e => { c.sound = e.target.checked; mcSave(); });
+}
+
 /* ════════ Onglet Infos : logiciel, auteur, mentions légales ════════ */
 const DISCORD = "https://discord.gg/KrkJrjrDJt", DEPOT = "https://github.com/Pichetdechiasso/PichetMeter-Aion2-Multitool";
 function renderInfos() {
@@ -3627,8 +4077,8 @@ function renderInfos() {
     <div class="card-head"><h2>${esc(L("Mentions légales", "Legal notice"))}</h2></div>
     <div class="legal-cols">
       ${sec(L("Logiciel non officiel", "Unofficial software"), `<p>${esc(L("PichetMeter est un outil communautaire gratuit et non officiel. Il n'est ni développé, ni approuvé, ni soutenu par NCSOFT. AION et AION 2 sont des marques de NCSOFT Corporation ; les noms, icônes et images du jeu restent la propriété de leurs détenteurs.", "PichetMeter is a free, unofficial community tool. It is not developed, endorsed or supported by NCSOFT. AION and AION 2 are trademarks of NCSOFT Corporation; game names, icons and images belong to their owners."))}</p>`)}
-      ${sec(L("Fonctionnement", "How it works"), `<p>${esc(L("PichetMeter ne modifie pas le jeu et n'injecte rien dans son processus : il affiche ses propres fenêtres par-dessus. Le DPS meter lit passivement le trafic réseau avec Npcap, sans rien envoyer. La détection des cooldowns écoute uniquement les touches choisies, sans jamais les bloquer.", "PichetMeter does not modify the game or inject anything into it: it shows its own windows on top. The DPS meter passively reads network traffic with Npcap and sends nothing. Cooldown tracking only listens to the keys you chose and never blocks them."))}</p>`)}
-      ${sec(L("Responsabilité", "Responsibility"), `<p>${esc(L("Les règles de l'éditeur sur les outils tiers peuvent évoluer : chaque joueur utilise PichetMeter sous sa propre responsabilité. Le logiciel est fourni « tel quel », sans garantie ; l'auteur ne peut être tenu responsable d'un dommage, d'une perte de données ou d'une sanction liée à son utilisation.", "The publisher's rules on third-party tools may change: each player uses PichetMeter at their own risk. The software is provided “as is”, without warranty; the author cannot be held liable for any damage, data loss or sanction resulting from its use."))}</p>`)}
+      ${sec(L("Fonctionnement", "How it works"), `<p>${esc(L("PichetMeter ne modifie pas le jeu et n'injecte rien dans son processus : il affiche ses propres fenêtres par-dessus. Le DPS meter lit passivement le trafic réseau avec Npcap, sans rien envoyer. La détection des cooldowns écoute uniquement les touches choisies, sans jamais les bloquer. Seul le module Macros, désactivé par défaut, envoie au jeu des appuis simulés quand tu le déclenches.", "PichetMeter does not modify the game or inject anything into it: it shows its own windows on top. The DPS meter passively reads network traffic with Npcap and sends nothing. Cooldown tracking only listens to the keys you chose and never blocks them. Only the Macros module, off by default, sends simulated input to the game when you trigger it."))}</p>`)}
+      ${sec(L("Responsabilité", "Responsibility"), `<p>${esc(L("Les règles de l'éditeur sur les outils tiers peuvent évoluer : chaque joueur utilise PichetMeter sous sa propre responsabilité, en particulier les macros, qui automatisent des actions. Le logiciel est fourni « tel quel », sans garantie ; l'auteur ne peut être tenu responsable d'un dommage, d'une perte de données ou d'une sanction liée à son utilisation.", "The publisher's rules on third-party tools may change: each player uses PichetMeter at their own risk, especially macros, which automate actions. The software is provided “as is”, without warranty; the author cannot be held liable for any damage, data loss or sanction resulting from its use."))}</p>`)}
       ${sec(L("Données personnelles", "Personal data"), `<p>${esc(L("Aucune donnée n'est collectée ni envoyée à l'auteur. Comptes, réglages et historiques restent sur ton PC, dans", "No data is collected or sent to the author. Accounts, settings and history stay on your PC, in"))} <code>%APPDATA%\\PichetMeter</code>. ${esc(L("Connexions : services officiels de NCSOFT (fiches, classements, images), carte communautaire choisie, polices Google Fonts, GitHub pendant l'installation. Le ping ouvre une simple connexion vers le serveur, sans échange de données.", "Connections: NCSOFT official services (profiles, rankings, images), the community map you picked, Google Fonts, GitHub during setup. The ping opens a plain connection to the server, with no data exchanged."))}</p>`)}
       ${sec(L("Logo", "Logo"), `<p>${esc(L("Le logo de PichetMeter est un fan art. Sonic the Hedgehog est une marque de SEGA, sans lien avec ce logiciel.", "The PichetMeter logo is fan art. Sonic the Hedgehog is a trademark of SEGA, unrelated to this software."))}</p>`)}
     </div>
@@ -3679,6 +4129,8 @@ window.__onPush = msg => {
     case "dps": DPS = msg.etat || DPS; renderDps(); break;
     case "cd": CD_STARTS = msg.debuts || {}; renderCdAll(); break;
     case "cdetat": KEYS = msg.etat || KEYS; renderKeyTest(); break;
+    case "macroetat": MC_STATE = { ...MC_STATE, ...(msg.etat || {}) }; renderMcBar(); renderMcList(); break;
+    case "macrobip": playTone(msg.on ? "macroOn" : "macroOff", Math.max(30, S.alerts.volume)); break;
     case "sound": playTone(msg.tone, msg.volume); break;
     case "viseur": VISEUR = msg; renderXhState(); break;
     case "fond": { const b = $("#backdropImg"); if (!b) break; if (msg.url) { b.style.backgroundImage = `url("${msg.url}")`; b.classList.add("on"); } else { b.style.backgroundImage = ""; b.classList.remove("on"); } break; }
@@ -3697,7 +4149,7 @@ async function boot() {
   onSettingsChanged.push(renderWidgetPanels, renderParams, renderDpsControls, renderXhControls, renderCdList, renderMapTab, renderModules);
   showFields(); renderParams(); renderAlerts(); renderTimers(); renderWidgetPanels(); renderFavs(); renderRecents(); renderAccount(); renderTasks();
   renderDpsControls(); renderCdList(); renderXhControls(); renderSrv();
-  renderMapTab(); renderModules(); renderInfos();
+  renderMapTab(); renderModules(); renderInfos(); renderMacros();
   requestAnimationFrame(() => placerGlider(true));
   setInterval(tickTimers, 1000);
   setInterval(() => { if (!$("#view-cd").hidden) cdTick(); }, 100);

@@ -27,9 +27,9 @@ for dp, _, fs in os.walk(PK):
 # Contrôle de l'arborescence attendue par installer.ps1
 need = ["Installer.cmd", "Desinstaller.cmd", "LISEZ-MOI.txt", "fichiers/installer.ps1", "fichiers/desinstaller.ps1", "fichiers/rcedit-x64.exe", "fichiers/rcedit-LICENSE.txt",
         "fichiers/PichetMeter.ico", "fichiers/app/main.js", "fichiers/app/ui.html", "fichiers/app/preload.js", "fichiers/app/package.json",
-        "fichiers/app/i18n.js", "fichiers/app/reseau.js", "fichiers/app/dpslogic.js", "fichiers/app/mobs.json", "fichiers/app/icon.png",
+        "fichiers/app/i18n.js", "fichiers/app/macrologic.js", "fichiers/app/reseau.js", "fichiers/app/dpslogic.js", "fichiers/app/mobs.json", "fichiers/app/icon.png",
         "fichiers/app/COPYING.txt", "fichiers/app/LICENCES.txt", "fichiers/app/img/logo.png"] + \
-       [f"fichiers/app/{n}.ps1" for n in ("helper", "keys", "viseur", "capture")] + \
+       [f"fichiers/app/{n}.ps1" for n in ("helper", "keys", "viseur", "capture", "macro")] + \
        [f"fichiers/app/img/cls-{k}.png" for k in ("gladiateur", "templier", "assassin", "rodeur", "sorcier", "spiritualiste", "clerc", "aede")]
 missing = [n for n in need if not os.path.isfile(os.path.join(PK, n))]
 assert not missing, missing
