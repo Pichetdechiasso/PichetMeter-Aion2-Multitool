@@ -99,7 +99,7 @@ tools/        build.py (paquet d'installation), pscheck.ps1 (vérification Power
 - **Installer depuis les sources :** `setup\Installer.cmd` fonctionne aussi depuis le dépôt téléchargé.
 - **Tests :** `for t in test/*.test.js; do node "$t"; done`, et `pwsh tools/pscheck.ps1 -Files app/*.ps1` pour les scripts PowerShell.
 - **Paquet :** `python3 tools/build.py` produit `dist/PichetMeter-<version>-Installation.zip`.
-- **Publier une version :** mets à jour la version dans `app/package.json`, `setup/fichiers/installer.ps1` (`$AppVersion`), `LISEZ-MOI.txt` et `CHANGELOG.md`, puis pousse un tag `vX.Y.Z`. GitHub Actions teste, construit le zip et crée la release.
+- **Publier une version :** mets à jour la version dans `app/package.json`, `setup/fichiers/installer.ps1` (`$AppVersion`), `LISEZ-MOI.txt` et `CHANGELOG.md`, puis pousse sur `main`. GitHub Actions teste, construit le zip, crée le tag `vX.Y.Z` et la release (une seule fois par version).
 
 Les contributions sont les bienvenues : ouvre une *issue* ou une *pull request*, ou passe sur le [Discord](https://discord.gg/KrkJrjrDJt).
 
