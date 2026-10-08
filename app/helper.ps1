@@ -32,6 +32,10 @@ public static class A2Helper
     [DllImport("user32.dll")] static extern bool ClientToScreen(IntPtr hWnd, ref POINT p);
     [DllImport("user32.dll")] static extern bool EnumWindows(EnumProc cb, IntPtr lParam);
     [DllImport("shell32.dll")] static extern int SHQueryUserNotificationState(out int state);
+    [DllImport("kernel32.dll")] static extern IntPtr OpenProcess(uint access, bool inherit, int pid);
+    [DllImport("kernel32.dll")] static extern bool CloseHandle(IntPtr h);
+    [DllImport("advapi32.dll")] static extern bool OpenProcessToken(IntPtr process, uint access, out IntPtr token);
+    [DllImport("advapi32.dll")] static extern bool GetTokenInformation(IntPtr token, int cls, out int info, int len, out int retLen);
     [DllImport("iphlpapi.dll")] static extern uint GetExtendedTcpTable(IntPtr table, ref int size, bool order, int af, int tableClass, uint reserved);
 
     public delegate bool EnumProc(IntPtr hWnd, IntPtr lParam);
@@ -99,6 +103,23 @@ public static class A2Helper
     {
         try { int s; if (SHQueryUserNotificationState(out s) == 0) return s; } catch { }
         return 0;
+    }
+
+    // 1 = jeu lancé en administrateur (ou protégé : ses droits ne sont pas lisibles), 0 = non, -1 = inconnu.
+    // Windows empêche alors un programme non administrateur de lui envoyer des touches ou de voir son clavier.
+    public static int GameElevated(int pid)
+    {
+        if (pid == 0) return -1;
+        IntPtr p = OpenProcess(0x1000, false, pid);
+        if (p == IntPtr.Zero) return 1;
+        try
+        {
+            IntPtr t;
+            if (!OpenProcessToken(p, 0x0008, out t)) return 1;
+            try { int e, n; if (GetTokenInformation(t, 20, out e, 4, out n)) return e != 0 ? 1 : 0; return -1; }
+            finally { CloseHandle(t); }
+        }
+        finally { CloseHandle(p); }
     }
 
     public static int ForegroundPid()
@@ -298,6 +319,7 @@ while ($true) {
                     $out.fg = ([A2Helper]::ForegroundPid() -eq $game)
                     $out.remote = [A2Helper]::GameRemote($game)
                     $out.rect = [A2Helper]::GameRect($game)
+                    $out.elev = [A2Helper]::GameElevated($game)
                 }
                 Send $out
             }

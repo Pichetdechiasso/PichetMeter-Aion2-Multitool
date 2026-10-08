@@ -33,6 +33,7 @@
 | **Timers** | Événements des serveurs Europe (faille, festival, invasion, arène, siège…) en heure locale, alertes avant le début, bouton « Recaler » si un horaire change, timers personnalisés. |
 | **Cooldowns** | Compte à rebours des compétences au moment où tu appuies sur leur touche, avec test de détection. |
 | **Macros** | Macros clavier et souris : une fois, N fois, maintenir ou On / Off, délai en ms entre chaque action, plusieurs macros sur une même touche, sorts choisis par leur icône et menu « Sorts & touches », arrêt d'urgence. Désactivées par défaut. |
+| **Auto-potions** | Appuie sur F1, F2, F3 (modifiables) quand la vie passe sous des seuils choisis, en lisant la barre de vie à l'écran. Partie du module Macros. |
 | **Viseur** | Viseur personnalisable dessiné au centre de l'écran. |
 | **Carte** | Carte interactive communautaire (AION2.run, Aion2 Interactive Map, Wikily…) dans l'interface ou en widget. |
 | **Ping & tâches** | Latence réelle vers le serveur, liste des quotidiennes et hebdomadaires. |
@@ -75,7 +76,8 @@ Le fichier [LISEZ-MOI.txt](LISEZ-MOI.txt), inclus dans le zip, détaille chaque 
 - PichetMeter **ne modifie pas le jeu** et n'injecte rien dans son processus : il affiche ses propres fenêtres par-dessus.
 - Le DPS meter **lit passivement** le trafic réseau du jeu avec Npcap, sans rien envoyer. Le décodage des paquets s'appuie sur le travail du projet open source [RATmeter](https://github.com/Kuroukihime/AIon2-Dps-Meter).
 - La détection des cooldowns écoute **uniquement les touches que tu as choisies**, sans jamais les bloquer ni en envoyer.
-- Le module **Macros** est le seul à agir sur le jeu : désactivé par défaut, il envoie des appuis de touches et des clics simulés (SendInput) quand tu le déclenches, uniquement jeu au premier plan, jamais interface ouverte, avec une touche d'arrêt d'urgence.
+- Le module **Macros** est le seul à agir sur le jeu : désactivé par défaut, il envoie des appuis de touches et des clics simulés (SendInput) quand tu le déclenches, uniquement jeu au premier plan, jamais interface ouverte, avec une touche d'arrêt d'urgence. Les auto-potions lisent seulement la couleur de la barre de vie à l'écran, rien dans le jeu.
+- Si Aion 2 tourne en administrateur, Windows bloque les macros et la lecture du clavier en jeu : PichetMeter le détecte et propose de se relancer en administrateur.
 - **Aucune donnée n'est collectée.** Tout reste sur ton PC. Connexions : services officiels de NCSOFT (fiches, classements), la carte communautaire choisie, Google Fonts, et GitHub pendant l'installation.
 
 > [!WARNING]

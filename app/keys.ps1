@@ -249,8 +249,9 @@ public static class A2Keys
 
     static void Fire(int vk, string src)
     {
-        if (vk == 0x10 || vk == 0x11 || vk == 0x12 || (vk >= 0xA0 && vk <= 0xA5)) return;
-        int mods = Modifiers();
+        // Ctrl, Alt ou Maj seuls peuvent être la touche d'une compétence : sans combinaison à vérifier
+        bool modif = vk == 0x10 || vk == 0x11 || vk == 0x12 || (vk >= 0xA0 && vk <= 0xA5);
+        int mods = modif ? 0 : Modifiers();
         long t = Maintenant();
         string id;
         lock (gate)

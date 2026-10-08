@@ -1,4 +1,4 @@
-﻿PICHETMETER — version 1.5.0
+﻿PICHETMETER — version 1.6.0
 Compagnon pour Aion 2 : armurerie, classement, tâches, timers, DPS meter de groupe, cooldowns,
 viseur, carte et macros, affichés par-dessus le jeu.
 Créateur : @atomedims · Discord : https://discord.gg/KrkJrjrDJt
@@ -34,6 +34,17 @@ DANS LE JEU
 - Option « Seulement quand le jeu est au premier plan » (Paramètres > Modules en jeu) :
   les widgets se cachent dès que tu passes sur Discord, ton navigateur, etc.
 - L'icône dans la zone de notification (près de l'horloge) permet aussi d'afficher l'overlay ou de quitter.
+
+NOUVEAUTÉS 1.6.0
+----------------
+- Auto-potions (onglet Macros) : appuie sur F1, F2, F3 (modifiables) quand ta vie passe sous
+  des seuils choisis. La vie est lue à l'écran sur ta barre de vie (rien n'est lu dans le jeu).
+- Ctrl, Alt, Maj seuls, Tab, Verr. maj, ponctuation et toutes les touches sont reconnus
+  (macros, sorts, cooldowns, arrêt d'urgence).
+- Délai par défaut entre deux actions de macro : 5 ms.
+- Détection du jeu lancé en administrateur : c'est ce qui empêche les macros de marcher EN JEU
+  (elles marchent hors du jeu). Bouton « Relancer en administrateur » et option
+  « Toujours lancer PichetMeter en administrateur » (Macros > Réglages).
 
 NOUVEAUTÉS 1.5.0
 ----------------
@@ -95,8 +106,18 @@ sanction) : un avertissement est à accepter avant la première activation.
 - Les macros ne jouent que lorsque le jeu est au premier plan (réglable) et jamais quand
   l'interface PichetMeter est ouverte. La touche Pause (modifiable) arrête tout instantanément.
 - « Tester (3 s) » joue la macro une fois après 3 secondes : clique dans le jeu, ou dans un bloc-notes.
-- Si Aion 2 tourne en administrateur, Windows bloque les appuis simulés : lance aussi PichetMeter
-  en administrateur. Le jeu peut aussi choisir d'ignorer les appuis simulés.
+- Les macros marchent hors du jeu mais pas en jeu ? Aion 2 tourne en administrateur : Windows bloque
+  alors les appuis simulés et la lecture du clavier. Active « Toujours lancer PichetMeter en
+  administrateur » (Macros > Réglages). Si rien ne change, le jeu ignore les appuis simulés.
+
+AUTO-POTIONS (onglet Macros)
+----------------------------
+1. Vie pleine, clique « Choisir la barre de vie » et encadre au plus près la partie colorée
+   de la barre de vie de ton personnage : sa couleur est enregistrée.
+2. Règle les potions : touche (F1, F2, F3 par défaut), seuil de vie en %, délai minimum entre
+   deux appuis. Active l'interrupteur « Auto-potions » (et celui des macros).
+3. En jeu, interface masquée, la vie lue s'affiche dans la carte. Si la lecture est fausse,
+   recadre la barre ou règle la tolérance de couleur. Ne place aucun widget sur la barre de vie.
 
 VISEUR
 ------

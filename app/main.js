@@ -528,7 +528,29 @@ const viseurNatif = new Assistant("viseur (compatibilité)", "viseur.ps1");
 /* ════════ Macros (module désactivé tant que l'utilisateur ne l'a pas activé et accepté) ════════ */
 const macros = new Assistant("macros", "macro.ps1", m => surMacro(m));
 let macroEtat = { actives: [], alertes: [], erreur: null, arret: 0 };
-let macroGroupes = [], macroSig = "";
+let macroGroupes = [], macroSig = "", journalPotions = 0;
+// Requête au module macros avec réponse attendue (ex. calibrage de la barre de vie)
+function demandeMacro(ligne, delai = 8000) {
+  return new Promise(async (resolve, reject) => {
+    macros.demarrer();
+    for (let i = 0; i < 100 && macros.proc && !macros.pret; i++) await attendre(100);
+    if (!macros.proc || !macros.pret) return reject(new Error(macros.erreur || "module macros indisponible"));
+    const id = ++macros.seq;
+    const t = setTimeout(() => { macros.attente.delete(id); reject(new Error("délai dépassé")); }, delai);
+    macros.attente.set(id, { resolve, reject, t });
+    macros.ecrire(ligne(id));
+  });
+}
+async function calibrerVie(zone) {
+  const z = zone || (cfgMacros().potions || {}).zone;
+  if (!z) throw new Error("aucune zone choisie");
+  const m = await demandeMacro(id => `hpcal ${id} ${z.x},${z.y},${z.w},${z.h}`);
+  if (m.erreur) throw new Error(m.erreur);
+  S.macros = S.macros || {};
+  S.macros.potions = { ...MacroLogic.DEFAUTS.potions, ...(S.macros.potions || {}), zone: z, couleur: m.couleur };
+  ecrireReglages(); diffuserReglages(); synchroniserMacros(true);
+  return { zone: z, couleur: m.couleur, v: m.v, png: m.png ? "data:image/png;base64," + m.png : null };
+}
 const cfgMacros = () => ({ ...MacroLogic.DEFAUTS, ...(S.macros || {}) });
 function synchroniserMacros(force) {
   const r = MacroLogic.compiler(cfgMacros());
@@ -537,21 +559,22 @@ function synchroniserMacros(force) {
   if (!IS_WIN) return;
   if (!r.actif) {
     // le module reste chargé mais n'écoute plus rien
-    if (macros.proc && macroSig !== "off") { macros.ecrire("clear"); macros.ecrire(r.options); }
+    if (macros.proc && macroSig !== "off") { macros.ecrire("clear"); macros.ecrire("pot actif=0"); macros.ecrire(r.options); }
     macroSig = "off";
     return;
   }
   macros.demarrer();
   if (!macros.proc) return;
-  const sig = [r.options, ...r.lignes].join("\n");
+  const sig = [r.options, r.potion, ...r.lignes].join("\n");
   if (sig === macroSig && !force) return;
   macroSig = sig;
   macros.ecrire("clear");
   for (const l of r.lignes) macros.ecrire(l);
+  macros.ecrire(r.potion);
   macros.ecrire(r.options);
   macros.ecrire("pid " + (statut.pid || 0));
   macros.ecrire("pause " + (mainVisible ? 1 : 0));
-  log("Macros :", r.lignes.length, "touche(s) active(s)");
+  log("Macros :", r.lignes.length, "touche(s) active(s)", r.potionsOk ? "· auto-potions actives" : "");
 }
 function surMacro(m) {
   if (m.type === "ready") { macroSig = ""; synchroniserMacros(true); return; }
@@ -564,6 +587,8 @@ function surMacro(m) {
     if (g && g.mode === "toggle" && cfgMacros().sound !== false && avant !== macroEtat.actives.length) pousser(main, { type: "macrobip", on: !!m.on });
   }
   if (m.type === "stop") { macroEtat.arret = Date.now(); log("Macros arrêtées par la touche d'arrêt"); }
+  if (m.type === "hp") macroEtat.hp = { v: m.v, t: Date.now() };
+  if (m.type === "potion") { macroEtat.potion = { seuil: m.seuil, t: Date.now() }; if (journalPotions++ < 20) log("Auto-potion : seuil", m.seuil, "%"); }
   if (m.type === "err") { macroEtat.erreur = m.message; log("Macros :", m.message); }
   pousser(main, { type: "macroetat", etat: macroEtat });
 }
@@ -580,7 +605,7 @@ async function sonder() {
     let rectDip = null;
     if (r) { try { rectDip = screen.screenToDipRect(null, r); } catch { rectDip = r; } }
     const avant = statut.game, devantAvant = jeuDevant();
-    statut = { game: !!m.game, fg: !!m.fg, remote: m.remote || null, pid: m.pid || 0, name: m.name || null, rect: r, rectDip, exclusif: m.qns === 3, qns: m.qns, fgpid: m.fgpid || 0, fgname: m.fgname || null };
+    statut = { game: !!m.game, fg: !!m.fg, remote: m.remote || null, pid: m.pid || 0, name: m.name || null, rect: r, rectDip, exclusif: m.qns === 3, qns: m.qns, fgpid: m.fgpid || 0, fgname: m.fgname || null, elev: m.elev == null ? -1 : m.elev };
     if (avant !== statut.game) log("Jeu", statut.game ? "détecté : " + (statut.name || "?") + " (pid " + statut.pid + ")" : "fermé");
     if (filtrePremierPlan() && devantAvant !== jeuDevant()) synchroniserWidgets();
   } catch { /* module occupé ou relancé */ }
@@ -765,7 +790,11 @@ let captureDemandee = false;
 // Npcap installé en mode « réservé aux administrateurs », ou service arrêté : seule la carte de bouclage
 // apparaît et ne s'ouvre pas. L'application peut alors se relancer en administrateur.
 let estAdmin = false;
-if (IS_WIN) require("child_process").execFile("net", ["session"], { windowsHide: true }, err => { estAdmin = !err; log("Droits administrateur :", estAdmin ? "oui" : "non"); });
+if (IS_WIN) require("child_process").execFile("net", ["session"], { windowsHide: true }, err => {
+  estAdmin = !err;
+  log("Droits administrateur :", estAdmin ? "oui" : "non");
+  if (!estAdmin && S.adminAuto && !process.argv.includes("--sans-admin")) { log("Relance en administrateur (option « Toujours lancer en administrateur »)"); relancerAdmin(); }
+});
 // Démarre le service Npcap (fenêtre de confirmation Windows), puis relance la capture
 function reparerNpcap() {
   const cmd = "if ((Get-ItemProperty 'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\npcap').Start -eq 4) { sc.exe config npcap start= system }; Start-Service npcap";
@@ -779,7 +808,8 @@ function reessayerCapture() {
 }
 function relancerAdmin() {
   const exe = process.execPath.replace(/'/g, "''");
-  spawn("powershell.exe", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", `Start-Sleep -Milliseconds 800; Start-Process -FilePath '${exe}' -Verb RunAs`], { detached: true, windowsHide: true, stdio: "ignore" }).unref();
+  // si Windows refuse (fenêtre de contrôle annulée), PichetMeter repart normalement
+  spawn("powershell.exe", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", `Start-Sleep -Milliseconds 800; try { Start-Process -FilePath '${exe}' -Verb RunAs -ErrorAction Stop } catch { Start-Process -FilePath '${exe}' -ArgumentList '--sans-admin' }`], { detached: true, windowsHide: true, stdio: "ignore" }).unref();
   setTimeout(() => app.quit(), 200);
 }
 function surCapture(m) {
@@ -904,7 +934,7 @@ async function boucleDps() {
 /* Sélecteur de zone à l'écran */
 let selecteur = null;
 let finSelection = null;
-function choisirZone(nomZone) {
+function choisirZone(nomZone, avant = null) {
   return new Promise(resolve => {
     if (finSelection) finSelection(null);
     const d = ecran();
@@ -919,16 +949,23 @@ function choisirZone(nomZone) {
     securiser(fen);
     fen.loadFile(UI, { hash: "w=picker&z=" + nomZone });
     fen.once("ready-to-show", () => { fen.setBounds(d.bounds); fen.show(); fen.focus(); });
-    finSelection = rect => {
+    finSelection = async rect => {
       finSelection = null;
       selecteur = null;
       if (vivante(fen)) fen.destroy();
-      if (etaitVisible && mainVisible && vivante(main)) { main.show(); main.focus(); pousser(main, { type: "hidden", v: false }); }
-      if (!rect || rect.w < 4 || rect.h < 4) return resolve(null);
+      const reafficher = () => { if (etaitVisible && mainVisible && vivante(main)) { main.show(); main.focus(); pousser(main, { type: "hidden", v: false }); } };
+      if (!rect || rect.w < 4 || rect.h < 4) { reafficher(); return resolve(null); }
       const dip = { x: d.bounds.x + rect.x, y: d.bounds.y + rect.y, width: rect.w, height: rect.h };
       let phys = dip;
       if (IS_WIN) { try { phys = screen.dipToScreenRect(null, dip); } catch { phys = dip; } }
       const zone = { x: Math.round(phys.x), y: Math.round(phys.y), w: Math.round(phys.width), h: Math.round(phys.height) };
+      if (avant) {
+        let r = null;
+        try { await attendre(150); r = await avant(zone); } catch (e) { r = { erreur: e.message, zone }; }
+        reafficher();
+        return resolve(r);
+      }
+      reafficher();
       S.dps = { ...(S.dps || {}), zones: { ...((S.dps && S.dps.zones) || {}), [nomZone]: zone } };
       ecrireReglages();
       diffuserReglages();
@@ -1045,7 +1082,7 @@ function diagnostic() {
     touches: { pret: touches.pret, actif: !!touches.proc, erreur: touches.erreur, bloque: touchesEtat.bloque, crochet: touchesEtat.crochet, surveillees: competences().filter(s => s.key && s.key.vk).length },
     capture: { ...captureEtat, actif: !!capture.proc, erreurModule: capture.erreur },
     raccourcis: etatRaccourcis,
-    jeu: { detecte: statut.game, premierPlan: statut.fg, serveur: statut.remote, nom: statut.name, pid: statut.pid, force: String(S.gameProcess || "").trim() || null, exclusif: statut.exclusif },
+    jeu: { detecte: statut.game, admin: statut.elev, premierPlan: statut.fg, serveur: statut.remote, nom: statut.name, pid: statut.pid, force: String(S.gameProcess || "").trim() || null, exclusif: statut.exclusif },
     macros: { pret: macros.pret, actif: !!macros.proc, erreur: macros.erreur || macroEtat.erreur, touches: macroGroupes.filter(g => g.etapes.length).length },
     viseur: { raison: raisonViseur(S.crosshair || {}), natif: IS_WIN && (S.crosshair || {}).mode !== "electron" && !viseurNatif.erreur, natifActif: !!viseurNatif.proc, natifErreur: viseurNatif.erreur }
   };
@@ -1140,7 +1177,7 @@ const API = {
   cd_reset: (e, id) => { if (id) { const n = { ...cdDebuts }; delete n[id]; cdDebuts = n; } else cdDebuts = {}; diffuser({ type: "cd", debuts: cdDebuts }); return true; },
   cd_state: () => cdDebuts,
   cd_keys: () => touchesEtat,
-  macro_state: () => ({ ...macroEtat, windows: IS_WIN, pret: macros.pret, actif: !!macros.proc, erreurModule: macros.erreur, admin: estAdmin, jeu: { detecte: statut.game, pid: statut.pid, nom: statut.name } }),
+  macro_state: () => ({ ...macroEtat, windows: IS_WIN, pret: macros.pret, actif: !!macros.proc, erreurModule: macros.erreur, admin: estAdmin, jeu: { detecte: statut.game, pid: statut.pid, nom: statut.name, admin: statut.elev } }),
   macro_test: (e, id) => {
     const g = macroGroupes.find(x => x.macros.includes(id));
     if (!g || !macros.proc) return false;
@@ -1148,6 +1185,17 @@ const API = {
     return true;
   },
   macro_stop: () => { macros.ecrire("stop"); return true; },
+  // Auto-potions : choix de la barre de vie à l'écran, puis calibrage de sa couleur (vie pleine)
+  potion_pick: () => IS_WIN ? choisirZone("pv", z => calibrerVie(z)) : null,
+  potion_calibrate: async () => {
+    if (!IS_WIN) return null;
+    const visible = mainVisible && vivante(main);
+    if (visible) { main.hide(); await attendre(350); }
+    try { return await calibrerVie(null); }
+    catch (e) { return { erreur: e.message }; }
+    finally { if (visible && mainVisible && vivante(main)) { main.show(); main.focus(); pousser(main, { type: "hidden", v: false }); } }
+  },
+  admin_auto: (e, on) => { S.adminAuto = !!on; ecrireReglages(); return true; },
   diagnostic: () => diagnostic(),
   open_logs: () => { shell.openPath(DATA); return true; },
   open_licence: () => { shell.openPath(path.join(__dirname, "COPYING.txt")); return true; }

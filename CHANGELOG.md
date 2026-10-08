@@ -1,5 +1,12 @@
 # Journal des versions
 
+## 1.6.0
+
+- **Auto-potions** (onglet Macros) : appui automatique sur F1, F2, F3 (modifiables) quand la vie passe sous des seuils réglables, avec un délai minimum par potion. La vie est lue à l'écran sur la barre choisie (calibrage de sa couleur, vie pleine).
+- Macros, sorts, cooldowns : **Ctrl, Alt, Maj seuls**, Tab, Verr. maj, ponctuation et toutes les autres touches sont reconnus.
+- Délai par défaut entre deux actions de macro : **5 ms**.
+- Macros qui marchent hors du jeu mais pas en jeu : PichetMeter détecte qu'Aion 2 tourne **en administrateur** (Windows bloque alors les appuis simulés) et propose de se relancer en administrateur, avec l'option « Toujours lancer en administrateur ».
+
 ## 1.5.0
 
 - Nouveau module **Macros** (clavier et souris), désactivé par défaut avec un avertissement à accepter :

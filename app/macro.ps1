@@ -15,9 +15,13 @@
 #   pid N                                   processus du jeu
 #   pause 1|0                               interface ouverte : rien ne se déclenche, tout s'arrête
 #   test id                                 joue la macro une fois, 3 s plus tard
+#   pot actif=1 zone=x,y,w,h couleur=r,g,b tol=N regles=vk,mods,seuil,delai;...
+#                                           auto-potions : lecture de la barre de vie à l'écran
+#   hpcal id x,y,w,h                        calibre la couleur de la barre (vie pleine), répond {"type":"hpcal","id":..}
 #   stop                                    arrête tout ; quit
 # Messages émis :
 #   {"type":"ready"} {"type":"run","id":"..","on":bool} {"type":"stop","raison":".."} {"type":"err","message":".."}
+#   {"type":"hp","v":0.63}  part de vie lue (auto-potions) ; {"type":"potion","seuil":N}  potion utilisée
 param([switch]$Test)
 
 $ErrorActionPreference = 'Stop'
@@ -48,6 +52,7 @@ public static class A2Macro
     [DllImport("user32.dll")] static extern uint MapVirtualKey(uint code, uint mapType);
     [DllImport("kernel32.dll")] static extern IntPtr GetModuleHandle(string name);
     [DllImport("winmm.dll")] static extern uint timeBeginPeriod(uint ms);
+    [DllImport("user32.dll")] static extern bool SetProcessDPIAware();
 
     [StructLayout(LayoutKind.Sequential)]
     public struct MSG { public IntPtr hwnd; public uint message; public IntPtr wParam; public IntPtr lParam; public uint time; public int x; public int y; public uint lPrivate; }
@@ -129,9 +134,13 @@ public static class A2Macro
     public static void Start()
     {
         try { timeBeginPeriod(1); } catch { }
+        try { SetProcessDPIAware(); } catch { } // coordonnées d'écran en pixels réels (barre de vie)
         Thread t = new Thread(RunHooks);
         t.IsBackground = true;
         t.Start();
+        Thread p = new Thread(BouclePotions);
+        p.IsBackground = true;
+        p.Start();
     }
     static void Installer()
     {
@@ -206,7 +215,7 @@ public static class A2Macro
     // Retourne true si l'appui doit être bloqué (non transmis au jeu)
     static bool Evenement(int vk, bool bas)
     {
-        if (vk == 0x10 || vk == 0x11 || vk == 0x12 || (vk >= 0xA0 && vk <= 0xA5)) return false;
+        bool modif = vk == 0x10 || vk == 0x11 || vk == 0x12 || (vk >= 0xA0 && vk <= 0xA5);
         bool repetition;
         lock (gate)
         {
@@ -214,7 +223,8 @@ public static class A2Macro
             if (bas) enfonces.Add(vk); else enfonces.Remove(vk);
         }
         if (!Actif) return false;
-        int mods = bas ? Modificateurs() : 0;
+        // une touche de modification (Ctrl, Alt, Maj) déclenche seule : pas de combinaison à vérifier
+        int mods = bas && !modif ? Modificateurs() : 0;
         if (bas && !repetition && PanicVk != 0 && vk == PanicVk && (PanicMods == 0 || mods == PanicMods))
         {
             // hors du crochet : il doit rendre la main tout de suite
@@ -407,6 +417,168 @@ public static class A2Macro
             Ecrire("{\"type\":\"err\",\"message\":\"Windows a refusé l'appui simulé (code " + Marshal.GetLastWin32Error().ToString(CultureInfo.InvariantCulture) + "). Le jeu tourne-t-il en administrateur ?\"}");
     }
 
+    /* ───────── Auto-potions : lecture de la barre de vie à l'écran ───────── */
+    public class Potion { public int Vk; public int Mods; public int Seuil; public int Delai; public long Dernier = -1000000; }
+    static volatile bool potionsActives = false;
+    static int[] zoneVie = null;
+    static int couleurR, couleurV, couleurB, tolerance = 70;
+    static List<Potion> potions = new List<Potion>();
+    static System.Reflection.MethodInfo captureEcran, pngEcran;
+
+    public static void ConfigurerPotions(string spec)
+    {
+        CultureInfo ci = CultureInfo.InvariantCulture;
+        bool actif = false; int[] z = null; int r = couleurR, v = couleurV, b = couleurB, tol = tolerance;
+        List<Potion> l = new List<Potion>();
+        foreach (string kv in spec.Split(' '))
+        {
+            int i = kv.IndexOf('=');
+            if (i < 0) continue;
+            string k = kv.Substring(0, i), val = kv.Substring(i + 1);
+            if (k == "actif") actif = val == "1";
+            else if (k == "zone") { string[] f = val.Split(','); if (f.Length == 4) { z = new int[4]; for (int j = 0; j < 4; j++) z[j] = int.Parse(f[j], ci); if (z[2] < 4 || z[3] < 1) z = null; } }
+            else if (k == "couleur") { string[] f = val.Split(','); if (f.Length == 3) { r = int.Parse(f[0], ci); v = int.Parse(f[1], ci); b = int.Parse(f[2], ci); } }
+            else if (k == "tol") tol = Math.Max(5, Math.Min(250, int.Parse(val, ci)));
+            else if (k == "regles")
+            {
+                foreach (string rg in val.Split(';'))
+                {
+                    string[] f = rg.Split(',');
+                    if (f.Length < 4) continue;
+                    Potion po = new Potion();
+                    po.Vk = int.Parse(f[0], ci); po.Mods = int.Parse(f[1], ci);
+                    po.Seuil = Math.Max(1, Math.Min(99, int.Parse(f[2], ci)));
+                    po.Delai = Math.Max(100, Math.Min(600000, int.Parse(f[3], ci)));
+                    if (po.Vk > 0 && po.Vk < 255) l.Add(po);
+                }
+            }
+        }
+        l.Sort(delegate (Potion a, Potion c) { return a.Seuil.CompareTo(c.Seuil); });
+        lock (gate)
+        {
+            // garde le moment du dernier appui des règles déjà connues (pas de double potion en changeant un réglage)
+            foreach (Potion n in l) foreach (Potion o in potions) if (o.Vk == n.Vk && o.Mods == n.Mods) n.Dernier = o.Dernier;
+            potions = l; zoneVie = z; couleurR = r; couleurV = v; couleurB = b; tolerance = tol;
+            potionsActives = actif && z != null && l.Count > 0;
+        }
+    }
+
+    // Part de vie (0 à 1) d'une barre qui se remplit de gauche à droite ; -1 si illisible.
+    // Une colonne est « pleine » si au moins 40 % des lignes sondées ont la couleur de la barre ;
+    // le texte écrit sur la barre (chiffres) ne crée que de petits trous, ignorés.
+    public static double Ratio(int[] px, int w, int h, int r0, int g0, int b0, int tol)
+    {
+        if (px == null || w < 4 || h < 1 || px.Length < w * h) return -1;
+        double[] fr = new double[] { 0.2, 0.35, 0.5, 0.65, 0.8 };
+        List<int> lignes = new List<int>();
+        foreach (double f in fr) { int y = Math.Min(h - 1, Math.Max(0, (int)(h * f))); if (!lignes.Contains(y)) lignes.Add(y); }
+        int tol2 = tol * tol, dernier = -1, trou = 0, maxTrou = Math.Max(3, w * 6 / 100);
+        for (int x = 0; x < w; x++)
+        {
+            int n = 0;
+            foreach (int y in lignes)
+            {
+                int c = px[y * w + x];
+                int dr = ((c >> 16) & 255) - r0, dg = ((c >> 8) & 255) - g0, db = (c & 255) - b0;
+                if (dr * dr + dg * dg + db * db <= tol2) n++;
+            }
+            if (n * 10 >= lignes.Count * 4) { dernier = x; trou = 0; }
+            else if (dernier >= 0) { trou++; if (trou > maxTrou) break; }
+        }
+        return (dernier + 1) / (double)w;
+    }
+
+    static int[] Capturer(int x, int y, int w, int h)
+    {
+        if (captureEcran == null)
+        {
+            foreach (System.Reflection.Assembly a in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                Type t = a.GetType("A2Ecran");
+                if (t != null) { captureEcran = t.GetMethod("Capture"); pngEcran = t.GetMethod("Png"); break; }
+            }
+            if (captureEcran == null) throw new InvalidOperationException("lecture de l'écran indisponible");
+        }
+        return (int[])captureEcran.Invoke(null, new object[] { x, y, w, h });
+    }
+
+    // Calibrage (vie pleine) : couleur médiane de la ligne du milieu, puis lecture de contrôle
+    public static string Calibrer(string id, string zone)
+    {
+        CultureInfo ci = CultureInfo.InvariantCulture;
+        string[] f = zone.Split(',');
+        int x = int.Parse(f[0], ci), y = int.Parse(f[1], ci), w = int.Parse(f[2], ci), h = int.Parse(f[3], ci);
+        int[] px = Capturer(x, y, w, h);
+        int ym = h / 2;
+        List<int> rs = new List<int>(), vs = new List<int>(), bs = new List<int>();
+        for (int i = w / 10; i < Math.Max(w / 10 + 1, w * 6 / 10); i++)
+        {
+            int c = px[ym * w + i];
+            rs.Add((c >> 16) & 255); vs.Add((c >> 8) & 255); bs.Add(c & 255);
+        }
+        rs.Sort(); vs.Sort(); bs.Sort();
+        int r = rs[rs.Count / 2], v = vs[vs.Count / 2], b = bs[bs.Count / 2];
+        double lu = Ratio(px, w, h, r, v, b, tolerance);
+        string png = "";
+        try { if (pngEcran != null) png = (string)pngEcran.Invoke(null, new object[] { px, w, h }); } catch { }
+        return "{\"type\":\"hpcal\",\"id\":" + int.Parse(id, ci).ToString(ci) + ",\"couleur\":[" + r.ToString(ci) + "," + v.ToString(ci) + "," + b.ToString(ci) + "],\"v\":" + lu.ToString("0.000", ci) + ",\"png\":\"" + png + "\"}";
+    }
+
+    static void BouclePotions()
+    {
+        CultureInfo ci = CultureInfo.InvariantCulture;
+        long dernierEnvoi = 0; double dernierLu = -2; bool erreurDite = false;
+        while (true)
+        {
+            Thread.Sleep(100);
+            if (!Actif || Pause || !potionsActives) continue;
+            if (!JeuDevant()) continue;
+            int[] z; List<Potion> l; int r, v, b, tol;
+            lock (gate) { z = zoneVie; l = potions; r = couleurR; v = couleurV; b = couleurB; tol = tolerance; }
+            if (z == null) continue;
+            double lu;
+            try { lu = Ratio(Capturer(z[0], z[1], z[2], z[3]), z[2], z[3], r, v, b, tol); erreurDite = false; }
+            catch (Exception ex)
+            {
+                if (!erreurDite) { erreurDite = true; Ecrire("{\"type\":\"err\",\"message\":\"Auto-potions : " + Echapper((ex.InnerException ?? ex).Message) + "\"}"); }
+                Thread.Sleep(2000);
+                continue;
+            }
+            long t = horloge.ElapsedMilliseconds;
+            if (t - dernierEnvoi >= 400 && Math.Abs(lu - dernierLu) >= 0.01 || t - dernierEnvoi >= 3000)
+            {
+                dernierEnvoi = t; dernierLu = lu;
+                Ecrire("{\"type\":\"hp\",\"v\":" + lu.ToString("0.000", ci) + "}");
+            }
+            // barre vide ou illisible (écran de chargement, personnage mort, barre masquée) : rien
+            if (lu <= 0.01) continue;
+            foreach (Potion po in l)
+            {
+                if (lu * 100 > po.Seuil || t - po.Dernier < po.Delai) continue;
+                po.Dernier = t;
+                Etape e = new Etape(); e.Vk = po.Vk; e.Mods = po.Mods; e.Action = 't'; e.Duree = 30;
+                Jouer(e, new List<int>(), new Groupe());
+                Ecrire("{\"type\":\"potion\",\"seuil\":" + po.Seuil.ToString(ci) + "}");
+                Thread.Sleep(40);
+            }
+        }
+    }
+
+    // Mode test : barre synthétique (remplie jusqu'à « plein », chiffres dessinés au milieu)
+    public static double TestBarre(int w, int h, double plein, int tol)
+    {
+        int[] px = new int[w * h];
+        int rouge = (200 << 16) | (40 << 8) | 40, fond = (25 << 16) | (20 << 8) | 22, texte = (240 << 16) | (240 << 8) | 240;
+        for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+            {
+                int c = x < (int)(w * plein) ? rouge + ((x * 7 + y * 3) % 9) : fond;
+                bool chiffre = x > w * 40 / 100 && x < w * 60 / 100 && y > h * 30 / 100 && y < h * 70 / 100 && (x % 5) < 2;
+                px[y * w + x] = chiffre ? texte : c;
+            }
+        return Ratio(px, w, h, 200, 40, 40, tol);
+    }
+
     /* ───────── Sortie ───────── */
     static string Echapper(string s) { return (s ?? "").Replace("\\", "\\\\").Replace("\"", "\\\""); }
     public static void Ecrire(string ligne)
@@ -416,9 +588,46 @@ public static class A2Macro
 }
 '@
 
+$ecran = @'
+using System;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
+using System.Runtime.InteropServices;
+
+public static class A2Ecran
+{
+    public static int[] Capture(int x, int y, int w, int h)
+    {
+        using (Bitmap b = new Bitmap(w, h, PixelFormat.Format32bppArgb))
+        {
+            using (Graphics g = Graphics.FromImage(b)) { g.CopyFromScreen(x, y, 0, 0, new Size(w, h)); }
+            BitmapData d = b.LockBits(new Rectangle(0, 0, w, h), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            int[] px = new int[w * h];
+            try { for (int r = 0; r < h; r++) Marshal.Copy(IntPtr.Add(d.Scan0, r * d.Stride), px, r * w, w); }
+            finally { b.UnlockBits(d); }
+            return px;
+        }
+    }
+    public static string Png(int[] px, int w, int h)
+    {
+        using (Bitmap b = new Bitmap(w, h, PixelFormat.Format32bppArgb))
+        {
+            BitmapData d = b.LockBits(new Rectangle(0, 0, w, h), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+            try { for (int r = 0; r < h; r++) Marshal.Copy(px, r * w, IntPtr.Add(d.Scan0, r * d.Stride), w); }
+            finally { b.UnlockBits(d); }
+            using (MemoryStream ms = new MemoryStream()) { b.Save(ms, ImageFormat.Png); return Convert.ToBase64String(ms.ToArray()); }
+        }
+    }
+}
+'@
+
 Add-Type -TypeDefinition $source -IgnoreWarnings
 if ($Test) { [A2Macro]::Simulation = $true }
-else { [A2Macro]::Start() }
+else {
+    Add-Type -TypeDefinition $ecran -ReferencedAssemblies System.Drawing -IgnoreWarnings
+    [A2Macro]::Start()
+}
 [A2Macro]::Ecrire('{"type":"ready"}')
 
 while ($true) {
@@ -434,6 +643,19 @@ while ($true) {
             if ($p) { [void][A2Macro]::ToutArreter($null) }
         }
         elseif ($line -eq 'stop') { [void][A2Macro]::ToutArreter($null) }
+        elseif ($line.StartsWith('pot ')) { [A2Macro]::ConfigurerPotions($line.Substring(4)) }
+        elseif ($line.StartsWith('hpcal ')) {
+            $p = $line.Substring(6).Split(' ')
+            try { [A2Macro]::Ecrire([A2Macro]::Calibrer($p[0], $p[1])) }
+            catch {
+                $ex = $_.Exception; while ($ex.InnerException) { $ex = $ex.InnerException }
+                [A2Macro]::Ecrire('{"type":"hpcal","id":' + [int]$p[0] + ',"erreur":"' + ($ex.Message -replace '\\', '\\\\' -replace '"', '\"') + '"}')
+            }
+        }
+        elseif ($Test -and $line -match '^hpsim (\d+) (\d+) ([\d.]+) (\d+)$') {
+            $v = [A2Macro]::TestBarre([int]$Matches[1], [int]$Matches[2], [double]::Parse($Matches[3], [Globalization.CultureInfo]::InvariantCulture), [int]$Matches[4])
+            [A2Macro]::Ecrire('{"type":"hpsim","v":' + $v.ToString('0.000', [Globalization.CultureInfo]::InvariantCulture) + '}')
+        }
         elseif ($line.StartsWith('test ')) { [A2Macro]::Tester($line.Substring(5), $(if ($Test) { 1 } else { 3000 })) }
         elseif ($line.StartsWith('opt ')) {
             foreach ($kv in $line.Substring(4).Split(' ')) {

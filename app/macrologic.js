@@ -15,8 +15,13 @@
  */
 (function (racine) {
   const DEFAUTS = {
-    v: 1, enabled: false, accepted: false, fgOnly: true, sound: true, delay: 120, tap: 30,
-    panic: { vk: 19, mods: 0, label: "Pause" }, spells: [], list: []
+    v: 2, enabled: false, accepted: false, fgOnly: true, sound: true, delay: 5, tap: 30,
+    panic: { vk: 19, mods: 0, label: "Pause" }, spells: [], list: [],
+    // Auto-potions : la barre de vie est lue à l'écran (zone choisie + couleur calibrée vie pleine)
+    potions: { enabled: false, zone: null, couleur: null, tol: 70, regles: [
+      { on: true, key: { vk: 112, mods: 0, label: "F1" }, seuil: 70, delai: 1500 },
+      { on: true, key: { vk: 113, mods: 0, label: "F2" }, seuil: 50, delai: 1500 },
+      { on: true, key: { vk: 114, mods: 0, label: "F3" }, seuil: 30, delai: 1500 }] }
   };
   const BOUTONS = { 1: "Clic gauche", 2: "Clic droit", 4: "Clic molette", 5: "Souris 4", 6: "Souris 5" };
   const ACTIONS = { tap: "t", down: "d", up: "u", hold: "h" };
@@ -32,7 +37,7 @@
   function compiler(cfg) {
     cfg = cfg || {};
     const sorts = new Map((cfg.spells || []).map(s => [s.id, s]));
-    const tap = entier(cfg.tap, 30, 10, 500), defaut = entier(cfg.delay, 120, 0, 10000);
+    const tap = entier(cfg.tap, 30, 10, 500), defaut = entier(cfg.delay, 5, 0, 10000);
     const groupes = new Map(), alertes = [];
     for (const m of cfg.list || []) {
       if (!m || m.enabled === false) continue;
@@ -75,8 +80,19 @@
     const lignes = liste.filter(g => g.etapes.length).map(g =>
       `add ${g.id}|${g.vk}|${g.mods}|${g.mode}|${g.count}|${g.loop}|${g.block ? 1 : 0}|${g.etapes.map(e => e.join(",")).join(";")}`);
     const panic = cfg.panic && cfg.panic.vk ? `${cfg.panic.vk},${cfg.panic.mods || 0}` : "0,0";
-    const actif = !!(cfg.enabled && cfg.accepted && lignes.length);
-    return { groupes: liste, alertes, lignes, actif, options: `opt fg=${cfg.fgOnly === false ? 0 : 1} panic=${panic} actif=${actif ? 1 : 0}` };
+    // Auto-potions
+    const p = { ...DEFAUTS.potions, ...(cfg.potions || {}) };
+    const regles = (p.regles || []).filter(r => r && r.on !== false && r.key && r.key.vk && +r.seuil > 0);
+    const z = p.zone && p.zone.w >= 4 && p.zone.h >= 1 ? p.zone : null, c = Array.isArray(p.couleur) && p.couleur.length === 3 ? p.couleur : null;
+    const potionsOk = !!(p.enabled && z && c && regles.length);
+    if (p.enabled && !z) alertes.push({ id: "potions", texte: "Auto-potions : choisis d'abord la barre de vie." });
+    else if (p.enabled && !c) alertes.push({ id: "potions", texte: "Auto-potions : calibre la barre de vie (vie pleine)." });
+    else if (p.enabled && !regles.length) alertes.push({ id: "potions", texte: "Auto-potions : aucune potion active." });
+    const potion = potionsOk
+      ? `pot actif=1 zone=${z.x},${z.y},${z.w},${z.h} couleur=${c.map(n => entier(n, 0, 0, 255)).join(",")} tol=${entier(p.tol, 70, 5, 250)} regles=${regles.map(r => `${r.key.vk},${r.key.mods || 0},${entier(r.seuil, 50, 1, 99)},${entier(r.delai, 1500, 100, 600000)}`).join(";")}`
+      : "pot actif=0";
+    const actif = !!(cfg.enabled && cfg.accepted && (lignes.length || potionsOk));
+    return { groupes: liste, alertes, lignes, actif, potion, potionsOk, options: `opt fg=${cfg.fgOnly === false ? 0 : 1} panic=${panic} actif=${actif ? 1 : 0}` };
   }
 
   /** Durée d'un passage de la macro (ms), pour l'aperçu. */

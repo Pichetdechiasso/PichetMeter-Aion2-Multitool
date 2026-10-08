@@ -25,6 +25,15 @@ assert.strictEqual(r.options, "opt fg=1 panic=19,0 actif=1");
 assert.strictEqual(ML.compiler({ ...cfg, accepted: false }).actif, false, "rien sans accord de l'utilisateur");
 assert.strictEqual(ML.compiler({ ...cfg, list: [{ ...cfg.list[0], trigger: { vk: 1, mods: 0 } }] }).lignes.length, 0, "clic gauche refusé comme déclencheur");
 assert.strictEqual(ML.duree(cfg.list[1], cfg), 30);
+assert.strictEqual(ML.DEFAUTS.delay, 5, "délai par défaut : 5 ms");
+assert.strictEqual(ML.compiler({ ...cfg, delay: undefined }).lignes[0].split("|")[7].split(";")[0], "49,0,t,20,5");
+// Auto-potions
+const pot = { ...ML.DEFAUTS.potions, enabled: true, zone: { x: 10, y: 20, w: 300, h: 14 }, couleur: [200, 40, 40], tol: 60 };
+const rp = ML.compiler({ ...cfg, list: [], potions: pot });
+assert.strictEqual(rp.potion, "pot actif=1 zone=10,20,300,14 couleur=200,40,40 tol=60 regles=112,0,70,1500;113,0,50,1500;114,0,30,1500");
+assert.strictEqual(rp.actif, true, "les auto-potions seules activent le module");
+assert.strictEqual(ML.compiler({ ...cfg, list: [], potions: { ...pot, couleur: null } }).potion, "pot actif=0");
+assert(ML.compiler({ ...cfg, list: [], potions: { ...pot, zone: null } }).alertes.some(a => a.id === "potions"));
 
 // Moteur : exécution simulée (horodatage des appuis)
 const pwsh = ["pwsh", "/tmp/claude-0/pwsh/pwsh"].find(p => spawnSync(p, ["-NoProfile", "-Command", "1"], { encoding: "utf8" }).status === 0);
@@ -36,7 +45,10 @@ const cmds = ["opt actif=1 fg=1 panic=19,0", "add h|70|0|hold|1|20|0|49,0,t,10,3
   "down 72", "up 72", "down 72", "up 72", "wait 260", "journal",
   "down 73", "up 73", "wait 120", "journal",
   "down 71", "up 71", "wait 100", "down 19", "wait 120", "journal",
-  "pause 1", "down 72", "up 72", "wait 80", "journal", "quit"];
+  "pause 1", "down 72", "up 72", "wait 80", "journal", "pause 0",
+  "add lc|162|0|once|1|0|0|53,0,t,10,0", "down 162", "up 162", "wait 60", "journal",
+  "hpsim 300 14 1 70", "hpsim 300 14 0.63 70", "hpsim 300 14 0.5 70", "hpsim 300 14 0.12 70", "hpsim 300 14 0 70",
+  "pot actif=1 zone=0,0,300,14 couleur=200,40,40 tol=70 regles=112,0,70,1500", "quit"];
 const out = spawnSync(pwsh, ["-NoProfile", "-File", path.join(__dirname, "../app/macro.ps1"), "-Test"], { input: cmds.join("\n") + "\n", encoding: "utf8", timeout: 60000 });
 const msgs = out.stdout.split(/\r?\n/).filter(Boolean).map(l => JSON.parse(l));
 const j = msgs.filter(m => m.type === "journal").map(m => m.j.split(" ").filter(Boolean).map(x => x.replace(/@\d+$/, "")));
@@ -48,5 +60,7 @@ assert.strictEqual(tours(j[2]), 3, "N fois : 3 passages, l'appui pendant l'exéc
 assert.deepStrictEqual(j[3], ["+17", "+52", "-52", "-17", "+5", "-5"], "modificateur Ctrl + touche, puis bouton de souris maintenu");
 assert(msgs.some(m => m.type === "stop" && m.raison === "panique"), "touche d'arrêt d'urgence");
 assert.strictEqual(j[5].length, 0, "rien ne se déclenche quand l'interface est ouverte");
+assert.deepStrictEqual(j[6], ["+53", "-53"], "Ctrl gauche seul comme déclencheur");
+assert.deepStrictEqual(msgs.filter(m => m.type === "hpsim").map(m => m.v), [1, 0.63, 0.5, 0.12, 0], "lecture de la barre de vie (chiffres sur la barre ignorés)");
 assert(!msgs.some(m => m.type === "err"), "aucune erreur : " + JSON.stringify(msgs.filter(m => m.type === "err")));
 console.log("macro.test ok");
