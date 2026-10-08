@@ -5,7 +5,7 @@
 <h1 align="center">PichetMeter</h1>
 
 <p align="center">
-  Compagnon gratuit pour <b>Aion 2</b> : DPS meter de groupe, armurerie, timers, cooldowns, macros, viseur et carte,<br>
+  Compagnon gratuit pour <b>Aion 2</b> : DPS meter de groupe, armurerie, timers, cooldowns, auto-potions, viseur et carte,<br>
   affichés directement par-dessus le jeu. Un raccourci (<kbd>Alt</kbd> + <kbd>C</kbd>), pas d'<kbd>Alt</kbd> + <kbd>Tab</kbd>.
 </p>
 
@@ -32,8 +32,7 @@
 | **Classement** | Classements officiels, ou comparatif de tes personnages et favoris. |
 | **Timers** | Événements des serveurs Europe (faille, festival, invasion, arène, siège…) en heure locale, alertes avant le début, bouton « Recaler » si un horaire change, timers personnalisés. |
 | **Cooldowns** | Compte à rebours des compétences au moment où tu appuies sur leur touche, avec test de détection. |
-| **Macros** | Macros clavier et souris : une fois, N fois, maintenir ou On / Off, délai en ms entre chaque action, plusieurs macros sur une même touche, sorts choisis par leur icône et menu « Sorts & touches », arrêt d'urgence. Désactivées par défaut. |
-| **Auto-potions** | Appuie sur F1, F2, F3 (modifiables) quand la vie passe sous des seuils choisis, en lisant la barre de vie à l'écran. Partie du module Macros. |
+| **Auto-potions** | Appuie sur F1, F2, F3 (modifiables) quand la vie passe sous des seuils choisis, en lisant la barre de vie à l'écran. Désactivées par défaut. |
 | **Viseur** | Viseur personnalisable dessiné au centre de l'écran. |
 | **Carte** | Carte interactive communautaire (AION2.run, Aion2 Interactive Map, Wikily…) dans l'interface ou en widget. |
 | **Ping & tâches** | Latence réelle vers le serveur, liste des quotidiennes et hebdomadaires. |
@@ -76,12 +75,12 @@ Le fichier [LISEZ-MOI.txt](LISEZ-MOI.txt), inclus dans le zip, détaille chaque 
 - PichetMeter **ne modifie pas le jeu** et n'injecte rien dans son processus : il affiche ses propres fenêtres par-dessus.
 - Le DPS meter **lit passivement** le trafic réseau du jeu avec Npcap, sans rien envoyer. Le décodage des paquets s'appuie sur le travail du projet open source [RATmeter](https://github.com/Kuroukihime/AIon2-Dps-Meter).
 - La détection des cooldowns écoute **uniquement les touches que tu as choisies**, sans jamais les bloquer ni en envoyer.
-- Le module **Macros** est le seul à agir sur le jeu : désactivé par défaut, il envoie des appuis de touches et des clics simulés (SendInput) quand tu le déclenches, uniquement jeu au premier plan, jamais interface ouverte, avec une touche d'arrêt d'urgence. Les auto-potions lisent seulement la couleur de la barre de vie à l'écran, rien dans le jeu.
-- Si Aion 2 tourne en administrateur, Windows bloque les macros et la lecture du clavier en jeu : PichetMeter le détecte et propose de se relancer en administrateur.
+- Les **auto-potions** sont le seul module qui agit sur le jeu : désactivées par défaut, elles envoient un appui simulé sur la touche de potion quand la vie lue à l'écran passe sous un seuil, uniquement jeu au premier plan, jamais interface ouverte, avec une touche d'arrêt d'urgence. Rien n'est lu dans le jeu.
+- Si Aion 2 tourne en administrateur, Windows bloque les appuis simulés et la lecture du clavier en jeu : PichetMeter le détecte et propose de se relancer en administrateur.
 - **Aucune donnée n'est collectée.** Tout reste sur ton PC. Connexions : services officiels de NCSOFT (fiches, classements), la carte communautaire choisie, Google Fonts, et GitHub pendant l'installation.
 
 > [!WARNING]
-> PichetMeter est un outil communautaire **non officiel**, ni développé ni approuvé par NCSOFT. Les règles de l'éditeur sur les outils tiers peuvent évoluer, et l'automatisation des actions (module Macros) peut être interdite : chacun l'utilise sous sa propre responsabilité. Le logiciel est fourni « tel quel », sans garantie.
+> PichetMeter est un outil communautaire **non officiel**, ni développé ni approuvé par NCSOFT. Les règles de l'éditeur sur les outils tiers peuvent évoluer, et l'automatisation des actions (auto-potions) peut être interdite : chacun l'utilise sous sa propre responsabilité. Le logiciel est fourni « tel quel », sans garantie.
 
 ## Développement
 
@@ -92,8 +91,8 @@ app/          application Electron
   main.js       processus principal : fenêtres, widgets, raccourcis, armurerie, DPS
   ui.html       interface (une seule page, aussi utilisée par chaque widget via #w=<module>)
   reseau.js     décodage du trafic du jeu (DPS de groupe)
-  macrologic.js traduction des macros en commandes pour macro.ps1
-  *.ps1         modules Windows : état du jeu, touches, macros, viseur natif, capture Npcap
+  macrologic.js configuration des auto-potions pour macro.ps1
+  *.ps1         modules Windows : état du jeu, touches, auto-potions, viseur natif, capture Npcap
   i18n.js       traduction anglaise
 setup/        installeur et désinstalleur Windows (Installer.cmd)
 test/         tests Node (node test/xxx.test.js)
@@ -124,8 +123,8 @@ PichetMeter est un logiciel libre distribué sous licence **GNU GPL version 3** 
 
 ## English
 
-**PichetMeter** is a free overlay companion for **Aion 2** on Windows: party DPS meter (passive network reading through Npcap, per-player skill breakdown, boss-only mode), armory and player lookup, rankings, EU event timers, skill cooldowns, keyboard and mouse macros (off by default), crosshair, interactive map, ping and daily/weekly tasks. Everything sits on top of the game, toggled with <kbd>Alt</kbd> + <kbd>C</kbd>. The interface is available in English (Settings > Display > Language).
+**PichetMeter** is a free overlay companion for **Aion 2** on Windows: party DPS meter (passive network reading through Npcap, per-player skill breakdown, boss-only mode), armory and player lookup, rankings, EU event timers, skill cooldowns, auto-potions (off by default), crosshair, interactive map, ping and daily/weekly tasks. Everything sits on top of the game, toggled with <kbd>Alt</kbd> + <kbd>C</kbd>. The interface is available in English (Settings > Display > Language).
 
 **Install:** download [PichetMeter-Installation.zip](https://github.com/Pichetdechiasso/PichetMeter-Aion2-Multitool/releases/latest/download/PichetMeter-Installation.zip), extract it, run `Installer.cmd`. The first install downloads the official Electron runtime (~150 MB) and verifies its SHA-256. No admin rights needed. For the DPS meter, install [Npcap](https://npcap.com). Run the game in windowed or borderless mode.
 
-PichetMeter does not modify or inject into the game and collects no data. Only the optional Macros module sends simulated input to the game when you trigger it; automating actions may be against the game rules. It is an unofficial community tool, not affiliated with or endorsed by NCSOFT. Use it at your own risk. Licensed under GPL-3.0.
+PichetMeter does not modify or inject into the game and collects no data. Only the optional auto-potions send a simulated key press to the game; automating actions may be against the game rules. It is an unofficial community tool, not affiliated with or endorsed by NCSOFT. Use it at your own risk. Licensed under GPL-3.0.

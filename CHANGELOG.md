@@ -1,5 +1,10 @@
 # Journal des versions
 
+## 1.7.0
+
+- Le module **Macros** est retiré de la version publique (il ne fonctionnait pas en jeu). L'onglet devient **Potions** et garde les auto-potions.
+- La touche d'arrêt d'urgence coupe aussi les auto-potions ; l'interrupteur repasse sur OFF.
+
 ## 1.6.0
 
 - **Auto-potions** (onglet Macros) : appui automatique sur F1, F2, F3 (modifiables) quand la vie passe sous des seuils réglables, avec un délai minimum par potion. La vie est lue à l'écran sur la barre choisie (calibrage de sa couleur, vie pleine).

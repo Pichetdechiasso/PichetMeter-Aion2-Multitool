@@ -586,7 +586,11 @@ function surMacro(m) {
     // bip discret quand une macro on / off démarre ou s'arrête
     if (g && g.mode === "toggle" && cfgMacros().sound !== false && avant !== macroEtat.actives.length) pousser(main, { type: "macrobip", on: !!m.on });
   }
-  if (m.type === "stop") { macroEtat.arret = Date.now(); log("Macros arrêtées par la touche d'arrêt"); }
+  if (m.type === "stop") {
+    macroEtat.arret = Date.now(); log("Macros et auto-potions arrêtées par la touche d'arrêt");
+    // l'interrupteur repasse sur OFF : rien ne reprend tout seul
+    S.macros = { ...(S.macros || {}), enabled: false }; ecrireReglages(); diffuserReglages(); synchroniserMacros();
+  }
   if (m.type === "hp") macroEtat.hp = { v: m.v, t: Date.now() };
   if (m.type === "potion") { macroEtat.potion = { seuil: m.seuil, t: Date.now() }; if (journalPotions++ < 20) log("Auto-potion : seuil", m.seuil, "%"); }
   if (m.type === "err") { macroEtat.erreur = m.message; log("Macros :", m.message); }

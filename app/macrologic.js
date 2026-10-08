@@ -14,6 +14,8 @@
  * blocage de la touche sont ceux de la première.
  */
 (function (racine) {
+  // Version publique : seul l'onglet Potions est proposé ; les macros enregistrées ne sont pas jouées
+  const MACROS_VISIBLES = false;
   const DEFAUTS = {
     v: 2, enabled: false, accepted: false, fgOnly: true, sound: true, delay: 5, tap: 30,
     panic: { vk: 19, mods: 0, label: "Pause" }, spells: [], list: [],
@@ -34,12 +36,13 @@
   }
 
   /** Traduit les réglages en groupes (une touche = un groupe) et en lignes de commande pour macro.ps1. */
-  function compiler(cfg) {
+  function compiler(cfg, opts = {}) {
     cfg = cfg || {};
+    const avecMacros = opts.macros != null ? !!opts.macros : MACROS_VISIBLES;
     const sorts = new Map((cfg.spells || []).map(s => [s.id, s]));
     const tap = entier(cfg.tap, 30, 10, 500), defaut = entier(cfg.delay, 5, 0, 10000);
     const groupes = new Map(), alertes = [];
-    for (const m of cfg.list || []) {
+    for (const m of avecMacros ? cfg.list || [] : []) {
       if (!m || m.enabled === false) continue;
       const nom = m.name || "Macro";
       if (!m.trigger || !m.trigger.vk) { alertes.push({ id: m.id, texte: `« ${nom} » n'a pas de touche de déclenchement.` }); continue; }
@@ -97,12 +100,12 @@
 
   /** Durée d'un passage de la macro (ms), pour l'aperçu. */
   function duree(m, cfg) {
-    const r = compiler({ ...cfg, enabled: true, accepted: true, list: [{ ...m, enabled: true, trigger: m.trigger && m.trigger.vk ? m.trigger : { vk: 70, mods: 0 } }] });
+    const r = compiler({ ...cfg, enabled: true, accepted: true, potions: null, list: [{ ...m, enabled: true, trigger: m.trigger && m.trigger.vk ? m.trigger : { vk: 70, mods: 0 } }] }, { macros: true });
     const g = r.groupes[0];
     return g ? g.etapes.reduce((t, e) => t + (e[0] && (e[2] === "t" || e[2] === "h") ? e[3] : 0) + e[4], 0) : 0;
   }
 
-  const api = { DEFAUTS, BOUTONS, compiler, duree, nouvelleMacro, cleTouche };
+  const api = { DEFAUTS, BOUTONS, MACROS_VISIBLES, compiler, duree, nouvelleMacro, cleTouche };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else racine.MacroLogic = api;
 })(typeof window !== "undefined" ? window : this);

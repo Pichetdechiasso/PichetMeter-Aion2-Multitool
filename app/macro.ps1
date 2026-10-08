@@ -228,7 +228,9 @@ public static class A2Macro
         if (bas && !repetition && PanicVk != 0 && vk == PanicVk && (PanicMods == 0 || mods == PanicMods))
         {
             // hors du crochet : il doit rendre la main tout de suite
-            Thread t = new Thread(delegate () { if (ToutArreter("panique")) Ecrire("{\"type\":\"stop\",\"raison\":\"panique\"}"); });
+            bool potionsEnCours = potionsActives;
+            potionsActives = false; // les auto-potions s'arrêtent aussi, jusqu'à une nouvelle configuration
+            Thread t = new Thread(delegate () { if (ToutArreter("panique") || potionsEnCours) Ecrire("{\"type\":\"stop\",\"raison\":\"panique\"}"); });
             t.IsBackground = true;
             t.Start();
             return false;

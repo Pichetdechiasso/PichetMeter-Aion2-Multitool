@@ -16,24 +16,25 @@ const cfg = {
     { id: "m4", name: "Coupée", enabled: false, trigger: { vk: 71, mods: 0 }, mode: "once", steps: [{ t: "wait", ms: 5 }] }
   ]
 };
-const r = ML.compiler(cfg);
+const r = ML.compiler(cfg, { macros: true });
 assert.strictEqual(r.lignes.length, 1, "deux macros sur F = un seul groupe");
 assert.strictEqual(r.lignes[0], "add g0|70|0|toggle|3|50|1|49,0,t,20,100;0,0,t,0,40;5,0,h,60,0;81,4,t,20,30;50,0,t,20,10");
 assert(r.alertes.some(a => /Rage/.test(a.texte)), "sort sans touche signalé");
 assert(r.alertes.some(a => a.id === "m3"), "macro sans déclencheur signalée");
 assert.strictEqual(r.options, "opt fg=1 panic=19,0 actif=1");
-assert.strictEqual(ML.compiler({ ...cfg, accepted: false }).actif, false, "rien sans accord de l'utilisateur");
-assert.strictEqual(ML.compiler({ ...cfg, list: [{ ...cfg.list[0], trigger: { vk: 1, mods: 0 } }] }).lignes.length, 0, "clic gauche refusé comme déclencheur");
+assert.strictEqual(ML.compiler({ ...cfg, accepted: false }, { macros: true }).actif, false, "rien sans accord de l'utilisateur");
+assert.strictEqual(ML.compiler({ ...cfg, list: [{ ...cfg.list[0], trigger: { vk: 1, mods: 0 } }] }, { macros: true }).lignes.length, 0, "clic gauche refusé comme déclencheur");
 assert.strictEqual(ML.duree(cfg.list[1], cfg), 30);
+assert.strictEqual(ML.compiler(cfg).lignes.length, 0, "version publique : les macros ne sont pas jouées");
 assert.strictEqual(ML.DEFAUTS.delay, 5, "délai par défaut : 5 ms");
-assert.strictEqual(ML.compiler({ ...cfg, delay: undefined }).lignes[0].split("|")[7].split(";")[0], "49,0,t,20,5");
+assert.strictEqual(ML.compiler({ ...cfg, delay: undefined }, { macros: true }).lignes[0].split("|")[7].split(";")[0], "49,0,t,20,5");
 // Auto-potions
 const pot = { ...ML.DEFAUTS.potions, enabled: true, zone: { x: 10, y: 20, w: 300, h: 14 }, couleur: [200, 40, 40], tol: 60 };
-const rp = ML.compiler({ ...cfg, list: [], potions: pot });
+const rp = ML.compiler({ ...cfg, list: [], potions: pot }, { macros: true });
 assert.strictEqual(rp.potion, "pot actif=1 zone=10,20,300,14 couleur=200,40,40 tol=60 regles=112,0,70,1500;113,0,50,1500;114,0,30,1500");
 assert.strictEqual(rp.actif, true, "les auto-potions seules activent le module");
-assert.strictEqual(ML.compiler({ ...cfg, list: [], potions: { ...pot, couleur: null } }).potion, "pot actif=0");
-assert(ML.compiler({ ...cfg, list: [], potions: { ...pot, zone: null } }).alertes.some(a => a.id === "potions"));
+assert.strictEqual(ML.compiler({ ...cfg, list: [], potions: { ...pot, couleur: null } }, { macros: true }).potion, "pot actif=0");
+assert(ML.compiler({ ...cfg, list: [], potions: { ...pot, zone: null } }, { macros: true }).alertes.some(a => a.id === "potions"));
 
 // Moteur : exécution simulée (horodatage des appuis)
 const pwsh = ["pwsh", "/tmp/claude-0/pwsh/pwsh"].find(p => spawnSync(p, ["-NoProfile", "-Command", "1"], { encoding: "utf8" }).status === 0);

@@ -1863,7 +1863,7 @@ const NAV = [
   ["cd", "Cooldowns", '<path d="M7 3h10M7 21h10M8 3v3a4 4 0 0 0 8 0V3M8 21v-3a4 4 0 0 1 8 0v3"/>'],
   ["viseur", "Viseur", '<circle cx="12" cy="12" r="8"/><path d="M12 2v6M12 16v6M2 12h6M16 12h6"/>'],
   ["carte", "Carte", '<path d="m9 4-6 2v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>'],
-  ["macros", "Macros", '<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6 10h1M10 10h1M14 10h1M18 10h0M7 14h10"/>'],
+  ["macros", (window.MacroLogic || {}).MACROS_VISIBLES ? "Macros" : "Potions", (window.MacroLogic || {}).MACROS_VISIBLES ? '<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6 10h1M10 10h1M14 10h1M18 10h0M7 14h10"/>' : '<path d="M9.5 3h5M10.5 3v5.2L5.6 16.4A3 3 0 0 0 8.2 21h7.6a3 3 0 0 0 2.6-4.6L13.5 8.2V3"/><path d="M7.4 14.5h9.2"/>'],
   ["ping", "Ping", '<path d="M3 12h4l3-8 4 16 3-8h4"/>'],
   ["params", "Paramètres", '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>'],
   ["infos", "Infos", '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.6v.2"/>']
@@ -3798,7 +3798,15 @@ function mcMini(m) {
   return `<div class="mc-mini">${st.slice(0, 9).map(e => `<span class="t" title="${esc(etapeVue(e).nom)}">${etapeVue(e).ic}</span>`).join("")}${st.length > 9 ? `<span class="more">+${st.length - 9}</span>` : ""}${!st.length ? `<span class="more">${esc(L("Aucune action", "No action"))}</span>` : ""}</div>`;
 }
 
-function renderMacros() { if (WIDGET || !$("#view-macros")) return; renderMcBar(); renderMcList(); renderMcEditor(); renderMcPot(); renderMcSpells(); renderMcOpts(); }
+const MC_PUB = !ML.MACROS_VISIBLES; // version publique : onglet Potions seulement
+function renderMacros() {
+  if (WIDGET || !$("#view-macros")) return;
+  if (MC_PUB) {
+    $("#mcListCard").parentElement.hidden = true; $("#mcSpellCard").hidden = true;
+    $("#mcPotCard").parentElement.className = "span-7 stack";
+  }
+  renderMcBar(); if (!MC_PUB) { renderMcList(); renderMcEditor(); renderMcSpells(); } renderMcPot(); renderMcOpts();
+}
 
 // Auto-potions : touche de potion pressée quand la vie lue à l'écran passe sous un seuil
 const mcPot = () => {
@@ -3823,7 +3831,7 @@ function renderMcPot() {
   const c = mc(), p = mcPot();
   const coul = Array.isArray(p.couleur) ? `rgb(${p.couleur.join(",")})` : null;
   card.innerHTML = `<div class="card-head"><div><h2>${esc(L("Auto-potions", "Auto-potions"))}</h2><span class="sub">${esc(L("Appuie sur une potion quand ta vie passe sous un seuil", "Presses a potion key when your health drops below a threshold"))}</span></div>
-      <span class="switch"><input type="checkbox" role="switch" id="mpOn" ${p.enabled ? "checked" : ""} aria-label="${esc(L("Activer les auto-potions", "Turn auto-potions on"))}"><span class="track"></span><span class="knob"></span></span></div>
+      <span class="switch"${MC_PUB ? " hidden" : ""}><input type="checkbox" role="switch" id="mpOn" ${p.enabled ? "checked" : ""} aria-label="${esc(L("Activer les auto-potions", "Turn auto-potions on"))}"><span class="track"></span><span class="knob"></span></span></div>
     <div class="mp-zone">
       <div class="mp-prev">${p.apercu ? `<img src="${esc(p.apercu)}" alt="${esc(L("Barre de vie choisie", "Chosen health bar"))}">` : esc(p.zone ? L("Barre de vie choisie", "Health bar chosen") : L("Aucune barre de vie choisie", "No health bar chosen"))}</div>
       <div class="mc-add"><button type="button" class="btn sm primary" id="mpPick">${esc(p.zone ? L("Changer la barre de vie", "Change the health bar") : L("Choisir la barre de vie", "Choose the health bar"))}</button>
@@ -3838,7 +3846,8 @@ function renderMcPot() {
       <button type="button" class="btn sm keycap" data-key data-pk>${esc(r.key && r.key.vk ? r.key.label : "?")}</button>
       <span>${esc(L("sous", "below"))}</span><input class="field" type="number" min="1" max="99" data-pf="seuil" value="${+r.seuil || 50}" aria-label="${esc(L("Seuil de vie", "Health threshold"))}"><span>%</span>
       <span title="${esc(L("Délai minimum entre deux appuis de cette potion", "Minimum delay between two presses of this potion"))}">${esc(L("délai", "delay"))}</span><input class="field" type="number" min="100" max="600000" step="100" data-pf="delai" value="${+r.delai || 1500}" aria-label="${esc(L("Délai minimum", "Minimum delay"))}"><span>ms</span></div>`).join("")}</div>
-    <p class="note">${esc(L("Rien n'est lu dans la mémoire du jeu : PichetMeter regarde seulement la couleur de ta barre de vie à l'écran. Garde-la visible (aucun widget par-dessus). Les auto-potions suivent l'interrupteur des macros et leurs sécurités : jeu au premier plan, interface masquée, arrêt d'urgence.", "Nothing is read from game memory: PichetMeter only looks at the colour of your health bar on screen. Keep it visible (no widget on top). Auto-potions follow the macros switch and its safeguards: game in front, interface hidden, emergency stop."))}</p>`;
+    <p class="note">${esc(MC_PUB ? L("Rien n'est lu dans la mémoire du jeu : PichetMeter regarde seulement la couleur de ta barre de vie à l'écran. Garde-la visible (aucun widget par-dessus). Sécurités : jeu au premier plan, interface masquée, arrêt d'urgence.", "Nothing is read from game memory: PichetMeter only looks at the colour of your health bar on screen. Keep it visible (no widget on top). Safeguards: game in front, interface hidden, emergency stop.")
+      : L("Rien n'est lu dans la mémoire du jeu : PichetMeter regarde seulement la couleur de ta barre de vie à l'écran. Garde-la visible (aucun widget par-dessus). Les auto-potions suivent l'interrupteur des macros et leurs sécurités : jeu au premier plan, interface masquée, arrêt d'urgence.", "Nothing is read from game memory: PichetMeter only looks at the colour of your health bar on screen. Keep it visible (no widget on top). Auto-potions follow the macros switch and its safeguards: game in front, interface hidden, emergency stop."))}</p>`;
   renderMcPotHp();
   const fin = r => {
     if (!r) { MP_MSG = DESKTOP ? "" : L("Disponible dans l'application Windows.", "Available in the Windows app."); }
@@ -3881,34 +3890,45 @@ function renderMcBar() {
   const c = mc(), on = !!(c.enabled && c.accepted), r = ML.compiler(c);
   const nb = r.groupes.filter(g => g.etapes.length).length;
   let det;
-  if (!on) det = L("Désactivées : aucune touche n'est simulée.", "Off: no key is simulated.");
+  if (MC_PUB) det = !on ? L("Désactivées : aucune touche n'est simulée.", "Off: no key is simulated.")
+    : !r.potionsOk ? L("Actives, mais la barre de vie n'est pas encore choisie et calibrée.", "On, but the health bar is not chosen and calibrated yet.")
+    : L(`Actives · arrêt d'urgence : ${kbdTxt(c.panic)}${c.fgOnly !== false ? " · seulement jeu au premier plan" : ""} · en pause quand l'interface est ouverte`, `On · emergency stop: ${kbdTxt(c.panic)}${c.fgOnly !== false ? " · game in front only" : ""} · paused while the interface is open`);
+  else if (!on) det = L("Désactivées : aucune touche n'est simulée.", "Off: no key is simulated.");
   else if (!nb && !r.potionsOk) det = L("Actives, mais aucune macro complète (touche + actions) ni auto-potion prête.", "On, but no complete macro (key + actions) nor ready auto-potion.");
   else if (!nb) det = L("Actives · auto-potions seulement · arrêt d'urgence : ", "On · auto-potions only · emergency stop: ") + kbdTxt(c.panic);
   else det = (r.potionsOk ? L("Auto-potions + ", "Auto-potions + ") : "") + L(`Actives · ${nb} touche(s) · arrêt d'urgence : ${kbdTxt(c.panic)}${c.fgOnly !== false ? " · seulement jeu au premier plan" : ""} · en pause quand l'interface est ouverte`,
     `On · ${nb} key(s) · emergency stop: ${kbdTxt(c.panic)}${c.fgOnly !== false ? " · game in front only" : ""} · paused while the interface is open`);
   bar.classList.toggle("on", on);
   const actives = (MC_STATE.actives || []).map(mcMacro).filter(Boolean);
-  bar.innerHTML = `<label><span class="mi">${navIcon("macros")}</span><span class="tx"><b>${esc(L("Macros clavier et souris", "Keyboard and mouse macros"))}</b><span>${esc(det)}</span></span>
+  bar.innerHTML = `<label><span class="mi">${navIcon("macros")}</span><span class="tx"><b>${esc(MC_PUB ? L("Auto-potions", "Auto-potions") : L("Macros clavier et souris", "Keyboard and mouse macros"))}</b><span>${esc(det)}</span></span>
     <span class="switch lg"><input type="checkbox" role="switch" id="mcOn" ${on ? "checked" : ""} aria-label="${esc(L("Activer les macros", "Turn macros on"))}"><span class="track"></span><span class="knob"></span></span></label>
     <div class="mc-run">${actives.map(m => `<span class="mc-chip">${esc(m.name)}</span>`).join("")}</div>`;
   $("[data-mcdot]")?.classList.toggle("on", on);
   $("#mcOn").addEventListener("change", e => {
     if (e.target.checked && !mc().accepted) { e.target.checked = false; renderMcWarn(true); return; }
-    mc().enabled = e.target.checked; mcSave(); renderMcBar();
+    mc().enabled = e.target.checked; if (MC_PUB) mcPot().enabled = e.target.checked;
+    mcSave(); renderMcBar(); if (MC_PUB) renderMcPot();
   });
 }
 function renderMcWarn(voir) {
   const w = $("#mcWarn"); if (!w) return;
   w.hidden = !voir;
   if (!voir) return;
-  w.innerHTML = `<div class="card-head"><div><h2>${esc(L("Avant d'activer les macros", "Before turning macros on"))}</h2></div></div>
+  w.innerHTML = MC_PUB ? `<div class="card-head"><div><h2>${esc(L("Avant d'activer les auto-potions", "Before turning auto-potions on"))}</h2></div></div>
+    <ul>
+      <li>${esc(L("Les auto-potions envoient au jeu un appui de touche simulé quand ta vie passe sous un seuil. C'est le seul module de PichetMeter qui agit sur le jeu.", "Auto-potions send a simulated key press to the game when your health drops below a threshold. It is the only PichetMeter module that acts on the game."))}</li>
+      <li>${esc(L("Les règles d'Aion 2 peuvent interdire l'automatisation des actions : leur utilisation peut entraîner une sanction sur ton compte. PichetMeter ne contourne aucune protection du jeu, et le jeu peut ignorer les appuis simulés.", "Aion 2 rules may forbid automating actions: using them can get your account sanctioned. PichetMeter does not bypass any game protection, and the game may ignore simulated input."))}</li>
+      <li>${esc(L("Tu les utilises sous ta seule responsabilité. La touche d'arrêt d'urgence (Pause par défaut) les coupe instantanément.", "You use them at your own risk. The emergency stop key (Pause by default) stops them at once."))}</li>
+    </ul>
+    <div class="mc-add"><button type="button" class="btn primary" id="mcAccept">${esc(L("J'ai compris, activer les auto-potions", "I understand, turn auto-potions on"))}</button><button type="button" class="btn" id="mcRefuse">${esc(L("Annuler", "Cancel"))}</button></div>`
+  : `<div class="card-head"><div><h2>${esc(L("Avant d'activer les macros", "Before turning macros on"))}</h2></div></div>
     <ul>
       <li>${esc(L("Les macros envoient au jeu des appuis de touches et de clics simulés. C'est le seul module de PichetMeter qui agit sur le jeu.", "Macros send simulated key presses and clicks to the game. It is the only PichetMeter module that acts on the game."))}</li>
       <li>${esc(L("Les règles d'Aion 2 peuvent interdire l'automatisation des actions : leur utilisation peut entraîner une sanction sur ton compte. PichetMeter ne contourne aucune protection du jeu, et le jeu peut aussi ignorer les appuis simulés.", "Aion 2 rules may forbid automating actions: using them can get your account sanctioned. PichetMeter does not bypass any game protection, and the game may also ignore simulated input."))}</li>
       <li>${esc(L("Tu les utilises sous ta seule responsabilité. La touche d'arrêt d'urgence (Pause par défaut) coupe tout instantanément.", "You use them at your own risk. The emergency stop key (Pause by default) stops everything at once."))}</li>
     </ul>
     <div class="mc-add"><button type="button" class="btn primary" id="mcAccept">${esc(L("J'ai compris, activer les macros", "I understand, turn macros on"))}</button><button type="button" class="btn" id="mcRefuse">${esc(L("Annuler", "Cancel"))}</button></div>`;
-  $("#mcAccept").onclick = () => { mc().accepted = true; mc().enabled = true; mcSave(); renderMcWarn(false); renderMcBar(); };
+  $("#mcAccept").onclick = () => { mc().accepted = true; mc().enabled = true; if (MC_PUB) mcPot().enabled = true; mcSave(); renderMcWarn(false); renderMcBar(); renderMcPot(); };
   $("#mcRefuse").onclick = () => renderMcWarn(false);
 }
 
@@ -4153,18 +4173,18 @@ function renderMcOpts() {
   if (DESKTOP && (st.erreurModule || st.erreur)) diag.push(L("Module : ", "Module: ") + (st.erreurModule || st.erreur));
   if (DESKTOP && c.enabled && c.accepted && c.fgOnly !== false && st.jeu && !st.jeu.detecte) diag.push(L("Jeu non détecté : les macros attendent qu'Aion 2 soit au premier plan.", "Game not detected: macros wait for Aion 2 to be in front."));
   const jeuAdmin = DESKTOP && st.jeu && st.jeu.admin === 1 && st.admin === false;
-  card.innerHTML = `<div class="card-head"><div><h2>${esc(L("Réglages des macros", "Macro settings"))}</h2></div></div>
+  card.innerHTML = `<div class="card-head"><div><h2>${esc(MC_PUB ? L("Réglages", "Settings") : L("Réglages des macros", "Macro settings"))}</h2></div></div>
     ${jeuAdmin ? `<div class="mc-admin"><b>${esc(L("Aion 2 tourne en administrateur", "Aion 2 runs as administrator"))}</b><span>${esc(L("Tant que PichetMeter n'est pas lui aussi lancé en administrateur, Windows bloque les macros, les auto-potions et la détection des touches en jeu (elles marchent seulement hors du jeu).", "Until PichetMeter also runs as administrator, Windows blocks macros, auto-potions and in-game key detection (they only work outside the game)."))}</span>
       <span><button type="button" class="btn sm primary" data-relaunch>${esc(L("Relancer en administrateur", "Relaunch as administrator"))}</button></span></div>` : ""}
-    <div class="mc-params">
+    <div class="mc-params"${MC_PUB ? " hidden" : ""}>
       <div class="form-row"><span class="label">${esc(L("Délai par défaut entre deux actions", "Default delay between actions"))}</span><span class="mc-num"><input class="field sm" type="number" min="0" max="10000" step="10" id="mcDefDelay" value="${+c.delay}"><span>ms</span></span></div>
       <div class="form-row"><span class="label">${esc(L("Durée d'un appui", "Press duration"))}</span><span class="mc-num"><input class="field sm" type="number" min="10" max="500" step="5" id="mcTap" value="${+c.tap}"><span>ms</span></span></div>
     </div>
     <div class="form-row"><span class="label">${esc(L("Arrêt d'urgence", "Emergency stop"))}</span><button type="button" class="btn keycap" data-key id="mcPanic">${esc(kbdTxt(c.panic))}</button>
-      <span class="note">${esc(L("Arrête aussitôt toutes les macros en cours et relâche les touches maintenues.", "Instantly stops every running macro and releases held keys."))}</span></div>
+      <span class="note">${esc(MC_PUB ? L("Coupe aussitôt les auto-potions, jusqu'à ce que tu les réactives.", "Instantly stops auto-potions until you turn them back on.") : L("Arrête aussitôt toutes les macros en cours et relâche les touches maintenues.", "Instantly stops every running macro and releases held keys."))}</span></div>
     <label class="set-item" for="mcFg"><span><span class="t">${esc(L("Seulement quand le jeu est au premier plan", "Only when the game is in front"))}</span><span class="d">${esc(L("Sinon, les macros jouent dans n'importe quelle fenêtre.", "Otherwise macros play in any window."))}</span></span>
       <span class="switch"><input type="checkbox" id="mcFg" role="switch" ${c.fgOnly !== false ? "checked" : ""}><span class="track"></span><span class="knob"></span></span></label>
-    <label class="set-item" for="mcSnd"><span><span class="t">${esc(L("Son des macros On / Off", "On / Off macro sound"))}</span><span class="d">${esc(L("Petit bip au démarrage et à l'arrêt d'une boucle.", "Short beep when a loop starts and stops."))}</span></span>
+    <label class="set-item" for="mcSnd"${MC_PUB ? " hidden" : ""}><span><span class="t">${esc(L("Son des macros On / Off", "On / Off macro sound"))}</span><span class="d">${esc(L("Petit bip au démarrage et à l'arrêt d'une boucle.", "Short beep when a loop starts and stops."))}</span></span>
       <span class="switch"><input type="checkbox" id="mcSnd" role="switch" ${c.sound !== false ? "checked" : ""}><span class="track"></span><span class="knob"></span></span></label>
     ${diag.map(t => `<p class="note warn-note">${esc(t)}</p>`).join("")}
     <label class="set-item" for="mcAdm"><span><span class="t">${esc(L("Toujours lancer PichetMeter en administrateur", "Always run PichetMeter as administrator"))}</span><span class="d">${esc(L("Nécessaire si Aion 2 tourne en administrateur : sinon les macros ne marchent que hors du jeu. Windows demande une confirmation à chaque lancement.", "Needed if Aion 2 runs as administrator: otherwise macros only work outside the game. Windows asks for confirmation at each launch."))}</span></span>
@@ -4203,8 +4223,8 @@ function renderInfos() {
     <div class="card-head"><h2>${esc(L("Mentions légales", "Legal notice"))}</h2></div>
     <div class="legal-cols">
       ${sec(L("Logiciel non officiel", "Unofficial software"), `<p>${esc(L("PichetMeter est un outil communautaire gratuit et non officiel. Il n'est ni développé, ni approuvé, ni soutenu par NCSOFT. AION et AION 2 sont des marques de NCSOFT Corporation ; les noms, icônes et images du jeu restent la propriété de leurs détenteurs.", "PichetMeter is a free, unofficial community tool. It is not developed, endorsed or supported by NCSOFT. AION and AION 2 are trademarks of NCSOFT Corporation; game names, icons and images belong to their owners."))}</p>`)}
-      ${sec(L("Fonctionnement", "How it works"), `<p>${esc(L("PichetMeter ne modifie pas le jeu et n'injecte rien dans son processus : il affiche ses propres fenêtres par-dessus. Le DPS meter lit passivement le trafic réseau avec Npcap, sans rien envoyer. La détection des cooldowns écoute uniquement les touches choisies, sans jamais les bloquer. Seul le module Macros (et ses auto-potions), désactivé par défaut, envoie au jeu des appuis simulés ; les auto-potions lisent seulement la couleur de la barre de vie à l'écran.", "PichetMeter does not modify the game or inject anything into it: it shows its own windows on top. The DPS meter passively reads network traffic with Npcap and sends nothing. Cooldown tracking only listens to the keys you chose and never blocks them. Only the Macros module (and its auto-potions), off by default, sends simulated input to the game; auto-potions only read the health bar colour on screen."))}</p>`)}
-      ${sec(L("Responsabilité", "Responsibility"), `<p>${esc(L("Les règles de l'éditeur sur les outils tiers peuvent évoluer : chaque joueur utilise PichetMeter sous sa propre responsabilité, en particulier les macros, qui automatisent des actions. Le logiciel est fourni « tel quel », sans garantie ; l'auteur ne peut être tenu responsable d'un dommage, d'une perte de données ou d'une sanction liée à son utilisation.", "The publisher's rules on third-party tools may change: each player uses PichetMeter at their own risk, especially macros, which automate actions. The software is provided “as is”, without warranty; the author cannot be held liable for any damage, data loss or sanction resulting from its use."))}</p>`)}
+      ${sec(L("Fonctionnement", "How it works"), `<p>${esc(L("PichetMeter ne modifie pas le jeu et n'injecte rien dans son processus : il affiche ses propres fenêtres par-dessus. Le DPS meter lit passivement le trafic réseau avec Npcap, sans rien envoyer. La détection des cooldowns écoute uniquement les touches choisies, sans jamais les bloquer. Seules les auto-potions, désactivées par défaut, envoient au jeu un appui de touche simulé ; elles lisent seulement la couleur de la barre de vie à l'écran.", "PichetMeter does not modify the game or inject anything into it: it shows its own windows on top. The DPS meter passively reads network traffic with Npcap and sends nothing. Cooldown tracking only listens to the keys you chose and never blocks them. Only auto-potions, off by default, send a simulated key press to the game; they only read the health bar colour on screen."))}</p>`)}
+      ${sec(L("Responsabilité", "Responsibility"), `<p>${esc(L("Les règles de l'éditeur sur les outils tiers peuvent évoluer : chaque joueur utilise PichetMeter sous sa propre responsabilité, en particulier les auto-potions, qui automatisent une action. Le logiciel est fourni « tel quel », sans garantie ; l'auteur ne peut être tenu responsable d'un dommage, d'une perte de données ou d'une sanction liée à son utilisation.", "The publisher's rules on third-party tools may change: each player uses PichetMeter at their own risk, especially auto-potions, which automate an action. The software is provided “as is”, without warranty; the author cannot be held liable for any damage, data loss or sanction resulting from its use."))}</p>`)}
       ${sec(L("Données personnelles", "Personal data"), `<p>${esc(L("Aucune donnée n'est collectée ni envoyée à l'auteur. Comptes, réglages et historiques restent sur ton PC, dans", "No data is collected or sent to the author. Accounts, settings and history stay on your PC, in"))} <code>%APPDATA%\\PichetMeter</code>. ${esc(L("Connexions : services officiels de NCSOFT (fiches, classements, images), carte communautaire choisie, polices Google Fonts, GitHub pendant l'installation. Le ping ouvre une simple connexion vers le serveur, sans échange de données.", "Connections: NCSOFT official services (profiles, rankings, images), the community map you picked, Google Fonts, GitHub during setup. The ping opens a plain connection to the server, with no data exchanged."))}</p>`)}
       ${sec(L("Logo", "Logo"), `<p>${esc(L("Le logo de PichetMeter est un fan art. Sonic the Hedgehog est une marque de SEGA, sans lien avec ce logiciel.", "The PichetMeter logo is fan art. Sonic the Hedgehog is a trademark of SEGA, unrelated to this software."))}</p>`)}
     </div>
