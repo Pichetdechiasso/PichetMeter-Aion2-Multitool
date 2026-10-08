@@ -1,5 +1,11 @@
 # Journal des versions
 
+## 1.8.0
+
+- **Auto-potions retirées** : l'onglet Potions disparaît, aucun module n'envoie plus de touche ou de clic au jeu.
+- **Correction : PichetMeter ne s'ouvrait plus.** L'option « Toujours lancer en administrateur » relançait l'application en boucle quand Windows ne confirmait pas les droits (service « Serveur » désactivé). L'option est retirée et effacée des réglages.
+- Droits administrateur détectés par le niveau d'intégrité du processus (`whoami /groups`) au lieu de `net session`. Le bouton « Relancer en administrateur » ne relance qu'une fois.
+
 ## 1.7.0
 
 - Le module **Macros** est retiré de la version publique (il ne fonctionnait pas en jeu). L'onglet devient **Potions** et garde les auto-potions.

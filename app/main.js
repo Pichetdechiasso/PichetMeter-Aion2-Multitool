@@ -13,7 +13,6 @@ const readline = require("readline");
 const { spawn } = require("child_process");
 const { lireNombre, SuiviCombat } = require("./dpslogic");
 const { Analyseur, DemoGroupe } = require("./reseau");
-const MacroLogic = require("./macrologic");
 
 const APP_ID = "PichetMeter";
 const APP_NAME = "PichetMeter";
@@ -73,6 +72,9 @@ const lireJson = (f, defaut) => { try { return JSON.parse(fs.readFileSync(f, "ut
 function ecrireJson(f, data) { const tmp = f + ".tmp"; fs.writeFileSync(tmp, JSON.stringify(data, null, 1)); fs.renameSync(tmp, f); }
 let S = lireJson(FICHIER, {});
 const ecrireReglages = () => { try { ecrireJson(FICHIER, S); } catch (e) { log("Réglages non enregistrés :", e); } };
+// 1.8 : macros, auto-potions et « Toujours lancer en administrateur » retirés. Les anciens réglages sont effacés
+// (l'option admin pouvait faire relancer PichetMeter en boucle sans jamais ouvrir de fenêtre).
+if (S && typeof S === "object" && ("adminAuto" in S || "macros" in S)) { delete S.adminAuto; delete S.macros; if (PREMIERE_INSTANCE) ecrireReglages(); }
 const W = k => (S.widgets && S.widgets[k]) || {};
 
 /* ════════ Fenêtres : outils ════════ */
@@ -166,7 +168,6 @@ async function basculer() {
     main.show(); main.setAlwaysOnTop(true, "screen-saver"); main.focus(); mainVisible = true;
   }
   pousser(main, { type: "hidden", v: !mainVisible });
-  macros.ecrire("pause " + (mainVisible ? 1 : 0)); // interface ouverte : aucune macro ne joue
   synchroniserWidgets();
   synchroniserViseur();
 }
@@ -525,78 +526,6 @@ const assistant = new Assistant("module Windows", "helper.ps1");
 const touches = new Assistant("détection des touches", "keys.ps1", m => surTouches(m));
 const viseurNatif = new Assistant("viseur (compatibilité)", "viseur.ps1");
 
-/* ════════ Macros (module désactivé tant que l'utilisateur ne l'a pas activé et accepté) ════════ */
-const macros = new Assistant("macros", "macro.ps1", m => surMacro(m));
-let macroEtat = { actives: [], alertes: [], erreur: null, arret: 0 };
-let macroGroupes = [], macroSig = "", journalPotions = 0;
-// Requête au module macros avec réponse attendue (ex. calibrage de la barre de vie)
-function demandeMacro(ligne, delai = 8000) {
-  return new Promise(async (resolve, reject) => {
-    macros.demarrer();
-    for (let i = 0; i < 100 && macros.proc && !macros.pret; i++) await attendre(100);
-    if (!macros.proc || !macros.pret) return reject(new Error(macros.erreur || "module macros indisponible"));
-    const id = ++macros.seq;
-    const t = setTimeout(() => { macros.attente.delete(id); reject(new Error("délai dépassé")); }, delai);
-    macros.attente.set(id, { resolve, reject, t });
-    macros.ecrire(ligne(id));
-  });
-}
-async function calibrerVie(zone) {
-  const z = zone || (cfgMacros().potions || {}).zone;
-  if (!z) throw new Error("aucune zone choisie");
-  const m = await demandeMacro(id => `hpcal ${id} ${z.x},${z.y},${z.w},${z.h}`);
-  if (m.erreur) throw new Error(m.erreur);
-  S.macros = S.macros || {};
-  S.macros.potions = { ...MacroLogic.DEFAUTS.potions, ...(S.macros.potions || {}), zone: z, couleur: m.couleur };
-  ecrireReglages(); diffuserReglages(); synchroniserMacros(true);
-  return { zone: z, couleur: m.couleur, v: m.v, png: m.png ? "data:image/png;base64," + m.png : null };
-}
-const cfgMacros = () => ({ ...MacroLogic.DEFAUTS, ...(S.macros || {}) });
-function synchroniserMacros(force) {
-  const r = MacroLogic.compiler(cfgMacros());
-  macroEtat.alertes = r.alertes;
-  macroGroupes = r.groupes;
-  if (!IS_WIN) return;
-  if (!r.actif) {
-    // le module reste chargé mais n'écoute plus rien
-    if (macros.proc && macroSig !== "off") { macros.ecrire("clear"); macros.ecrire("pot actif=0"); macros.ecrire(r.options); }
-    macroSig = "off";
-    return;
-  }
-  macros.demarrer();
-  if (!macros.proc) return;
-  const sig = [r.options, r.potion, ...r.lignes].join("\n");
-  if (sig === macroSig && !force) return;
-  macroSig = sig;
-  macros.ecrire("clear");
-  for (const l of r.lignes) macros.ecrire(l);
-  macros.ecrire(r.potion);
-  macros.ecrire(r.options);
-  macros.ecrire("pid " + (statut.pid || 0));
-  macros.ecrire("pause " + (mainVisible ? 1 : 0));
-  log("Macros :", r.lignes.length, "touche(s) active(s)", r.potionsOk ? "· auto-potions actives" : "");
-}
-function surMacro(m) {
-  if (m.type === "ready") { macroSig = ""; synchroniserMacros(true); return; }
-  if (m.type === "run") {
-    const g = macroGroupes.find(x => x.id === m.id);
-    const ids = g ? g.macros : [];
-    const avant = macroEtat.actives.length;
-    macroEtat.actives = m.on ? [...new Set([...macroEtat.actives, ...ids])] : macroEtat.actives.filter(x => !ids.includes(x));
-    // bip discret quand une macro on / off démarre ou s'arrête
-    if (g && g.mode === "toggle" && cfgMacros().sound !== false && avant !== macroEtat.actives.length) pousser(main, { type: "macrobip", on: !!m.on });
-  }
-  if (m.type === "stop") {
-    macroEtat.arret = Date.now(); log("Macros et auto-potions arrêtées par la touche d'arrêt");
-    // l'interrupteur repasse sur OFF : rien ne reprend tout seul
-    S.macros = { ...(S.macros || {}), enabled: false }; ecrireReglages(); diffuserReglages(); synchroniserMacros();
-  }
-  if (m.type === "hp") macroEtat.hp = { v: m.v, t: Date.now() };
-  if (m.type === "potion") { macroEtat.potion = { seuil: m.seuil, t: Date.now() }; if (journalPotions++ < 20) log("Auto-potion : seuil", m.seuil, "%"); }
-  if (m.type === "err") { macroEtat.erreur = m.message; log("Macros :", m.message); }
-  pousser(main, { type: "macroetat", etat: macroEtat });
-}
-
 /* ════════ État du jeu ════════ */
 // Nom de processus du jeu (AION2.exe), sans confondre avec PichetMeter.exe (ancien nom Aion2CompanionHUD.exe) ou un autre outil
 const estNomJeu = n => /^aion\s*2/i.test(n || "") && !/companion|hud|meter|dps|tool|launcher|overlay|helper/i.test(n || "");
@@ -614,7 +543,6 @@ async function sonder() {
     if (filtrePremierPlan() && devantAvant !== jeuDevant()) synchroniserWidgets();
   } catch { /* module occupé ou relancé */ }
   touches.ecrire("pid " + (statut.pid || 0));
-  macros.ecrire("pid " + (statut.pid || 0));
   synchroniserViseur();
   garderAuDessus();
 }
@@ -793,11 +721,12 @@ let captureEtat = { etape: "arrete", message: null, carte: null, boucle: false, 
 let captureDemandee = false;
 // Npcap installé en mode « réservé aux administrateurs », ou service arrêté : seule la carte de bouclage
 // apparaît et ne s'ouvre pas. L'application peut alors se relancer en administrateur.
+// Niveau d'intégrité du processus (S-1-16-12288 = élevé, 16384 = système) : fiable même si le service
+// « Serveur » de Windows est désactivé (l'ancien test « net session » échouait alors en administrateur).
 let estAdmin = false;
-if (IS_WIN) require("child_process").execFile("net", ["session"], { windowsHide: true }, err => {
-  estAdmin = !err;
+if (IS_WIN) require("child_process").execFile("whoami", ["/groups"], { windowsHide: true }, (err, sortie) => {
+  estAdmin = !err && /S-1-16-(12288|16384)\b/.test(String(sortie || ""));
   log("Droits administrateur :", estAdmin ? "oui" : "non");
-  if (!estAdmin && S.adminAuto && !process.argv.includes("--sans-admin")) { log("Relance en administrateur (option « Toujours lancer en administrateur »)"); relancerAdmin(); }
 });
 // Démarre le service Npcap (fenêtre de confirmation Windows), puis relance la capture
 function reparerNpcap() {
@@ -810,11 +739,18 @@ function reessayerCapture() {
   captureEtat = { ...captureEtat, etape: "demarrage", message: null };
   if (capture.proc) { capture.ecrire("stop"); capture.ecrire("start"); } else { captureDemandee = false; majCapture(); }
 }
+// Relance en administrateur, uniquement sur demande (bouton). Une instance déjà relancée ne se relance jamais :
+// pas de boucle possible, et si Windows refuse, PichetMeter repart normalement.
+let relanceEnCours = false;
 function relancerAdmin() {
+  if (relanceEnCours || estAdmin || process.argv.includes("--relance-admin")) return false;
+  relanceEnCours = true;
+  log("Relance en administrateur demandée");
   const exe = process.execPath.replace(/'/g, "''");
   // si Windows refuse (fenêtre de contrôle annulée), PichetMeter repart normalement
-  spawn("powershell.exe", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", `Start-Sleep -Milliseconds 800; try { Start-Process -FilePath '${exe}' -Verb RunAs -ErrorAction Stop } catch { Start-Process -FilePath '${exe}' -ArgumentList '--sans-admin' }`], { detached: true, windowsHide: true, stdio: "ignore" }).unref();
+  spawn("powershell.exe", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", `Start-Sleep -Milliseconds 800; try { Start-Process -FilePath '${exe}' -ArgumentList '--relance-admin' -Verb RunAs -ErrorAction Stop } catch { Start-Process -FilePath '${exe}' -ArgumentList '--relance-admin' }`], { detached: true, windowsHide: true, stdio: "ignore" }).unref();
   setTimeout(() => app.quit(), 200);
+  return true;
 }
 function surCapture(m) {
   switch (m.type) {
@@ -1072,7 +1008,6 @@ function apresReglages() {
   majCartes(false);
   synchroniserViseur();
   synchroniserTouches();
-  synchroniserMacros();
   boucleDps();
   for (const k of [...KINDS, "toast"]) appliquerWidget(k);
   majSuiviPremierPlan();
@@ -1087,7 +1022,6 @@ function diagnostic() {
     capture: { ...captureEtat, actif: !!capture.proc, erreurModule: capture.erreur },
     raccourcis: etatRaccourcis,
     jeu: { detecte: statut.game, admin: statut.elev, premierPlan: statut.fg, serveur: statut.remote, nom: statut.name, pid: statut.pid, force: String(S.gameProcess || "").trim() || null, exclusif: statut.exclusif },
-    macros: { pret: macros.pret, actif: !!macros.proc, erreur: macros.erreur || macroEtat.erreur, touches: macroGroupes.filter(g => g.etapes.length).length },
     viseur: { raison: raisonViseur(S.crosshair || {}), natif: IS_WIN && (S.crosshair || {}).mode !== "electron" && !viseurNatif.erreur, natifActif: !!viseurNatif.proc, natifErreur: viseurNatif.erreur }
   };
 }
@@ -1175,31 +1109,12 @@ const API = {
   },
   npcap_repair: () => { if (IS_WIN) reparerNpcap(); return IS_WIN; },
   capture_retry: () => { if (IS_WIN) reessayerCapture(); return IS_WIN; },
-  relaunch_admin: () => { if (IS_WIN) relancerAdmin(); return IS_WIN; },
+  relaunch_admin: () => IS_WIN ? relancerAdmin() : false,
   open_url: (e, url) => { if (/^https:\/\//.test(String(url))) shell.openExternal(String(url)); return true; },
   cd_trigger: (e, id) => declencher(id),
   cd_reset: (e, id) => { if (id) { const n = { ...cdDebuts }; delete n[id]; cdDebuts = n; } else cdDebuts = {}; diffuser({ type: "cd", debuts: cdDebuts }); return true; },
   cd_state: () => cdDebuts,
   cd_keys: () => touchesEtat,
-  macro_state: () => ({ ...macroEtat, windows: IS_WIN, pret: macros.pret, actif: !!macros.proc, erreurModule: macros.erreur, admin: estAdmin, jeu: { detecte: statut.game, pid: statut.pid, nom: statut.name, admin: statut.elev } }),
-  macro_test: (e, id) => {
-    const g = macroGroupes.find(x => x.macros.includes(id));
-    if (!g || !macros.proc) return false;
-    macros.ecrire("test " + g.id); // joue un passage 3 s plus tard, dans la fenêtre active (le jeu, ou un bloc-notes pour essayer)
-    return true;
-  },
-  macro_stop: () => { macros.ecrire("stop"); return true; },
-  // Auto-potions : choix de la barre de vie à l'écran, puis calibrage de sa couleur (vie pleine)
-  potion_pick: () => IS_WIN ? choisirZone("pv", z => calibrerVie(z)) : null,
-  potion_calibrate: async () => {
-    if (!IS_WIN) return null;
-    const visible = mainVisible && vivante(main);
-    if (visible) { main.hide(); await attendre(350); }
-    try { return await calibrerVie(null); }
-    catch (e) { return { erreur: e.message }; }
-    finally { if (visible && mainVisible && vivante(main)) { main.show(); main.focus(); pousser(main, { type: "hidden", v: false }); } }
-  },
-  admin_auto: (e, on) => { S.adminAuto = !!on; ecrireReglages(); return true; },
   diagnostic: () => diagnostic(),
   open_logs: () => { shell.openPath(DATA); return true; },
   open_licence: () => { shell.openPath(path.join(__dirname, "COPYING.txt")); return true; }
@@ -1223,17 +1138,16 @@ function demarrer() {
   setInterval(sonder, 1500);
   majSuiviPremierPlan();
   synchroniserTouches();
-  synchroniserMacros();
   boucleDps();
   creerTray();
   // widgets épinglés préparés en arrière-plan pour un affichage instantané
   setTimeout(() => { for (const k of KINDS) if (W(k).pinned) ouvrirWidget(k); }, 1500);
   screen.on("display-metrics-changed", () => { appliquerAffichage(); for (const k of KINDS) placer(k); synchroniserViseur(); });
 }
-if (!PREMIERE_INSTANCE) app.quit();
+if (!PREMIERE_INSTANCE) { log("PichetMeter est déjà lancé : l'instance ouverte est réaffichée"); app.quit(); }
 else {
   app.on("second-instance", () => { if (!mainVisible) basculer(); else if (vivante(main)) main.focus(); });
   app.whenReady().then(demarrer);
-  app.on("will-quit", () => { globalShortcut.unregisterAll(); assistant.arreter(); touches.arreter(); viseurNatif.arreter(); capture.arreter(); macros.arreter(); });
+  app.on("will-quit", () => { globalShortcut.unregisterAll(); assistant.arreter(); touches.arreter(); viseurNatif.arreter(); capture.arreter(); });
   app.on("window-all-closed", () => app.quit());
 }

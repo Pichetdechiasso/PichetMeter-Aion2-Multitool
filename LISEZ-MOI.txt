@@ -1,6 +1,6 @@
-﻿PICHETMETER — version 1.7.0
+﻿PICHETMETER — version 1.8.0
 Compagnon pour Aion 2 : armurerie, classement, tâches, timers, DPS meter de groupe, cooldowns,
-viseur, carte et auto-potions, affichés par-dessus le jeu.
+viseur et carte, affichés par-dessus le jeu.
 Créateur : @atomedims · Discord : https://discord.gg/KrkJrjrDJt
 Code source et nouvelles versions : https://github.com/Pichetdechiasso/PichetMeter-Aion2-Multitool
 ===========================================================================================
@@ -34,6 +34,15 @@ DANS LE JEU
 - Option « Seulement quand le jeu est au premier plan » (Paramètres > Modules en jeu) :
   les widgets se cachent dès que tu passes sur Discord, ton navigateur, etc.
 - L'icône dans la zone de notification (près de l'horloge) permet aussi d'afficher l'overlay ou de quitter.
+
+NOUVEAUTÉS 1.8.0
+----------------
+- Les auto-potions sont retirées : plus aucun module n'envoie de touche ou de clic au jeu.
+- L'option « Toujours lancer PichetMeter en administrateur » est retirée. Elle pouvait faire
+  redémarrer PichetMeter en boucle sans qu'aucune fenêtre ne s'ouvre. Ton réglage est effacé
+  automatiquement à la mise à jour.
+- Détection des droits administrateur plus fiable. Le bouton « Relancer en administrateur »
+  (Cooldowns, Diagnostic) reste disponible et ne peut plus boucler.
 
 NOUVEAUTÉS 1.7.0
 ----------------
@@ -89,23 +98,6 @@ La carte « Test de détection » de l'onglet montre si la touche est bien vue.
 Si rien n'est détecté alors que le jeu tourne en administrateur, lance aussi PichetMeter
 en administrateur (clic droit sur le raccourci).
 
-AUTO-POTIONS (onglet Potions)
------------------------------
-Désactivées par défaut. C'est le seul module qui envoie quelque chose au jeu : un appui sur la
-touche de potion. Les règles d'Aion 2 peuvent interdire l'automatisation des actions (risque de
-sanction) : un avertissement est à accepter avant la première activation.
-1. Vie pleine, clique « Choisir la barre de vie » et encadre au plus près la partie colorée
-   de la barre de vie de ton personnage : sa couleur est enregistrée.
-2. Règle les potions : touche (F1, F2, F3 par défaut), seuil de vie en %, délai minimum entre
-   deux appuis. Active l'interrupteur « Auto-potions » en haut de l'onglet.
-3. En jeu, interface masquée, la vie lue s'affiche dans la carte. Si la lecture est fausse,
-   recadre la barre ou règle la tolérance de couleur. Ne place aucun widget sur la barre de vie.
-- Elles n'agissent que jeu au premier plan, jamais interface ouverte. La touche Pause (modifiable)
-  les coupe aussitôt.
-- Si Aion 2 tourne en administrateur, Windows bloque les appuis simulés : active « Toujours lancer
-  PichetMeter en administrateur » (onglet Potions > Réglages). Le jeu peut aussi ignorer les
-  appuis simulés.
-
 VISEUR
 ------
 Il s'affiche quand l'overlay est masqué. Il est dessiné par défaut en « mode compatibilité »
@@ -122,6 +114,8 @@ Onglet Paramètres > Diagnostic : état du module Windows, de la lecture de l'é
 de la détection des touches, des raccourcis et du jeu.
 Réglages et journal : %APPDATA%\PichetMeter (bouton dans Diagnostic).
 Pour tout remettre à zéro : quitte l'application et supprime ce dossier.
+Rien ne s'ouvre au lancement ? Regarde l'icône près de l'horloge (Alt + C affiche l'overlay).
+Sinon, ferme « PichetMeter » dans le Gestionnaire des tâches (Ctrl + Maj + Échap) et relance-le.
 Questions et bugs : sur le Discord (https://discord.gg/KrkJrjrDJt).
 
 Si l'installation échoue au téléchargement (pare-feu, proxy d'entreprise) : télécharge
@@ -140,7 +134,7 @@ PichetMeter est un outil communautaire gratuit et non officiel, ni développé n
 AION et AION 2 sont des marques de NCSOFT Corporation ; icônes et images du jeu © NCSOFT.
 Le logo est un fan art ; Sonic the Hedgehog est une marque de SEGA, sans lien avec ce logiciel.
 Les règles de l'éditeur sur les outils tiers peuvent évoluer : chacun utilise PichetMeter sous sa
-propre responsabilité, en particulier les auto-potions, qui automatisent une action. Logiciel fourni « tel quel », sans garantie.
+propre responsabilité. Logiciel fourni « tel quel », sans garantie.
 Aucune donnée n'est collectée ni envoyée à l'auteur : tout reste sur ton PC.
 Licence : GNU GPL version 3 (texte complet : resources\app\COPYING.txt dans le dossier d'installation).
 Décodage réseau du DPS meter d'après RATmeter (github.com/Kuroukihime/AIon2-Dps-Meter, GPL-3.0).
