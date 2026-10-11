@@ -1,4 +1,4 @@
-﻿# Installation de PichetMeter
+# Installation de PichetMeter
 # 1. télécharge le moteur Electron officiel (github.com/electron/electron) et vérifie son empreinte SHA-256 ;
 # 2. installe PichetMeter.exe dans %LOCALAPPDATA%\Programs\PichetMeter ;
 # 3. copie l'application, crée les raccourcis Bureau et menu Démarrer, l'entrée « Applications installées »,
@@ -15,7 +15,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $ElectronVersion = 'v44.5.1'
-$AppVersion = '1.8.0'
+$AppVersion = '2.0.0'
 $AppName = 'PichetMeter'
 $ExeName = 'PichetMeter.exe'
 $Icone = 'PichetMeter.ico'

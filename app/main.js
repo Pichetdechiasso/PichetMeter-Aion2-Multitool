@@ -4,7 +4,7 @@
  * Fenêtres : interface plein écran, widgets transparents, viseur, sélecteur de zone, alertes.
  * Données : armurerie officielle Aion 2 (aion2.plaync.com), module Windows (helper.ps1 / keys.ps1).
  */
-const { app, BrowserWindow, WebContentsView, desktopCapturer, ipcMain, globalShortcut, screen, Tray, Menu, nativeImage, shell, session } = require("electron");
+const { app, BrowserWindow, WebContentsView, desktopCapturer, ipcMain, globalShortcut, screen, Tray, Menu, nativeImage, shell, session, dialog } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const net = require("net");
@@ -13,6 +13,7 @@ const readline = require("readline");
 const { spawn } = require("child_process");
 const { lireNombre, SuiviCombat } = require("./dpslogic");
 const { Analyseur, DemoGroupe } = require("./reseau");
+const { MoteurMacros } = require("./macros");
 
 const APP_ID = "PichetMeter";
 const APP_NAME = "PichetMeter";
@@ -90,6 +91,11 @@ function pousser(win, msg) { if (vivante(win)) win.webContents.send("push", msg)
 function diffuser(msg, sauf) { for (const w of BrowserWindow.getAllWindows()) if (w.webContents !== sauf) pousser(w, msg); }
 const diffuserReglages = sauf => diffuser({ type: "settings", json: JSON.stringify(S) }, sauf);
 
+/* ════════ Module Macros (moteur de Pichet Macro, driver Interception) ════════ */
+const macros = new MoteurMacros({ dossier: DATA, log, diffuser: msg => diffuser(msg), reglages: () => S });
+const macrosActives = () => !(S.macro && S.macro.enabled === false);
+const CMD_FICHIERS = new Set(["import", "export", "export_all"]);
+
 /* ════════ Fenêtre principale ════════ */
 let main = null;
 let mainVisible = true;
@@ -103,7 +109,14 @@ function geometrie() {
     const w = Math.min(1320, wa.width), h = Math.min(880, wa.height);
     return { x: wa.x + Math.round((wa.width - w) / 2), y: wa.y + Math.round((wa.height - h) / 2), width: w, height: h };
   }
-  return { x: b.x, y: b.y, width: b.width, height: b.height };
+  // Tiroir ancré à gauche de l'écran (Alt + C), toute la hauteur ; largeur réglable ou plein écran (« Agrandir »)
+  return { x: b.x, y: b.y, width: largeurTiroir(b.width), height: b.height };
+}
+function largeurTiroir(ecranW) {
+  const d = S.display || {};
+  if (d.drawerWide) return ecranW;
+  const voulu = +d.drawerW || Math.round(Math.min(1240, Math.max(820, ecranW * 0.6)));
+  return Math.max(560, Math.min(ecranW, Math.round(voulu)));
 }
 function appliquerAffichage() {
   if (!vivante(main)) return;
@@ -173,7 +186,7 @@ async function basculer() {
 }
 
 /* ════════ Widgets épinglés ════════ */
-const KINDS = ["timers", "ping", "map", "dps", "cd"];
+const KINDS = ["timers", "ping", "map", "dps", "cd", "macro"];
 const widgets = {};
 function configWidget(kind) {
   if (kind === "toast") { const a = S.alerts || {}; return { size: a.size || "m", opacity: 97, click: true, pos: a.pos || "br" }; }
@@ -198,6 +211,7 @@ function ouvrirWidget(kind) {
     if (kind === "toast" && o.message) pousser(win, { type: "toast", ...o.message });
     pousser(win, { type: "cd", debuts: cdDebuts });
     pousser(win, { type: "dps", etat: dpsEtat });
+    pousser(win, { type: "macro", ev: "snapshot", ...macros.etat() });
   });
   win.on("moved", () => deplace(kind));
   if (carte) {
@@ -1022,7 +1036,9 @@ function diagnostic() {
     capture: { ...captureEtat, actif: !!capture.proc, erreurModule: capture.erreur },
     raccourcis: etatRaccourcis,
     jeu: { detecte: statut.game, admin: statut.elev, premierPlan: statut.fg, serveur: statut.remote, nom: statut.name, pid: statut.pid, force: String(S.gameProcess || "").trim() || null, exclusif: statut.exclusif },
-    viseur: { raison: raisonViseur(S.crosshair || {}), natif: IS_WIN && (S.crosshair || {}).mode !== "electron" && !viseurNatif.erreur, natifActif: !!viseurNatif.proc, natifErreur: viseurNatif.erreur }
+    viseur: { raison: raisonViseur(S.crosshair || {}), natif: IS_WIN && (S.crosshair || {}).mode !== "electron" && !viseurNatif.erreur, natifActif: !!viseurNatif.proc, natifErreur: viseurNatif.erreur },
+    macros: { actif: macrosActives(), phase: macros.phase, texte: macros.texte, python: macros.python,
+      driver: macros.bonjourInfos ? macros.bonjourInfos.driver : null, pynput: macros.bonjourInfos ? macros.bonjourInfos.pynput : null, autonome: macros.autonome }
   };
 }
 
@@ -1070,6 +1086,19 @@ const API = {
   },
   widget_fit: (e, kind, w, h) => { ajuster(kind, +w || 0, +h || 0); return true; },
   display_update: () => { appliquerAffichage(); return true; },
+  drawer_resize: (e, w, fin) => {
+    if (!vivante(main) || (S.display && S.display.mode) === "window") return false;
+    const b = ecran().bounds, l = Math.max(560, Math.min(b.width, Math.round(+w || 0)));
+    S.display = { ...(S.display || {}), drawerW: l, drawerWide: false };
+    main.setBounds({ x: b.x, y: b.y, width: l, height: b.height });
+    if (fin) { ecrireReglages(); diffuserReglages(e.sender); }
+    return l;
+  },
+  drawer_wide: (e, on) => {
+    S.display = { ...(S.display || {}), drawerWide: !!on };
+    ecrireReglages(); diffuserReglages(e.sender); appliquerAffichage();
+    return !!on;
+  },
   crosshair_preview: () => { viseurApercuJusque = Date.now() + 5000; synchroniserViseur(); setTimeout(synchroniserViseur, 5100); return true; },
   map_view: (e, r) => { placerCarteOnglet(r); return true; },
   map_reload: () => { majCartes(true); return true; },
@@ -1117,7 +1146,33 @@ const API = {
   cd_keys: () => touchesEtat,
   diagnostic: () => diagnostic(),
   open_logs: () => { shell.openPath(DATA); return true; },
-  open_licence: () => { shell.openPath(path.join(__dirname, "COPYING.txt")); return true; }
+  open_licence: () => { shell.openPath(path.join(__dirname, "COPYING.txt")); return true; },
+  // ── Macros ──
+  macro_status: async () => { if (IS_WIN) await macros.verifierAutonome(); return macros.etat(); },
+  macro_start: () => macros.demarrer(true),
+  macro_enable: (e, on) => {
+    S.macro = { ...(S.macro || {}), enabled: !!on }; ecrireReglages(); diffuserReglages();
+    if (on) macros.demarrer(true); else macros.arreter();
+    return !!on;
+  },
+  macro_reinstall: () => macros.reinstaller(),
+  macro: (e, cmd, data) => {
+    if (CMD_FICHIERS.has(cmd)) throw new Error("commande refusée : " + cmd);
+    return macros.commande(String(cmd), data && typeof data === "object" ? data : {});
+  },
+  macro_import: async () => {
+    const r = await dialog.showOpenDialog(vivante(main) ? main : undefined, { title: "Importer des macros", properties: ["openFile", "multiSelections"],
+      filters: [{ name: "Macros Pichet Macro", extensions: ["json"] }] });
+    if (r.canceled || !r.filePaths.length) return null;
+    return macros.commande("import", { paths: r.filePaths }, 60000);
+  },
+  macro_export: async (e, mid, nom, tout) => {
+    const base = String(tout ? "mes-macros" : (nom || "macro")).replace(/[\\/:*?"<>|]+/g, "_").slice(0, 80) || "macro";
+    const r = await dialog.showSaveDialog(vivante(main) ? main : undefined, { title: tout ? "Exporter toutes les macros" : "Exporter la macro",
+      defaultPath: path.join(app.getPath("desktop"), base + ".json"), filters: [{ name: "Macros Pichet Macro", extensions: ["json"] }] });
+    if (r.canceled || !r.filePath) return null;
+    return tout ? macros.commande("export_all", { path: r.filePath }) : macros.commande("export", { mid: String(mid), path: r.filePath, subs: true });
+  }
 };
 ipcMain.on("get-state", e => { e.returnValue = JSON.stringify(S); });
 ipcMain.on("get-version", e => { e.returnValue = app.getVersion(); });
@@ -1142,12 +1197,13 @@ function demarrer() {
   creerTray();
   // widgets épinglés préparés en arrière-plan pour un affichage instantané
   setTimeout(() => { for (const k of KINDS) if (W(k).pinned) ouvrirWidget(k); }, 1500);
+  if (macrosActives()) setTimeout(() => macros.demarrer(true), 1200);
   screen.on("display-metrics-changed", () => { appliquerAffichage(); for (const k of KINDS) placer(k); synchroniserViseur(); });
 }
 if (!PREMIERE_INSTANCE) { log("PichetMeter est déjà lancé : l'instance ouverte est réaffichée"); app.quit(); }
 else {
   app.on("second-instance", () => { if (!mainVisible) basculer(); else if (vivante(main)) main.focus(); });
   app.whenReady().then(demarrer);
-  app.on("will-quit", () => { globalShortcut.unregisterAll(); assistant.arreter(); touches.arreter(); viseurNatif.arreter(); capture.arreter(); });
+  app.on("will-quit", () => { globalShortcut.unregisterAll(); macros.arreter(); assistant.arreter(); touches.arreter(); viseurNatif.arreter(); capture.arreter(); });
   app.on("window-all-closed", () => app.quit());
 }

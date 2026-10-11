@@ -969,10 +969,37 @@ input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.18); }
 .badge { transition: color .3s; }
 .note.warn-note { color: var(--amber); font-weight: 600; }
 body.no-anim *, body.no-anim *::before, body.no-anim *::after { transition: none !important; animation: none !important; }
+/* ════════ Tiroir à gauche de l'écran (Alt + C) ════════ */
+body.desktop:not(.winmode):not(.widget) { display: block; }
+body.desktop:not(.winmode):not(.widget) #backdrop { display: block; position: fixed; inset: 0; z-index: 0; cursor: default; overflow: hidden;
+  border-radius: 0 28px 28px 0; background: rgba(6, 12, 30, .3); }
+#backdrop .img { inset: auto; left: -16px; top: -16px; width: calc(var(--ecran-w, 100vw) + 32px); height: calc(var(--ecran-h, 100vh) + 32px); background-size: 100% 100%; }
+#backdrop::after { background: linear-gradient(90deg, rgba(0, 0, 0, .18), transparent 70%); }
+body.desktop:not(.winmode):not(.widget) .shell { width: 100vw; height: 100vh; border-radius: 0 28px 28px 0; padding: 16px 0 0 18px; border-left: 0;
+  transform-origin: 0 50%; transition: transform .38s var(--ease-out), opacity .24s var(--ease-out); }
+body.desktop:not(.winmode):not(.widget) #backdrop { transition: transform .38s var(--ease-out), opacity .3s var(--ease-out); }
+body.desktop.ov-out:not(.widget):not(.winmode) .shell, body.desktop.ov-out:not(.widget):not(.winmode) #backdrop {
+  opacity: .15; transform: translateX(-102%); transition: transform .19s var(--ease-in), opacity .19s var(--ease-in); pointer-events: none; }
+body.desktop:not(.winmode):not(.widget) .shell::before { left: 22px; transform: none; }
+#drawerGrip { display: none; }
+body.desktop:not(.winmode):not(.widget) #drawerGrip { display: block; position: fixed; top: 0; right: 0; bottom: 0; width: 10px; z-index: 40; cursor: ew-resize; }
+#drawerGrip::after { content: ""; position: absolute; right: 3px; top: 50%; width: 4px; height: 64px; margin-top: -32px; border-radius: 4px; background: rgba(190, 215, 255, .28); transition: background .2s, height .2s, margin .2s; }
+#drawerGrip:hover::after, #drawerGrip.on::after { background: var(--cyan-glow); height: 110px; margin-top: -55px; box-shadow: 0 0 12px var(--cyan-glow); }
+body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
+/* Verre dépoli renforcé : panneaux translucides sur le jeu flouté */
+:root:not([data-theme="light"]) body.desktop:not(.winmode):not(.widget) .shell { background: linear-gradient(165deg, rgba(46, 88, 190, .30), rgba(6, 16, 46, .55));
+  -webkit-backdrop-filter: blur(26px) saturate(170%); backdrop-filter: blur(26px) saturate(170%); border: 1px solid rgba(190, 215, 255, .2); border-left: 0;
+  box-shadow: 20px 0 70px rgba(0, 6, 26, .5), inset -1px 0 0 rgba(255, 255, 255, .1), inset 0 1px 0 rgba(255, 255, 255, .12); }
+:root:not([data-theme="light"]) .card.neu-extruded, :root:not([data-theme="light"]) .topbar.neu-extruded {
+  background: linear-gradient(155deg, rgba(255, 255, 255, .10), rgba(255, 255, 255, .025)); border: 1px solid rgba(190, 215, 255, .16);
+  box-shadow: 0 10px 30px rgba(0, 6, 26, .3), inset 0 1px 0 rgba(255, 255, 255, .14); }
+:root[data-theme="light"] .card.neu-extruded { background: linear-gradient(155deg, rgba(255, 255, 255, .62), rgba(255, 255, 255, .34)); border: 1px solid rgba(255, 255, 255, .8); }
 </style>
+<link rel="stylesheet" href="macros.css">
 </head>
 <body>
 <div id="backdrop" aria-hidden="true"><div class="img" id="backdropImg"></div></div>
+<div id="drawerGrip" title="Glisser pour changer la largeur · double-clic : agrandir / réduire" aria-hidden="true"></div>
 
 <!-- ═════════ Écran d'accueil ═════════ -->
 <div class="welcome" id="welcome" hidden>
@@ -1025,6 +1052,7 @@ body.no-anim *, body.no-anim *::before, body.no-anim *::after { transition: none
     </div>
     <button class="btn icon" id="themeBtn" aria-label="Basculer mode sombre / clair" title="Mode sombre / clair"><svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></svg></button>
     <div class="winctl">
+      <button class="btn icon" id="wideBtn" aria-pressed="false" aria-label="Agrandir l'interface à tout l'écran" title="Agrandir / réduire le tiroir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16M8 8l-4 4 4 4M16 8l4 4-4 4"/></svg></button>
       <button class="btn icon" id="pinBtn" aria-pressed="true" aria-label="Toujours au premier plan" title="Toujours au premier plan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5M8 3h8l-1 6 3 4H6l3-4z"/></svg></button>
       <button class="btn icon" id="hideBtn" aria-label="Masquer l'overlay" title="Masquer (Échap) — les widgets épinglés restent à l'écran"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
       <button class="btn icon danger" id="quitBtn" aria-label="Quitter" title="Quitter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
@@ -1494,6 +1522,9 @@ body.no-anim *, body.no-anim *::before, body.no-anim *::after { transition: none
   <!-- ═════════ Vue : Paramètres ═════════ -->
   <div class="grid view" id="view-infos" hidden></div>
 
+  <!-- ═════════ Vue : Macros (moteur Pichet Macro) ═════════ -->
+  <div class="view" id="view-macros" hidden></div>
+
   <div class="view auto-grid" id="view-params" hidden>
     <section class="card neu-extruded" id="modCard">
       <div class="card-head"><div><h2>Modules en jeu</h2><span class="sub">Affichés par-dessus le jeu quand l'overlay est masqué</span></div></div>
@@ -1505,7 +1536,8 @@ body.no-anim *, body.no-anim *::before, body.no-anim *::after { transition: none
     <section class="card neu-extruded">
       <div class="card-head"><h2>Affichage</h2></div>
       <div class="form-row"><span class="label">Fenêtre de l'interface</span>
-        <div class="seg" id="dispMode"><button data-v="full">Plein écran</button><button data-v="window">Fenêtrée</button></div></div>
+        <div class="seg" id="dispMode"><button data-v="full">Tiroir à gauche</button><button data-v="window">Fenêtrée</button></div>
+        <p class="note">Tiroir : glisse son bord droit pour changer sa largeur, double-clique dessus (ou bouton ⇔ en haut) pour l'agrandir à tout l'écran.</p></div>
       <div class="form-row"><span class="label">Langue de l'interface</span><div id="langParams"></div></div>
       <div class="form-row"><span class="label">Opacité de l'interface</span>
         <div class="slider-row"><input type="range" id="dispOp" min="60" max="100" step="5" aria-label="Opacité de l'interface"><span class="mono" id="dispOpV"></span></div></div>
@@ -1564,6 +1596,7 @@ body.no-anim *, body.no-anim *::before, body.no-anim *::after { transition: none
 </div>
 <div class="tip" id="tip" hidden></div>
 
+<script src="macros-ui.js"></script>
 <script src="i18n.js"></script>
 <script>
 (() => {
@@ -1591,8 +1624,10 @@ const DEFAULTS = {
     ping: { pinned: true, opacity: 80, pos: "tl", size: "s", click: true },
     map: { pinned: false, opacity: 85, pos: "br", size: "m", click: false },
     dps: { pinned: true, opacity: 90, pos: "ml", size: "m", click: true },
-    cd: { pinned: true, opacity: 95, pos: "bc", size: "m", click: true }
+    cd: { pinned: true, opacity: 95, pos: "bc", size: "m", click: true },
+    macro: { pinned: true, opacity: 92, pos: "tc", size: "m", click: true }
   },
+  macro: { enabled: true, hideOnRun: true },
   dps: { v: 3, enabled: true, source: "reseau", demo: false, interval: 1, idle: 10, dot: true, bossOnly: false, zones: {},
     view: { layout: "bars", who: "all", rows: 8, cols: ["dps", "share", "dmg", "crit"], fmt: "short", tint: "class", graph: false, color: "#22d3ee", hors: "show", horsOp: 30 } },
   cd: { v: 2, skills: [], view: { orient: "row", hideReady: false, names: false, secs: true, glow: true } },
@@ -1735,13 +1770,14 @@ const NAV = [
   ["timers", "Timers", '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/>'],
   ["dps", "DPS meter", '<path d="M4 20V11M10 20V5M16 20v-6M22 20H2"/>'],
   ["cd", "Cooldowns", '<path d="M7 3h10M7 21h10M8 3v3a4 4 0 0 0 8 0V3M8 21v-3a4 4 0 0 1 8 0v3"/>'],
+  ["macros", "Macros", '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>'],
   ["viseur", "Viseur", '<circle cx="12" cy="12" r="8"/><path d="M12 2v6M12 16v6M2 12h6M16 12h6"/>'],
   ["carte", "Carte", '<path d="m9 4-6 2v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>'],
   ["ping", "Ping", '<path d="M3 12h4l3-8 4 16 3-8h4"/>'],
   ["params", "Paramètres", '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>'],
   ["infos", "Infos", '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.6v.2"/>']
 ];
-const MOD_VIEWS = ["timers", "dps", "cd", "viseur", "carte", "ping"];
+const MOD_VIEWS = ["timers", "dps", "cd", "macros", "viseur", "carte", "ping"];
 $("#sideNav").innerHTML = '<i class="glider" aria-hidden="true"></i>' + NAV.map(([v, t, ic], i) => `<button role="tab" data-view="${v}" aria-selected="${i === 0}">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ic}</svg>${esc(t)}${v === "taches" ? '<span class="nbadge" id="taskBadge" hidden></span>' : ""}${MOD_VIEWS.includes(v) ? `<i class="mdot" data-mdot="${v}" aria-hidden="true"></i>` : v === "macros" ? '<i class="mdot" data-mcdot aria-hidden="true"></i>' : ""}</button>`).join("") +
   `<div class="side-foot"><span>Masquer l'overlay</span><span><kbd>Échap</kbd> ou <kbd id="hkFoot">Alt + C</kbd></span>
@@ -2756,7 +2792,7 @@ function beat() {
 }
 
 /* ════════ Panneaux "widget à l'écran" ════════ */
-const WLABEL = { timers: "les timers", map: "la carte", ping: "l'indicateur de ping", dps: "le DPS meter", cd: "les cooldowns" };
+const WLABEL = { timers: "les timers", map: "la carte", ping: "l'indicateur de ping", dps: "le DPS meter", cd: "les cooldowns", macro: "les macros en cours" };
 function renderWidgetPanels() {
   $$(".wpanel[data-widget]").forEach(p => {
     const k = p.dataset.widget, w = S.widgets[k];
@@ -2782,7 +2818,8 @@ const MODS = {
   cd: { w: "cd", nom: "Cooldowns", fr: "les cooldowns", en: "the cooldowns" },
   viseur: { w: null, nom: "Viseur", fr: "le viseur", en: "the crosshair" },
   carte: { w: "map", nom: "Carte", fr: "la carte", en: "the map" },
-  ping: { w: "ping", nom: "Ping & macros", fr: "l'indicateur de ping", en: "the ping indicator" }
+  ping: { w: "ping", nom: "Ping", fr: "l'indicateur de ping", en: "the ping indicator" },
+  macros: { w: "macro", nom: "Macros", fr: "les macros en cours et les touches envoyées", en: "running macros and the keys they send" }
 };
 const navIcon = v => { const n = NAV.find(x => x[0] === v); return n ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${n[2]}</svg>` : ""; };
 const modOn = v => v === "viseur" ? !!S.crosshair.enabled : !!(S.widgets[MODS[v].w] || {}).pinned;
@@ -3526,6 +3563,7 @@ $("#hideBtn").addEventListener("click", () => api()?.toggle());
 $("#quitBtn").addEventListener("click", () => api()?.quit());
 document.addEventListener("keydown", e => {
   if (e.key !== "Escape" || !DESKTOP || WIDGET || capture) return;
+  if (window.MacrosUI.busy()) { window.MacrosUI.escape(); return; }
   if (!$("#welcome").hidden || !$("#acctMenu").hidden || e.target.matches("input, select, textarea")) { $("#acctMenu").hidden = true; return; }
   api()?.toggle();
 });
@@ -3541,6 +3579,7 @@ function onView(v) {
   if (v === "viseur") { renderXhControls(); if (DESKTOP) api().crosshair_state().then(st => { if (st) { VISEUR = { ...VISEUR, ...st }; renderXhState(); } }); }
   if (v === "params") loadDiag();
   if (v === "timers") renderSrv();
+  if (v === "macros") window.MacrosUI.show();
 }
 
 /* ════════ Mode widget (fenêtre épinglée) ════════ */
@@ -3599,6 +3638,7 @@ function bootWidget(kind) {
     });
   }
   if (kind === "cd") { renderCdAll(); setInterval(cdTick, 100); onSettingsChanged.push(renderCdAll); }
+  if (kind === "macro") window.MacrosUI.bootWidget(wr);
   if (kind === "toast") {
     wr.innerHTML = `<div class="wbox wtoast"><span class="bell" aria-hidden="true">${svg("bell")}</span><div style="min-width:0"><b id="wtT">Alerte</b><p id="wtM"></p></div></div>`;
     window.showToastText = (t, m) => { $("#wtT").textContent = t; $("#wtM").textContent = m; const bx = $(".wtoast"); if (bx) { bx.classList.remove("pop"); void bx.offsetWidth; bx.classList.add("pop"); } };
@@ -3650,7 +3690,7 @@ function renderInfos() {
     <div class="card-head"><h2>${esc(L("Mentions légales", "Legal notice"))}</h2></div>
     <div class="legal-cols">
       ${sec(L("Logiciel non officiel", "Unofficial software"), `<p>${esc(L("PichetMeter est un outil communautaire gratuit et non officiel. Il n'est ni développé, ni approuvé, ni soutenu par NCSOFT. AION et AION 2 sont des marques de NCSOFT Corporation ; les noms, icônes et images du jeu restent la propriété de leurs détenteurs.", "PichetMeter is a free, unofficial community tool. It is not developed, endorsed or supported by NCSOFT. AION and AION 2 are trademarks of NCSOFT Corporation; game names, icons and images belong to their owners."))}</p>`)}
-      ${sec(L("Fonctionnement", "How it works"), `<p>${esc(L("PichetMeter ne modifie pas le jeu et n'injecte rien dans son processus : il affiche ses propres fenêtres par-dessus. Le DPS meter lit passivement le trafic réseau avec Npcap, sans rien envoyer. La détection des cooldowns écoute uniquement les touches choisies, sans jamais les bloquer. Aucun module n'envoie de touche, de clic ou de donnée au jeu.", "PichetMeter does not modify the game or inject anything into it: it shows its own windows on top. The DPS meter passively reads network traffic with Npcap and sends nothing. Cooldown tracking only listens to the keys you chose and never blocks them. No module sends any key, click or data to the game."))}</p>`)}
+      ${sec(L("Fonctionnement", "How it works"), `<p>${esc(L("PichetMeter ne modifie pas le jeu et n'injecte rien dans son processus : il affiche ses propres fenêtres par-dessus. Le DPS meter lit passivement le trafic réseau avec Npcap, sans rien envoyer. La détection des cooldowns écoute uniquement les touches choisies, sans jamais les bloquer. Seul le module Macros envoie des touches et des clics, par le driver Interception, quand tu lances une macro.", "PichetMeter does not modify the game or inject anything into it: it shows its own windows on top. The DPS meter passively reads network traffic with Npcap and sends nothing. Cooldown tracking only listens to the keys you chose and never blocks them. Only the Macros module sends keys and clicks, through the Interception driver, when you run a macro."))}</p>`)}
       ${sec(L("Responsabilité", "Responsibility"), `<p>${esc(L("Les règles de l'éditeur sur les outils tiers peuvent évoluer : chaque joueur utilise PichetMeter sous sa propre responsabilité. Le logiciel est fourni « tel quel », sans garantie ; l'auteur ne peut être tenu responsable d'un dommage, d'une perte de données ou d'une sanction liée à son utilisation.", "The publisher's rules on third-party tools may change: each player uses PichetMeter at their own risk. The software is provided “as is”, without warranty; the author cannot be held liable for any damage, data loss or sanction resulting from its use."))}</p>`)}
       ${sec(L("Données personnelles", "Personal data"), `<p>${esc(L("Aucune donnée n'est collectée ni envoyée à l'auteur. Comptes, réglages et historiques restent sur ton PC, dans", "No data is collected or sent to the author. Accounts, settings and history stay on your PC, in"))} <code>%APPDATA%\\PichetMeter</code>. ${esc(L("Connexions : services officiels de NCSOFT (fiches, classements, images), carte communautaire choisie, polices Google Fonts, GitHub pendant l'installation. Le ping ouvre une simple connexion vers le serveur, sans échange de données.", "Connections: NCSOFT official services (profiles, rankings, images), the community map you picked, Google Fonts, GitHub during setup. The ping opens a plain connection to the server, with no data exchanged."))}</p>`)}
       ${sec(L("Logo", "Logo"), `<p>${esc(L("Le logo de PichetMeter est un fan art. Sonic the Hedgehog est une marque de SEGA, sans lien avec ce logiciel.", "The PichetMeter logo is fan art. Sonic the Hedgehog is a trademark of SEGA, unrelated to this software."))}</p>`)}
@@ -3704,12 +3744,36 @@ window.__onPush = msg => {
     case "cdetat": KEYS = msg.etat || KEYS; renderKeyTest(); break;
     case "sound": playTone(msg.tone, msg.volume); break;
     case "viseur": VISEUR = msg; renderXhState(); break;
-    case "fond": { const b = $("#backdropImg"); if (!b) break; if (msg.url) { b.style.backgroundImage = `url("${msg.url}")`; b.classList.add("on"); } else { b.style.backgroundImage = ""; b.classList.remove("on"); } break; }
+    case "macro": window.MacrosUI.push(msg); break;
+    case "fond": { const b = $("#backdropImg"); if (!b) break; root.style.setProperty("--ecran-w", screen.width + "px"); root.style.setProperty("--ecran-h", screen.height + "px"); if (msg.url) { b.style.backgroundImage = `url("${msg.url}")`; b.classList.add("on"); } else { b.style.backgroundImage = ""; b.classList.remove("on"); } break; }
   }
 };
 const flushPush = () => { (window.__pushQueue || []).splice(0).forEach(m => window.__onPush(m)); };
 
 /* ════════ Démarrage ════════ */
+/* ════════ Tiroir : largeur à la souris, agrandir ════════ */
+function setWide(on) {
+  S.display.drawerWide = !!on; $("#wideBtn").setAttribute("aria-pressed", String(!!on));
+  if (DESKTOP) api()?.drawer_wide(!!on); else save();
+}
+$("#wideBtn").addEventListener("click", () => setWide(!S.display.drawerWide));
+onSettingsChanged.push(() => { const b = $("#wideBtn"); if (b) b.setAttribute("aria-pressed", String(!!S.display.drawerWide)); });
+(() => {
+  const g = $("#drawerGrip");
+  let actif = false, raf = 0, largeur = 0;
+  g.addEventListener("pointerdown", e => { if (e.button !== 0 || !DESKTOP) return; actif = true; g.classList.add("on"); g.setPointerCapture(e.pointerId); e.preventDefault(); });
+  g.addEventListener("pointermove", e => {
+    if (!actif) return;
+    largeur = Math.round(e.screenX - window.screenX + 4);
+    if (!raf) raf = requestAnimationFrame(() => { raf = 0; api()?.drawer_resize(largeur, false); });
+  });
+  const fin = e => { if (!actif) return; actif = false; g.classList.remove("on"); try { g.releasePointerCapture(e.pointerId); } catch {} if (largeur) { S.display.drawerW = largeur; S.display.drawerWide = false; api()?.drawer_resize(largeur, true); } };
+  g.addEventListener("pointerup", fin); g.addEventListener("pointercancel", fin);
+  g.addEventListener("dblclick", () => setWide(!S.display.drawerWide));
+})();
+window.MacrosUI.init({ api, S: () => S, save, DESKTOP, WIDGET, notify, setWide, renderModules, renderWidgetPanels });
+onSettingsChanged.push(() => window.MacrosUI.onSettings());
+
 async function boot() {
   if (WIDGET) { bootWidget(WIDGET); flushPush(); return; }
   if (DESKTOP) {

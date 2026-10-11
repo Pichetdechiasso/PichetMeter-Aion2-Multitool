@@ -12,7 +12,7 @@ os.makedirs(DIST, exist_ok=True)
 os.makedirs(F)
 for n in ("Installer.cmd", "Desinstaller.cmd"): shutil.copy(os.path.join(ROOT, "setup", n), PK)
 for n in os.listdir(os.path.join(ROOT, "setup", "fichiers")): shutil.copy(os.path.join(ROOT, "setup", "fichiers", n), F)
-shutil.copytree(os.path.join(ROOT, "app"), os.path.join(F, "app"))
+shutil.copytree(os.path.join(ROOT, "app"), os.path.join(F, "app"), ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
 shutil.copy(os.path.join(ROOT, "icon.ico"), os.path.join(F, "PichetMeter.ico"))
 shutil.copy(os.path.join(ROOT, "LISEZ-MOI.txt"), PK)
 # Fins de ligne Windows ; BOM UTF-8 pour PowerShell 5.1 et le bloc-notes
@@ -28,7 +28,8 @@ for dp, _, fs in os.walk(PK):
 need = ["Installer.cmd", "Desinstaller.cmd", "LISEZ-MOI.txt", "fichiers/installer.ps1", "fichiers/desinstaller.ps1", "fichiers/rcedit-x64.exe", "fichiers/rcedit-LICENSE.txt",
         "fichiers/PichetMeter.ico", "fichiers/app/main.js", "fichiers/app/ui.html", "fichiers/app/preload.js", "fichiers/app/package.json",
         "fichiers/app/i18n.js", "fichiers/app/reseau.js", "fichiers/app/dpslogic.js", "fichiers/app/mobs.json", "fichiers/app/icon.png",
-        "fichiers/app/COPYING.txt", "fichiers/app/LICENCES.txt", "fichiers/app/img/logo.png"] + \
+        "fichiers/app/COPYING.txt", "fichiers/app/LICENCES.txt", "fichiers/app/img/logo.png",
+        "fichiers/app/macros.js", "fichiers/app/macros-ui.js", "fichiers/app/macros.css", "fichiers/app/macro/serveur.py", "fichiers/app/macro/engine.py", "fichiers/app/macro/driver.py", "fichiers/app/macro/signaux.py"] + \
        [f"fichiers/app/{n}.ps1" for n in ("helper", "keys", "viseur", "capture")] + \
        [f"fichiers/app/img/cls-{k}.png" for k in ("gladiateur", "templier", "assassin", "rodeur", "sorcier", "spiritualiste", "clerc", "aede")]
 missing = [n for n in need if not os.path.isfile(os.path.join(PK, n))]

@@ -1,5 +1,10 @@
 # Journal des versions
 
+## 2.0.0 (version personnelle)
+
+- **Pichet Macro intégré** : onglet **Macros** (liste, éditeur de nœuds façon Blueprint, panneau Détails, enregistrement, lecture, réglages du driver) et widget en jeu des macros en cours. Le moteur de Pichet Macro (`app/macro/`, driver Interception) tourne sans Qt ; PichetMeter le pilote en JSON (`app/macros.js`). Macros et réglages partagés avec Pichet Macro (`~/.pichet_macro`).
+- **Tiroir à gauche** : l'interface glisse depuis le bord gauche de l'écran avec Alt + C, en verre dépoli sur le jeu flouté ; largeur réglable au bord droit, bouton « Agrandir ».
+
 ## 1.8.0
 
 - **Auto-potions retirées** : l'onglet Potions disparaît, aucun module n'envoie plus de touche ou de clic au jeu.
