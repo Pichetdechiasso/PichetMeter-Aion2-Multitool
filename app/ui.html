@@ -996,6 +996,7 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
 :root[data-theme="light"] .card.neu-extruded { background: linear-gradient(155deg, rgba(255, 255, 255, .62), rgba(255, 255, 255, .34)); border: 1px solid rgba(255, 255, 255, .8); }
 </style>
 <link rel="stylesheet" href="macros.css">
+<link rel="stylesheet" href="widgets.css">
 </head>
 <body>
 <div id="backdrop" aria-hidden="true"><div class="img" id="backdropImg"></div></div>
@@ -1529,6 +1530,7 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
     <section class="card neu-extruded" id="modCard">
       <div class="card-head"><div><h2>Modules en jeu</h2><span class="sub">Affichés par-dessus le jeu quand l'overlay est masqué</span></div></div>
       <div class="mod-list" id="modList"></div>
+      <button class="btn primary" type="button" data-layout="" style="justify-self:start">Placer et régler les widgets à l'écran</button>
       <label class="set-item" for="optWfg"><span><span class="t">Seulement quand le jeu est au premier plan</span><span class="d">Les widgets disparaissent dès que tu passes sur une autre fenêtre (Discord, navigateur…) et reviennent avec le jeu. Le viseur garde son propre réglage.</span></span>
         <span class="switch"><input type="checkbox" id="optWfg" role="switch"><span class="track"></span><span class="knob"></span></span></label>
       <p class="note warn-note" id="wfgNote" hidden>Jeu non détecté : les widgets restent cachés jusqu'à son lancement. S'il tourne déjà, indique son processus dans Diagnostic.</p>
@@ -1547,6 +1549,7 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
         <span class="switch"><input type="checkbox" id="optAnim" role="switch"><span class="track"></span><span class="knob"></span></span></label>
       <p class="note">Le jeu doit être en mode fenêtré ou plein écran fenêtré (sans bordure) pour que l'overlay et les widgets restent visibles par-dessus.</p>
     </section>
+    <section class="card neu-extruded" id="mascCard"></section>
     <section class="card neu-extruded">
       <div class="card-head"><h2>Raccourci &amp; performances</h2></div>
       <div class="form-row"><span class="label">Afficher / masquer l'overlay</span>
@@ -1596,6 +1599,7 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
 </div>
 <div class="tip" id="tip" hidden></div>
 
+<script src="mascottes.js"></script>
 <script src="macros-ui.js"></script>
 <script src="i18n.js"></script>
 <script>
@@ -1614,7 +1618,7 @@ const SCALE = { s: .85, m: 1, l: 1.25 };
 const TIMERS_OFF = ["arena", "siege", "nahma", "kaira"];
 const DEFAULTS = {
   lang: "fr", theme: null, hotkey: "Alt + C", streamer: false, notif: true, autosync: true, fps: "60",
-  display: { mode: "full", opacity: 100, flou: 6, anim: true, widgetsFg: false },
+  display: { mode: "full", opacity: 100, flou: 6, anim: true, widgetsFg: false, splash: true },
   accounts: [], active: 0, favorites: [], recents: [],
   map: { source: "aion2run", url: "", zoom: 80 }, gameProcess: "",
   timers: { v: 2, disabled: [...TIMERS_OFF], noalert: ["festival", "invasion"], custom: [], overrides: {}, server: { region: "eu", serverId: null, serverName: "", tz: "Europe/Paris" }, known: {} },
@@ -1628,6 +1632,7 @@ const DEFAULTS = {
     macro: { pinned: true, opacity: 92, pos: "tc", size: "m", click: true }
   },
   macro: { enabled: true, hideOnRun: true },
+  mascots: { on: true, macro: true, dps: true, timers: true, size: 110, lead: 5 },
   dps: { v: 3, enabled: true, source: "reseau", demo: false, interval: 1, idle: 10, dot: true, bossOnly: false, zones: {},
     view: { layout: "bars", who: "all", rows: 8, cols: ["dps", "share", "dmg", "crit"], fmt: "short", tint: "class", graph: false, color: "#22d3ee", hors: "show", horsOp: 30 } },
   cd: { v: 2, skills: [], view: { orient: "row", hideReady: false, names: false, secs: true, glow: true } },
@@ -2795,18 +2800,13 @@ function beat() {
 const WLABEL = { timers: "les timers", map: "la carte", ping: "l'indicateur de ping", dps: "le DPS meter", cd: "les cooldowns", macro: "les macros en cours" };
 function renderWidgetPanels() {
   $$(".wpanel[data-widget]").forEach(p => {
-    const k = p.dataset.widget, w = S.widgets[k];
-    p.innerHTML = `<div class="card-head"><div><h2>Widget à l'écran</h2><span class="sub">${esc(L("Taille, opacité et position en jeu", "Size, opacity and position in game"))}</span></div></div>
-      <label class="set-item"><span><span class="t">Clic à travers</span><span class="d">Les clics passent au jeu. Coupe-le pour déplacer le widget à la souris.</span></span>
-        <span class="switch"><input type="checkbox" role="switch" data-k="click" ${w.click ? "checked" : ""} aria-label="Clic à travers"><span class="track"></span><span class="knob"></span></span></label>
-      <div class="form-row"><span class="label">Taille</span>
-        <div class="seg" data-k="size">${[["s", "Petite"], ["m", "Moyenne"], ["l", "Grande"]].map(([v, t]) => `<button type="button" data-v="${v}" aria-pressed="${w.size === v}">${t}</button>`).join("")}</div></div>
-      <div class="form-row"><span class="label">Opacité</span>
-        <div class="slider-row"><input type="range" min="25" max="100" step="5" value="${w.opacity}" data-k="opacity" aria-label="Opacité du widget"><span class="mono" data-op>${w.opacity} %</span></div></div>
-      <div class="form-row"><span class="label">Position</span>
-        <select class="field sm" data-k="pos" aria-label="Position du widget">${POS.concat([["free", "Libre (déplacé à la souris)"]]).map(([v, t]) => `<option value="${v}" ${w.pos === v ? "selected" : ""}>${t}</option>`).join("")}</select></div>
-      <div><button class="btn sm primary" data-preview>Voir le widget 6 secondes</button></div>
-      ${DESKTOP ? "" : '<p class="note">Les widgets s\'ouvrent dans l\'application de bureau.</p>'}`;
+    const k = p.dataset.widget, w = S.widgets[k] || {};
+    const pos = w.pos === "free" ? L("Libre", "Free") : ((POS.find(x => x[0] === w.pos) || [])[1] || "—");
+    p.innerHTML = `<div class="card-head"><div><h2>Widget à l'écran</h2><span class="sub">${esc(L("Position, taille, opacité et mascotte", "Position, size, opacity and mascot"))}</span></div></div>
+      <div class="wsum"><span>Taille <b>${Math.round(wEchelle(k) * 100)} %</b></span>${k === "map" ? "" : `<span>Opacité <b>${w.opacity ?? 90} %</b></span>`}<span>Position <b>${esc(pos)}</b></span>
+        <span>Clic à travers <b>${w.click ? "oui" : "non"}</b></span>${MASC_KINDS.includes(k) ? `<span>Mascotte <b>${mascOn(k) ? "oui" : "non"}</b></span>` : ""}</div>
+      <button class="btn primary" type="button" data-layout="${esc(k)}" style="justify-self:start">Placer et régler les widgets</button>
+      <p class="note">Une page transparente s'ouvre par-dessus le jeu avec tous les widgets : glisse-les, tire leur coin pour la taille, règle l'opacité et le clic à travers.</p>`;
   });
 }
 function widgetChanged(k) { saveNow().then(() => api()?.widget_update(k)); }
@@ -3012,7 +3012,7 @@ function messageVide(st) {
 }
 function renderDps() {
   const st = DPS;
-  if (WIDGET === "dps") { if (!DPS_APPUI) $("#widgetRoot").innerHTML = dpsWidgetHTML(st); return; }
+  if (WIDGET === "dps") { if (!DPS_APPUI) wCorps().innerHTML = dpsWidgetHTML(st); mascotteDps(st); return; }
   if (WIDGET || !$("#kDps")) return;
   const c = st.combat, js = (c && c.joueurs) || [], moi = js.find(j => j.moi);
   $("#dpsCard").style.setProperty("--dpsc", S.dps.view.color);
@@ -3206,7 +3206,7 @@ function cdTick() {
   const now = Date.now(), v = S.cd.view;
   if (WIDGET === "cd" && v.hideReady) {
     const vis = cdSkills().filter(s => remaining(s, now) > 0).map(s => s.id).join(",");
-    if (vis !== cdVisibles) { cdVisibles = vis; $("#widgetRoot").innerHTML = cdWidgetHTML(false); }
+    if (vis !== cdVisibles) { cdVisibles = vis; wCorps().innerHTML = cdWidgetHTML(false); }
   }
   $$("[data-cdid]").forEach(cell => {
     const s = cdSkills().find(x => x.id === cell.dataset.cdid); if (!s) return;
@@ -3218,7 +3218,7 @@ function cdTick() {
 }
 function renderCdPrev() { if (!WIDGET && $("#cdPrev")) { $("#cdPrev").innerHTML = cdWidgetHTML(true); cdTick(); } }
 function renderCdAll() {
-  if (WIDGET === "cd") { cdVisibles = null; $("#widgetRoot").innerHTML = cdWidgetHTML(false); cdTick(); return; }
+  if (WIDGET === "cd") { cdVisibles = null; wCorps().innerHTML = cdWidgetHTML(false); cdTick(); return; }
   renderCdPrev();
 }
 function renderCdList() {
@@ -3587,29 +3587,34 @@ function bootWidget(kind) {
   document.body.classList.add("widget");
   $("#app").hidden = true; $("#welcome").hidden = true;
   const wr = $("#widgetRoot"); wr.hidden = false;
-  const echelle = () => kind === "toast" ? S.alerts.size : (S.widgets[kind] || {}).size;
+  let corps = wr;
+  if (!["crosshair", "picker", "map"].includes(kind)) {
+    wr.innerHTML = '<div class="wm" id="wWrap"><div class="wm-slot" id="wSlot"></div><div class="wm-body" id="wBody"></div></div>';
+    corps = $("#wBody");
+    if (MASC_KINDS.includes(kind)) installerMascotte(kind);
+  }
   const fit = () => {
     if (kind === "crosshair" || kind === "picker") return;
-    const vide = !wr.firstElementChild;
+    const vide = corps === wr ? !wr.firstElementChild : (!corps.firstElementChild && !$("#wSlot").classList.contains("on"));
     const r = wr.getBoundingClientRect();
     api()?.widget_fit(kind, vide ? 0 : Math.ceil(r.width), vide ? 0 : Math.ceil(r.height));
   };
   if (kind !== "crosshair" && kind !== "picker") {
-    const zoom = () => { wr.style.zoom = kind === "map" ? 1 : SCALE[echelle()] || 1; requestAnimationFrame(fit); };
+    const zoom = () => { wr.style.zoom = kind === "map" ? 1 : wEchelle(kind); requestAnimationFrame(fit); };
     zoom(); onSettingsChanged.push(zoom);
   }
   if (kind === "timers") {
-    wr.innerHTML = `<div class="wbox wt pywebview-drag-region" id="wTimers" aria-label="Prochains événements"></div>`;
+    corps.innerHTML = `<div class="wbox wt pywebview-drag-region" id="wTimers" aria-label="Prochains événements"></div>`;
     const paint = () => {
       const now = Date.now();
       const ts = allTimers().filter(t => t.enabled).map(t => ({ t, n: nextOf(t, now) })).filter(x => !x.n.idle)
         .map(x => ({ ...x, k: x.n.ready ? 0 : finEnCours(x.t, x.n, now) ? 1 : x.n.at })).sort((a, b) => a.k - b.k).slice(0, 5).map(x => x.t);
       $("#wTimers").innerHTML = ts.map(wTimerRow).join("") || '<span class="note">Aucun timer actif</span>'; tickTimers();
     };
-    paint(); setInterval(tickTimers, 1000); setInterval(paint, 15000); onSettingsChanged.push(paint);
+    paint(); setInterval(() => { tickTimers(); mascotteTimers(); }, 1000); setInterval(paint, 15000); onSettingsChanged.push(paint);
   }
   if (kind === "ping") {
-    wr.innerHTML = `<div class="wbox wp pywebview-drag-region">
+    corps.innerHTML = `<div class="wbox wp pywebview-drag-region">
       <div class="wping"><b data-ping>—</b><span class="u">ms</span><i class="q" data-ping-q></i></div>
       <svg class="spark" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true"></svg></div>`;
     tickPing(); setInterval(tickPing, 2000);
@@ -3638,9 +3643,9 @@ function bootWidget(kind) {
     });
   }
   if (kind === "cd") { renderCdAll(); setInterval(cdTick, 100); onSettingsChanged.push(renderCdAll); }
-  if (kind === "macro") window.MacrosUI.bootWidget(wr);
+  if (kind === "macro") window.MacrosUI.bootWidget(corps, SCENE, () => mascOn("macro"));
   if (kind === "toast") {
-    wr.innerHTML = `<div class="wbox wtoast"><span class="bell" aria-hidden="true">${svg("bell")}</span><div style="min-width:0"><b id="wtT">Alerte</b><p id="wtM"></p></div></div>`;
+    corps.innerHTML = `<div class="wbox wtoast"><span class="bell" aria-hidden="true">${svg("bell")}</span><div style="min-width:0"><b id="wtT">Alerte</b><p id="wtM"></p></div></div>`;
     window.showToastText = (t, m) => { $("#wtT").textContent = t; $("#wtM").textContent = m; const bx = $(".wtoast"); if (bx) { bx.classList.remove("pop"); void bx.offsetWidth; bx.classList.add("pop"); } };
   }
   if (kind === "crosshair") {
@@ -3665,7 +3670,322 @@ function bootWidget(kind) {
     return;
   }
   new ResizeObserver(fit).observe(wr);
+  if ($("#wSlot")) new MutationObserver(fit).observe($("#wSlot"), { attributes: true, attributeFilter: ["class"] });
   setTimeout(fit, 60);
+}
+
+/* ════════ Mascottes des widgets (Macros, DPS meter, Timers) ════════ */
+const MASC_KINDS = ["macro", "dps", "timers"];
+const mascOn = k => !!(S.mascots && S.mascots.on !== false && S.mascots[k] !== false);
+const wEchelle = k => { const c = k === "toast" ? (S.alerts || {}) : (S.widgets[k] || {}); return Math.max(.4, Math.min(3, +c.scale || SCALE[c.size] || 1)); };
+const wCorps = () => $("#wBody") || $("#widgetRoot");
+let SCENE = null;
+function installerMascotte(kind) {
+  const wrap = $("#wWrap");
+  SCENE = new window.Mascottes.Scene($("#wSlot"));
+  window.Mascottes.charger(api());
+  const maj = () => {
+    const on = mascOn(kind);
+    wrap.classList.toggle("has-m", on);
+    wrap.style.setProperty("--msz", Math.max(60, Math.min(220, +(S.mascots || {}).size || 110)) + "px");
+    if (!on && SCENE.visible) SCENE.cacher();
+  };
+  // la mascotte se place du côté du centre de l'écran (à droite d'un widget de gauche, à gauche d'un widget de droite)
+  const cote = () => { const centre = window.screenX + window.outerWidth / 2, milieu = (screen.availLeft || 0) + screen.width / 2; wrap.classList.toggle("side-r", centre < milieu); };
+  maj(); cote(); onSettingsChanged.push(maj); setInterval(cote, 1500);
+}
+let dpsCombat = false;
+function mascotteDps(st) {
+  if (!SCENE) return;
+  if (!mascOn("dps")) { if (SCENE.visible) SCENE.cacher(); dpsCombat = !!st.enCombat; return; }
+  if (st.enCombat && !dpsCombat) SCENE.montrer();           // début du combat : une mascotte arrive
+  else if (!st.enCombat && dpsCombat) SCENE.fete(true);     // fin du combat : saut de joie, puis elle repart
+  else if (st.enCombat && Math.random() < .3) SCENE.sautiller();
+  dpsCombat = !!st.enCombat;
+}
+function mascotteTimers() {
+  if (!SCENE) return;
+  if (!mascOn("timers")) { if (SCENE.visible) SCENE.cacher(); return; }
+  const now = Date.now(), lead = Math.max(1, +(S.mascots || {}).lead || 5) * 6e4;
+  let proche = null;
+  for (const t of allTimers()) {
+    if (!t.enabled) continue;
+    const n = nextOf(t, now);
+    if (n.idle || n.ready || !n.at || finEnCours(t, n, now)) continue;
+    const reste = n.at - now;
+    if (reste > 0 && reste <= lead && (!proche || reste < proche.reste)) proche = { t, reste };
+  }
+  if (proche) { SCENE.montrer(); SCENE.bulle(`${proche.t.name} · ${fmtLeft(proche.reste)}`); if (proche.reste < 10000) SCENE.sautiller(); }
+  else if (SCENE.visible) SCENE.fete(true); // le timer est arrivé au bout
+}
+/* Paramètres : carte « Mascottes & animations » */
+async function renderMascSettings() {
+  const box = $("#mascCard");
+  if (!box || WIDGET) return;
+  const m = S.mascots;
+  if (!box.dataset.pret) {
+    box.dataset.pret = "1";
+    box.addEventListener("change", e => {
+      const t = e.target;
+      if (t.dataset.msc) { S.mascots[t.dataset.msc] = t.type === "checkbox" ? t.checked : +t.value; save(); renderMascSettings(); renderWidgetPanels(); }
+      if (t.id === "optSplash") { S.display.splash = t.checked; save(); }
+    });
+    box.addEventListener("input", e => { if (e.target.dataset.msc === "size") { S.mascots.size = +e.target.value; $("#mscSzV").textContent = e.target.value + " px"; clearTimeout(box._t); box._t = setTimeout(save, 150); } });
+    box.addEventListener("click", e => {
+      const k = e.target.closest("[data-msck]");
+      if (k) { const v = k.dataset.msck; if (S.mascots.on === false) { S.mascots.on = true; S.mascots[v] = true; } else S.mascots[v] = !mascOn(v); save(); renderMascSettings(); renderWidgetPanels(); }
+      if (e.target.closest("#mscDir")) api()?.mascots_folder();
+      if (e.target.closest("#mscRef")) { box.dataset.liste = ""; renderMascSettings(); }
+    });
+  }
+  const tg = (k, t) => `<button type="button" class="chip" data-msck="${k}" aria-pressed="${mascOn(k)}">${t}</button>`;
+  box.innerHTML = `<div class="card-head"><div><h2>Mascottes &amp; animations</h2><span class="sub">Tes mascottes animées dans les widgets</span></div></div>
+    <label class="set-item"><span><span class="t">Mascottes animées</span><span class="d">Une mascotte au hasard, jamais deux fois de suite la même</span></span>
+      <span class="switch"><input type="checkbox" data-msc="on" role="switch" ${m.on !== false ? "checked" : ""}><span class="track"></span><span class="knob"></span></span></label>
+    <div class="form-row"><span class="label">Widgets</span><div class="chips">${tg("macro", "Macros · à l'appui")}${tg("dps", "DPS meter · en combat")}${tg("timers", "Timers · avant la fin")}</div></div>
+    <div class="form-row"><span class="label">Taille des mascottes</span><div class="slider-row"><input type="range" min="60" max="220" step="5" value="${m.size || 110}" data-msc="size" aria-label="Taille des mascottes"><span class="mono" id="mscSzV">${m.size || 110} px</span></div></div>
+    <label class="form-row"><span class="label">Timers : apparition avant la fin (minutes)</span><input class="field sm mono" type="number" min="1" max="60" value="${m.lead || 5}" data-msc="lead" style="max-width:120px"></label>
+    <label class="set-item"><span><span class="t">Animation de lancement</span><span class="d">Mascotte et barre de chargement au démarrage du logiciel</span></span>
+      <span class="switch"><input type="checkbox" id="optSplash" role="switch" ${S.display.splash !== false ? "checked" : ""}><span class="track"></span><span class="knob"></span></span></label>
+    <div class="msc-grid" id="mscGrid"></div>
+    <div class="chips"><button type="button" class="btn sm" id="mscDir">Ouvrir le dossier des mascottes</button><button type="button" class="btn sm" id="mscRef">Actualiser</button></div>
+    <p class="note">Ajoute tes GIF animés ou PNG transparents dans le dossier, puis Actualiser.</p>`;
+  const liste = await window.Mascottes.charger(api());
+  const g = $("#mscGrid"); if (g) g.innerHTML = liste.map(x => `<figure><img src="${esc(x.url)}" alt="" loading="lazy"><figcaption>${esc(x.nom)}</figcaption></figure>`).join("") || '<p class="note">Aucune mascotte trouvée.</p>';
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-layout]"); if (!b) return;
+  if (DESKTOP) api()?.layout_open(b.dataset.layout || ""); else notify("Placement des widgets", "L'écran de placement s'ouvre dans l'application de bureau.");
+});
+
+/* ════════ Écran de placement des widgets (page transparente sur tout l'écran) ════════ */
+let LAYOUT_INFO = null;
+const L_NOMS = { timers: "Timers", ping: "Ping", dps: "DPS meter", cd: "Cooldowns", macro: "Macros", map: "Carte", toast: "Alertes" };
+const L_KINDS = ["timers", "ping", "dps", "cd", "macro", "map", "toast"];
+function dpsApercu() {
+  const membres = [[901, (activeAcct() || {}).name || "Moi", 15, 52000, true], [902, "Kaelthys", 11, 61000], [903, "Sylvaine", 14, 47000], [904, "Elowen", 17, 15000]];
+  const duree = 84000, joueurs = membres.map(([id, nom, classe, base, moi]) => ({ id, nom, classe, moi: !!moi, groupe: true, total: base * 84, dps: base, crit: 31, coups: 200, dos: 18, parfait: 9, double: 7, max: 41000, dot: 0, morts: 0, comp: [] }));
+  const total = joueurs.reduce((a, j) => a + j.total, 0); joueurs.forEach(j => j.part = j.total / total); joueurs.sort((a, b) => b.total - a.total);
+  return { ...DPS, enCombat: true, combat: { debut: Date.now() - duree, duree, total, dps: Math.round(total / 84), cible: { nom: "Mannequin d'entraînement", pv: 30e6, pvMax: 48e6 }, joueurs }, serie: [] };
+}
+function contenuApercu(k) {
+  if (k === "timers") return `<div class="wbox wt">${allTimers().filter(t => t.enabled).slice(0, 5).map(wTimerRow).join("") || '<span class="note">Aucun timer actif</span>'}</div>`;
+  if (k === "ping") return `<div class="wbox wp"><div class="wping"><b data-ping>${ping ?? "—"}</b><span class="u">ms</span><i class="q" data-ping-q></i></div><svg class="spark" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true"></svg></div>`;
+  if (k === "dps") return dpsWidgetHTML(DPS.combat ? DPS : dpsApercu());
+  if (k === "cd") return cdWidgetHTML(true);
+  if (k === "macro") return window.MacrosUI.apercuWidget();
+  if (k === "map") { const [W, H] = mapSize(); return `<div class="wbox wmapweb" style="width:${W}px;height:${H}px"><div class="wmh"><span class="t">Carte · ${esc(mapName())}</span></div><div style="display:grid;place-items:center;height:calc(100% - 34px);color:#a6b9de;font-weight:700">Carte interactive</div></div>`; }
+  if (k === "toast") return `<div class="wbox wtoast"><span class="bell" aria-hidden="true">${svg("bell")}</span><div style="min-width:0"><b>Exemple d'alerte</b><p>Faille dans 5 minutes</p></div></div>`;
+  return "";
+}
+function bootLayout() {
+  document.body.classList.add("widget", "layout");
+  $("#app").hidden = true; $("#welcome").hidden = true;
+  const sel0 = decodeURIComponent((location.hash.match(/k=(\w+)/) || [])[1] || "");
+  const root = document.createElement("div"); root.id = "layoutRoot"; document.body.appendChild(root);
+  // brouillon : copies des réglages, enregistrées seulement avec « Enregistrer »
+  const D = {}; for (const k of L_KINDS) D[k] = k === "toast" ? { ...S.alerts } : { ...(S.widgets[k] || {}) };
+  const M = { ...S.mascots };
+  const P = {}; // positions (relatives à l'écran) : { x, y }
+  let aimant = true, sel = sel0 || "", B = { x: 0, y: 0, width: innerWidth, height: innerHeight }, WA = { x: 0, y: 0, width: innerWidth, height: innerHeight };
+  window.Mascottes.charger(api());
+  const echelle = k => Math.max(.4, Math.min(3, +D[k].scale || SCALE[D[k].size] || 1));
+  const visibleEnJeu = k => k === "toast" ? true : !!D[k].pinned;
+  root.innerHTML = `<div class="lt-wa" id="ltWa"></div>
+    <div class="lt-bar" role="toolbar" aria-label="Placement des widgets"><div class="lt-poignee" title="Glisser pour déplacer cette barre"><h2>Placement des widgets</h2><small>Glisse un widget pour le déplacer · tire son coin pour la taille · flèches : 1 px (Maj : 10 px) · Entrée : enregistrer · Échap : annuler</small></div><i class="sep"></i>
+      <button type="button" class="chip" id="ltAimant" aria-pressed="true">Magnétisme</button>
+      <button type="button" class="btn sm" id="ltReset">Tout réinitialiser</button>
+      <button type="button" class="btn sm" id="ltCancel">Annuler</button>
+      <button type="button" class="btn sm primary" id="ltSave">Enregistrer</button></div>
+`;
+  const placerWa = () => { const r = $("#ltWa"); Object.assign(r.style, { left: (WA.x - B.x) + "px", top: (WA.y - B.y) + "px", width: WA.width + "px", height: WA.height + "px" }); };
+
+  function boite(k) {
+    let el = root.querySelector(`.lw[data-k="${k}"]`);
+    if (!el) {
+      el = document.createElement("div"); el.className = "lw"; el.dataset.k = k;
+      el.innerHTML = `<span class="lw-tag"></span><div class="lw-in"></div><span class="lw-grip" title="Taille"></span>`;
+      root.appendChild(el);
+    }
+    const masc = MASC_KINDS.includes(k) && M.on !== false && M[k] !== false;
+    const z = echelle(k), side = P[k] && (P[k].x + 120 < B.width / 2) ? " side-r" : "";
+    const inn = el.querySelector(".lw-in");
+    if (!inn.dataset.pret || inn.dataset.masc !== String(masc) || inn.dataset.side !== side) {
+      inn.dataset.pret = "1"; inn.dataset.masc = String(masc); inn.dataset.side = side;
+      const url = masc ? (inn.dataset.url || window.Mascottes.auHasard()) : "";
+      inn.dataset.url = url;
+      inn.innerHTML = `<div class="wm${masc ? " has-m" : ""}${side}" style="--msz:${Math.max(60, Math.min(220, +M.size || 110))}px"><div class="wm-slot${masc ? " on idle" : ""}">${masc && url ? `<img class="msc-img" src="${esc(url)}" alt="">` : ""}</div><div class="wm-body">${contenuApercu(k)}</div></div>`;
+    }
+    inn.style.zoom = k === "map" ? 1 : z;
+    inn.style.padding = "5px";
+    inn.style.opacity = k === "toast" || k === "map" ? 1 : Math.max(.1, (+D[k].opacity || 90) / 100);
+    el.classList.toggle("cache", !visibleEnJeu(k));
+    el.classList.toggle("sel", sel === k);
+    el.classList.toggle("tag-bas", !!P[k] && P[k].y < 34);
+    el.querySelector(".lw-tag").innerHTML = `${esc(L_NOMS[k])} <i>${k === "map" ? mapTaille().join(" × ") : Math.round(z * 100) + " %"}</i>${visibleEnJeu(k) ? "" : " <em>masqué en jeu</em>"}`;
+    return el;
+  }
+  const mapTaille = () => D.map.size === "custom" && D.map.w ? [D.map.w, D.map.h] : (MAP_SIZES[D.map.size] || MAP_SIZES.m);
+  const taille = k => { const el = boite(k); return [el.offsetWidth, el.offsetHeight]; };
+  function positionDepart(k, deja) {
+    const c = D[k], [w, h] = taille(k), M2 = 16, wa = { x: WA.x - B.x, y: WA.y - B.y, width: WA.width, height: WA.height };
+    if (c.pos === "free" && c.x != null) return { x: c.x - B.x, y: c.y - B.y };
+    const p = /^[tmb][lcr]$/.test(c.pos || "") ? c.pos : (k === "toast" ? "br" : "tr");
+    let x = { l: wa.x + M2, c: wa.x + (wa.width - w) / 2, r: wa.x + wa.width - w - M2 }[p[1]];
+    let y = { t: wa.y + M2, m: wa.y + (wa.height - h) / 2, b: wa.y + wa.height - h - M2 }[p[0]];
+    for (const a of deja) { if (a.pos !== p) continue; y += p[0] === "b" ? -(a.h + 8) : a.h + 8; }
+    deja.push({ pos: p, h });
+    return { x: Math.round(x), y: Math.round(y) };
+  }
+  function toutPlacer(depuisReglages) {
+    const deja = [];
+    for (const k of L_KINDS) { boite(k); if (depuisReglages || !P[k]) P[k] = positionDepart(k, deja); }
+    for (const k of L_KINDS) appliquer(k);
+    inspecteur();
+  }
+  function appliquer(k) {
+    const el = boite(k), [w, h] = [el.offsetWidth, el.offsetHeight];
+    P[k].x = Math.max(-w + 40, Math.min(B.width - 40, P[k].x)); P[k].y = Math.max(0, Math.min(B.height - 30, P[k].y));
+    el.style.left = P[k].x + "px"; el.style.top = P[k].y + "px";
+  }
+  /* Magnétisme : bords de l'écran, centre, bords des autres widgets */
+  function aimanter(k, x, y, w, h) {
+    $$(".lt-guide", root).forEach(g => g.remove());
+    if (!aimant) return [x, y];
+    const S2 = 8, wa = { x: WA.x - B.x, y: WA.y - B.y, r: WA.x - B.x + WA.width, b: WA.y - B.y + WA.height };
+    const vx = [wa.x + 16, wa.x, B.width / 2, wa.r - 16, wa.r], vy = [wa.y + 16, wa.y, B.height / 2, wa.b - 16, wa.b];
+    for (const o of L_KINDS) { if (o === k || !P[o]) continue; const e = boite(o); vx.push(P[o].x, P[o].x + e.offsetWidth, P[o].x - 8, P[o].x + e.offsetWidth + 8); vy.push(P[o].y, P[o].y + e.offsetHeight, P[o].y - 8, P[o].y + e.offsetHeight + 8); }
+    const meilleur = (cands, vals) => { let b = null; for (const [v, off] of vals) for (const c of cands) { const d = Math.abs(v - c); if (d <= S2 && (!b || d < b.d)) b = { d, pos: c - off, ligne: c }; } return b; };
+    const bx = meilleur(vx, [[x, 0], [x + w, w], [x + w / 2, w / 2]]), by = meilleur(vy, [[y, 0], [y + h, h], [y + h / 2, h / 2]]);
+    const guide = (cls, prop, v) => { const g = document.createElement("i"); g.className = "lt-guide " + cls; g.style[prop] = v + "px"; root.appendChild(g); };
+    if (bx) { x = bx.pos; guide("v", "left", bx.ligne); }
+    if (by) { y = by.pos; guide("h", "top", by.ligne); }
+    return [Math.round(x), Math.round(y)];
+  }
+  let geste = null;
+  root.addEventListener("pointerdown", e => {
+    const el = e.target.closest(".lw");
+    if (!el) { if (!e.target.closest(".lt-bar, .lt-insp")) { sel = ""; L_KINDS.forEach(boite); inspecteur(); } return; }
+    const k = el.dataset.k; sel = k; L_KINDS.forEach(boite); inspecteur();
+    const grip = e.target.closest(".lw-grip");
+    geste = { k, grip: !!grip, sx: e.clientX, sy: e.clientY, x: P[k].x, y: P[k].y, w: el.offsetWidth, h: el.offsetHeight, z: echelle(k), map: mapTaille() };
+    el.classList.add("glisse"); root.classList.add("geste"); el.setPointerCapture(e.pointerId); e.preventDefault();
+  });
+  root.addEventListener("pointermove", e => {
+    if (!geste) return;
+    const g = geste, dx = e.clientX - g.sx, dy = e.clientY - g.sy, el = boite(g.k);
+    if (g.grip) {
+      if (g.k === "map") { D.map = { ...D.map, size: "custom", w: Math.max(360, Math.round(g.map[0] + dx)), h: Math.max(260, Math.round(g.map[1] + dy)) }; el.querySelector(".lw-in").dataset.pret = ""; }
+      else D[g.k].scale = Math.round(Math.max(.5, Math.min(2.5, g.z * (g.w + Math.max(dx, dy * g.w / g.h)) / g.w)) * 20) / 20;
+      boite(g.k); inspecteur();
+    } else {
+      const [x, y] = aimanter(g.k, g.x + dx, g.y + dy, el.offsetWidth, el.offsetHeight);
+      P[g.k].x = x; P[g.k].y = y; appliquer(g.k); placerInspecteur();
+    }
+  });
+  const fin = e => {
+    if (!geste) return;
+    const el = boite(geste.k); el.classList.remove("glisse"); root.classList.remove("geste");
+    try { el.releasePointerCapture(e.pointerId); } catch {}
+    $$(".lt-guide", root).forEach(g => g.remove());
+    const k = geste.k; geste = null;
+    el.querySelector(".lw-in").dataset.side = "?"; boite(k); appliquer(k); inspecteur();
+  };
+  root.addEventListener("pointerup", fin); root.addEventListener("pointercancel", fin);
+  /* Panneau de réglages du widget sélectionné */
+  function inspecteur() {
+    let box = $(".lt-insp", root);
+    if (!sel) { if (box) box.remove(); return; }
+    if (!box) { box = document.createElement("div"); box.className = "lt-insp"; root.appendChild(box); brancherInsp(box); }
+    const k = sel, c = D[k], masc = MASC_KINDS.includes(k);
+    const sw = (id, on, t, d) => `<label class="set-item"><span><span class="t">${t}</span>${d ? `<span class="d">${d}</span>` : ""}</span><span class="switch sm"><input type="checkbox" data-i="${id}" ${on ? "checked" : ""}><span class="track"></span><span class="knob"></span></span></label>`;
+    box.innerHTML = `<h3>${esc(L_NOMS[k])}</h3>
+      ${k === "toast" ? '<p class="note">Les alertes d\'événements apparaissent ici.</p>' : sw("pinned", !!c.pinned, "Afficher en jeu", "Quand l'interface est masquée")}
+      ${k === "toast" ? "" : sw("click", !!c.click, "Clic à travers", "Les clics passent au jeu")}
+      ${masc ? sw("masc", M.on !== false && M[k] !== false, "Mascotte animée", k === "macro" ? "À l'appui d'une macro" : k === "dps" ? "Pendant les combats" : `${M.lead || 5} min avant la fin d'un timer`) : ""}
+      ${k === "map" ? `<p class="note">Taille : ${mapTaille().join(" × ")} px (tire le coin)</p>` : `<div class="form-row"><span class="label">Taille</span><div class="slider-row"><input type="range" min="50" max="250" step="5" data-i="scale" value="${Math.round(echelle(k) * 100)}"><span class="mono">${Math.round(echelle(k) * 100)} %</span></div></div>`}
+      ${k === "toast" || k === "map" ? "" : `<div class="form-row"><span class="label">Opacité</span><div class="slider-row"><input type="range" min="20" max="100" step="5" data-i="opacity" value="${c.opacity ?? 90}"><span class="mono">${c.opacity ?? 90} %</span></div></div>`}
+      <div class="lt-chips"><button type="button" class="btn sm" data-i="defaut">Position par défaut</button></div>`;
+    placerInspecteur();
+  }
+  function placerInspecteur() {
+    const box = $(".lt-insp", root); if (!box || !sel) return;
+    const el = boite(sel), r = el.getBoundingClientRect(), W = box.offsetWidth, H = box.offsetHeight;
+    let x = r.right + 18, y = r.top;
+    if (x + W > innerWidth - 10) x = r.left - W - 18;
+    if (x < 10) { x = Math.min(innerWidth - W - 10, Math.max(10, r.left)); y = r.bottom + 18; }
+    if (y + H > innerHeight - 10) y = Math.max(10, innerHeight - H - 10);
+    box.style.left = Math.round(x) + "px"; box.style.top = Math.max(84, Math.round(y)) + "px";
+  }
+  function brancherInsp(box) {
+    box.addEventListener("input", e => {
+      const t = e.target, k = sel; if (!k) return;
+      if (t.dataset.i === "scale") { D[k].scale = +t.value / 100; t.nextElementSibling.textContent = t.value + " %"; boite(k); }
+      if (t.dataset.i === "opacity") { D[k].opacity = +t.value; t.nextElementSibling.textContent = t.value + " %"; boite(k); }
+    });
+    box.addEventListener("change", e => {
+      const t = e.target, k = sel; if (!k) return;
+      if (t.dataset.i === "pinned" || t.dataset.i === "click") D[k][t.dataset.i] = t.checked;
+      if (t.dataset.i === "masc") { M[k] = t.checked; if (t.checked) M.on = true; }
+      boite(k); inspecteur();
+    });
+    box.addEventListener("click", e => {
+      if (!e.target.closest('[data-i="defaut"]') || !sel) return;
+      const def = sel === "toast" ? { pos: "br" } : (DEFAULTS.widgets[sel] || {});
+      D[sel] = { ...D[sel], pos: def.pos || "tr", x: null, y: null };
+      const deja = []; P[sel] = positionDepart(sel, deja); appliquer(sel); inspecteur();
+    });
+  }
+  /* Barre d'outils : déplaçable par son titre, discrète pendant un geste */
+  (() => {
+    const bar = $(".lt-bar", root), poignee = $(".lt-poignee", root);
+    let d = null;
+    poignee.addEventListener("pointerdown", e => { const r = bar.getBoundingClientRect(); d = { dx: e.clientX - r.left, dy: e.clientY - r.top }; poignee.setPointerCapture(e.pointerId); e.stopPropagation(); });
+    poignee.addEventListener("pointermove", e => { if (!d) return; Object.assign(bar.style, { left: Math.max(0, e.clientX - d.dx) + "px", top: Math.max(0, e.clientY - d.dy) + "px", transform: "none", animation: "none" }); });
+    poignee.addEventListener("pointerup", () => { d = null; });
+  })();
+  $("#ltAimant").addEventListener("click", e => { aimant = !aimant; e.currentTarget.setAttribute("aria-pressed", String(aimant)); });
+  $("#ltReset").addEventListener("click", () => {
+    for (const k of L_KINDS) { const def = k === "toast" ? { pos: "br", size: "m" } : (DEFAULTS.widgets[k] || {}); D[k] = { ...D[k], pos: def.pos || "tr", x: null, y: null, scale: null, size: def.size || "m" }; if (k === "map") Object.assign(D.map, { size: "m", w: null, h: null }); }
+    for (const k of L_KINDS) { const el = boite(k); el.querySelector(".lw-in").dataset.pret = ""; boite(k); }
+    toutPlacer(true);
+  });
+  const annuler = () => { if (DESKTOP) api()?.layout_close(); };
+  async function enregistrer() {
+    const cfgs = {};
+    for (const k of L_KINDS) {
+      if (k === "toast") continue;
+      cfgs[k] = { ...D[k], pos: "free", x: Math.round(B.x + P[k].x), y: Math.round(B.y + P[k].y) };
+      if (k !== "map") cfgs[k].scale = echelle(k);
+    }
+    const alertes = { pos: "free", x: Math.round(B.x + P.toast.x), y: Math.round(B.y + P.toast.y), scale: echelle("toast") };
+    S.mascots = { ...S.mascots, ...M };
+    if (!DESKTOP) return;
+    await saveNow();
+    await api().layout_save(cfgs, alertes);
+  }
+  $("#ltCancel").addEventListener("click", annuler);
+  $("#ltSave").addEventListener("click", enregistrer);
+  document.addEventListener("keydown", e => {
+    if (e.target.matches("input, select, textarea")) return;
+    if (e.key === "Escape") { e.preventDefault(); annuler(); return; }
+    if (e.key === "Enter") { e.preventDefault(); enregistrer(); return; }
+    if (!sel) return;
+    const pas = e.shiftKey ? 10 : 1, mv = { ArrowLeft: [-pas, 0], ArrowRight: [pas, 0], ArrowUp: [0, -pas], ArrowDown: [0, pas] }[e.key];
+    if (mv) { e.preventDefault(); P[sel].x += mv[0]; P[sel].y += mv[1]; appliquer(sel); placerInspecteur(); }
+    if ((e.key === "+" || e.key === "=" || e.key === "-") && sel !== "map") { e.preventDefault(); D[sel].scale = Math.max(.5, Math.min(2.5, echelle(sel) + (e.key === "-" ? -.05 : .05))); boite(sel); inspecteur(); }
+  });
+  /* Données en direct dans les aperçus */
+  setInterval(() => { tickTimers(); if (!DPS.combat) return; const el = root.querySelector('.lw[data-k="dps"] .wm-body'); if (el && !geste) el.innerHTML = dpsWidgetHTML(DPS); }, 1000);
+  setInterval(cdTick, 200); tickPing(); setInterval(tickPing, 2000);
+  const demarrer = () => {
+    if (LAYOUT_INFO) { B = LAYOUT_INFO.bounds; WA = LAYOUT_INFO.wa; }
+    placerWa(); toutPlacer(true);
+    tickTimers();
+  };
+  window.__layoutPret = demarrer;
+  if (LAYOUT_INFO || !DESKTOP) requestAnimationFrame(demarrer);
+  addEventListener("resize", () => { if (!DESKTOP) { B = WA = { x: 0, y: 0, width: innerWidth, height: innerHeight }; placerWa(); for (const k of L_KINDS) if (P[k]) appliquer(k); } });
 }
 
 /* ════════ Onglet Infos : logiciel, auteur, mentions légales ════════ */
@@ -3745,6 +4065,7 @@ window.__onPush = msg => {
     case "sound": playTone(msg.tone, msg.volume); break;
     case "viseur": VISEUR = msg; renderXhState(); break;
     case "macro": window.MacrosUI.push(msg); break;
+    case "layout": LAYOUT_INFO = msg; if (window.__layoutPret) window.__layoutPret(); break;
     case "fond": { const b = $("#backdropImg"); if (!b) break; root.style.setProperty("--ecran-w", screen.width + "px"); root.style.setProperty("--ecran-h", screen.height + "px"); if (msg.url) { b.style.backgroundImage = `url("${msg.url}")`; b.classList.add("on"); } else { b.style.backgroundImage = ""; b.classList.remove("on"); } break; }
   }
 };
@@ -3775,6 +4096,7 @@ window.MacrosUI.init({ api, S: () => S, save, DESKTOP, WIDGET, notify, setWide, 
 onSettingsChanged.push(() => window.MacrosUI.onSettings());
 
 async function boot() {
+  if (WIDGET === "layout") { bootLayout(); flushPush(); return; }
   if (WIDGET) { bootWidget(WIDGET); flushPush(); return; }
   if (DESKTOP) {
     document.body.classList.add("desktop"); if (animOn()) document.body.classList.add("ov-out"); saveNow();
@@ -3782,7 +4104,7 @@ async function boot() {
     setTimeout(() => { if (!WINDOW_HIDDEN) ouvrirOverlay(); }, 2000);
   }
   onSettingsChanged.push(renderWidgetPanels, renderParams, renderDpsControls, renderXhControls, renderCdList, renderMapTab, renderModules);
-  showFields(); renderParams(); renderAlerts(); renderTimers(); renderWidgetPanels(); renderFavs(); renderRecents(); renderAccount(); renderTasks();
+  showFields(); renderParams(); renderMascSettings(); onSettingsChanged.push(renderMascSettings); renderAlerts(); renderTimers(); renderWidgetPanels(); renderFavs(); renderRecents(); renderAccount(); renderTasks();
   renderDpsControls(); renderCdList(); renderXhControls(); renderSrv();
   renderMapTab(); renderModules(); renderInfos();
   requestAnimationFrame(() => placerGlider(true));

@@ -1,0 +1,114 @@
+/* PichetMeter · mascottes des widgets, widget Macros animé, écran de placement des widgets */
+:root { --spring: cubic-bezier(.3, 1.45, .5, 1); --ease-o: cubic-bezier(.2, .8, .2, 1); }
+
+/* ════════ Widget : corps + emplacement de la mascotte ════════ */
+.wm { display: flex; align-items: flex-end; gap: 2px; }
+.wm.side-r { flex-direction: row-reverse; }
+.wm-body:empty { display: none; }
+.wm-slot { display: none; position: relative; flex: none; width: var(--msz, 110px); height: calc(var(--msz, 110px) + 30px); pointer-events: none; }
+.wm.has-m .wm-slot { display: block; }
+.msc-img { position: absolute; left: 0; right: 0; bottom: 7px; margin: 0 auto; max-width: 100%; max-height: var(--msz, 110px); opacity: 0; transform: scale(.1);
+  transform-origin: 50% 100%; filter: drop-shadow(0 6px 10px rgba(0, 6, 26, .55)); }
+.msc-ombre { position: absolute; left: 22%; right: 22%; bottom: 2px; height: 9px; border-radius: 50%; background: rgba(0, 6, 26, .5); filter: blur(3px); opacity: 0; transition: opacity .3s; }
+.wm-slot.in .msc-img { animation: mscIn .65s var(--spring) forwards; }
+.wm-slot.idle .msc-img { opacity: 1; transform: none; animation: mscFlotte 2.4s ease-in-out infinite; }
+.wm-slot .msc-img.hop { opacity: 1; animation: mscHop .45s var(--spring); }
+.wm-slot.fete .msc-img { opacity: 1; animation: mscFete 1.45s var(--ease-o); }
+.wm-slot.out .msc-img { animation: mscOut .4s ease-in forwards; }
+.wm-slot.in .msc-ombre, .wm-slot.idle .msc-ombre, .wm-slot.fete .msc-ombre { opacity: 1; }
+@keyframes mscIn { 0% { opacity: 0; transform: translateY(26px) scale(.15); } 60% { opacity: 1; transform: translateY(-6px) scale(1.12, .92); } 100% { opacity: 1; transform: none; } }
+@keyframes mscFlotte { 50% { transform: translateY(-5px); } }
+@keyframes mscHop { 0% { transform: none; } 40% { transform: translateY(-16px) scale(1.04, .96); } 75% { transform: translateY(0) scale(1.08, .9); } 100% { transform: none; } }
+@keyframes mscFete { 0% { transform: none; } 15% { transform: translateY(-22px) rotate(-8deg); } 30% { transform: translateY(0) scale(1.1, .9); } 45% { transform: translateY(-26px) rotate(8deg); }
+  60% { transform: translateY(0) scale(1.1, .9); } 75% { transform: translateY(-10px) rotate(-4deg); } 100% { transform: none; } }
+@keyframes mscOut { to { opacity: 0; transform: translateY(18px) scale(.3); } }
+.msc-bulle { position: absolute; top: 0; left: 50%; transform: translateX(-50%); max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font: 700 10.5px var(--f-body, "Segoe UI"); color: #071430; background: #fff; padding: 3px 8px; border-radius: 9px; box-shadow: 0 3px 10px rgba(0, 6, 26, .4);
+  animation: mscBulle .35s var(--spring); }
+.msc-bulle::after { content: ""; position: absolute; left: 50%; bottom: -4px; width: 8px; height: 8px; margin-left: -4px; background: #fff; transform: rotate(45deg); }
+@keyframes mscBulle { from { opacity: 0; transform: translateX(-50%) translateY(6px) scale(.8); } }
+.msc-coeur { position: absolute; bottom: 45%; font-size: 15px; color: #ff6b9a; text-shadow: 0 0 8px rgba(255, 107, 154, .9); pointer-events: none; animation: mscCoeur 1.25s var(--ease-o) forwards; }
+@keyframes mscCoeur { from { opacity: 1; transform: translate(0, 0) scale(.5); } to { opacity: 0; transform: translate(var(--dx), -70px) scale(1.2) rotate(var(--r)); } }
+
+/* ════════ Widget Macros : entrée en glissé, battement, flux de touches ════════ */
+.wbox.wmc { width: max-content; min-width: 210px; max-width: 330px; padding: 9px 11px; gap: 7px; overflow: hidden;
+  background: linear-gradient(160deg, rgba(26, 50, 112, .88), rgba(7, 15, 40, .92)); animation: wmcBoite .45s var(--spring); }
+.wbox.wmc::before { content: ""; position: absolute; top: 0; left: 12px; width: 54px; height: 2px; background: linear-gradient(90deg, #2f6bff 0 33.3%, #fff 33.3% 66.6%, #e63946 66.6%); }
+@keyframes wmcBoite { from { opacity: 0; transform: translateY(-8px) scale(.94); } }
+.wmc-m { display: grid; gap: 5px; animation: wmcLigne .4s var(--ease-o) both; }
+@keyframes wmcLigne { from { opacity: 0; transform: translateX(-12px); } }
+.wmc-m.fin { animation: wmcFin .9s var(--ease-o) forwards; }
+@keyframes wmcFin { 0% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; transform: translateX(10px); } }
+.wmc-h { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+.wmc-h b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wmc-h .mono { font: 600 11px var(--f-data, monospace); color: #a6b9de; }
+.wmc-h .hb { font-style: normal; color: #ff5a7a; text-shadow: 0 0 8px rgba(255, 90, 122, .8); animation: mcCoeur .9s ease-in-out infinite; }
+.wmc-m.fin .hb { animation: none; color: #4ade80; text-shadow: 0 0 8px rgba(74, 222, 128, .8); }
+.wmc-flux { position: relative; height: 3px; border-radius: 3px; background: rgba(140, 196, 255, .14); overflow: hidden; }
+.wmc-flux::after { content: ""; position: absolute; inset: 0; width: 40%; border-radius: 3px; background: linear-gradient(90deg, transparent, #8cc4ff, #ff9ec0, transparent); animation: wmcFlux 1.1s linear infinite; }
+.wmc-m.fin .wmc-flux::after { animation: none; width: 100%; background: #4ade80; }
+@keyframes wmcFlux { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
+.wmc-k { display: flex; gap: 4px; flex-wrap: wrap; min-height: 19px; }
+.wmc-k kbd { font: 700 10.5px var(--f-data, monospace); padding: 1px 6px; border-radius: 6px; color: #eef4ff; border: 1px solid rgba(170, 205, 255, .3);
+  background: rgba(79, 149, 255, .22); box-shadow: 0 0 8px rgba(79, 149, 255, .35); animation: wmcTouche .35s var(--spring); transition: opacity .3s; }
+.wmc-k kbd:last-child { background: rgba(255, 158, 192, .3); border-color: rgba(255, 158, 192, .55); }
+@keyframes wmcTouche { from { opacity: 0; transform: translateY(6px) scale(.6); } }
+body.no-anim .wm-slot *, body.no-anim .wbox.wmc, body.no-anim .wmc-m, body.no-anim .wmc-k kbd { animation: none !important; }
+
+/* ════════ Écran de placement des widgets ════════ */
+html.wmode body.layout { overflow: hidden; height: 100vh; }
+body.layout #widgetRoot { display: none !important; }
+#layoutRoot { position: fixed; inset: 0; background-color: rgba(3, 8, 24, .46); user-select: none;
+  background-image: linear-gradient(rgba(140, 196, 255, .07) 1px, transparent 1px), linear-gradient(90deg, rgba(140, 196, 255, .07) 1px, transparent 1px);
+  background-size: 40px 40px; animation: ltIn .3s var(--ease-o); }
+@keyframes ltIn { from { opacity: 0; } }
+#layoutRoot .lt-wa { position: absolute; border: 1px dashed rgba(140, 196, 255, .25); border-radius: 6px; pointer-events: none; }
+.lw { position: absolute; padding: 0; border-radius: 16px; cursor: grab; touch-action: none; transition: box-shadow .2s, opacity .2s; }
+.lw::after { content: ""; position: absolute; inset: -4px; border-radius: 18px; border: 1.5px dashed rgba(170, 205, 255, .6); pointer-events: none; transition: border-color .2s; }
+.lw:hover::after { border-color: #cfe0ff; }
+.lw.sel::after { border: 2px solid #8cc4ff; box-shadow: 0 0 0 4px rgba(79, 149, 255, .22), 0 0 26px rgba(79, 149, 255, .35); }
+.lw.glisse { cursor: grabbing; }
+.lw.cache .lw-in { opacity: .35 !important; filter: grayscale(.6); }
+.lw-in { pointer-events: none; transform-origin: 0 0; }
+.lw-in #wBodyL, .lw-in .wm { pointer-events: none; }
+.lw-tag { position: absolute; left: -4px; bottom: calc(100% + 8px); display: flex; align-items: center; gap: 6px; white-space: nowrap; font: 700 11.5px var(--f-body, "Segoe UI"); color: #eef4ff;
+  padding: 3px 9px; border-radius: 8px; background: rgba(9, 20, 52, .9); border: 1px solid rgba(170, 205, 255, .3); pointer-events: none; }
+.lw-tag i { font-style: normal; font: 600 10.5px var(--f-data, monospace); color: #8cc4ff; }
+.lw-tag em { font-style: normal; color: #ffcc66; }
+.lw.sel .lw-tag { background: linear-gradient(135deg, #3f7bff, #1d4ed8); border-color: rgba(255, 255, 255, .35); }
+.lw-grip { position: absolute; right: -11px; bottom: -11px; width: 18px; height: 18px; border-radius: 6px; cursor: nwse-resize; z-index: 2;
+  background: linear-gradient(135deg, #8cc4ff, #3f7bff); border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0, 6, 26, .5); opacity: 0; transition: opacity .2s, transform .2s var(--spring); }
+.lw:hover .lw-grip, .lw.sel .lw-grip { opacity: 1; }
+.lw-grip:hover { transform: scale(1.2); }
+.lt-guide { position: absolute; background: #ff9ec0; box-shadow: 0 0 6px #ff9ec0; pointer-events: none; z-index: 5; }
+.lt-guide.v { width: 1px; top: 0; bottom: 0; } .lt-guide.h { height: 1px; left: 0; right: 0; }
+.lt-bar, .lt-insp { position: fixed; z-index: 10; color: #eef4ff; border-radius: 18px; background: linear-gradient(160deg, rgba(36, 70, 160, .9), rgba(7, 16, 44, .94));
+  border: 1px solid rgba(190, 215, 255, .26); box-shadow: 0 18px 50px rgba(0, 6, 26, .55), inset 0 1px 0 rgba(255, 255, 255, .16); }
+.lt-bar { top: 38%; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 10px 12px 10px 16px; animation: ltBar .45s var(--spring); max-width: calc(100vw - 40px); flex-wrap: wrap; justify-content: center; }
+@keyframes ltBar { from { opacity: 0; transform: translateX(-50%) translateY(-20px); } }
+.lt-poignee { cursor: move; max-width: 420px; }
+.lt-poignee small { display: block; line-height: 1.35; }
+#layoutRoot.geste .lt-bar, #layoutRoot.geste .lt-insp { opacity: .25; transition: opacity .2s; pointer-events: none; }
+.lw.sel { z-index: 3; } .lw.glisse { z-index: 4; }
+.lw.tag-bas .lw-tag { bottom: auto; top: calc(100% + 8px); }
+.lt-bar h2 { font: 700 15px var(--f-display, "Segoe UI"); margin: 0; }
+.lt-bar small { color: #a6b9de; font-size: 12px; }
+.lt-bar .sep { width: 1px; height: 24px; background: rgba(170, 205, 255, .22); }
+.lt-insp { width: 290px; padding: 14px; display: grid; gap: 11px; animation: popIn .22s var(--ease-o); }
+.lt-insp h3 { margin: 0; font: 700 15px var(--f-display, "Segoe UI"); display: flex; align-items: center; gap: 8px; }
+.lt-insp .note { color: #a6b9de; }
+.lt-insp .set-item { padding: 8px 11px; }
+.lt-insp .slider-row input[type="range"] { max-width: none; }
+.lt-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.lt-hint { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 10; font: 600 12.5px var(--f-body, "Segoe UI"); color: #cfe0ff; padding: 7px 14px; border-radius: 99px;
+  background: rgba(7, 16, 44, .82); border: 1px solid rgba(170, 205, 255, .2); pointer-events: none; }
+.lt-hint kbd { font-size: 11px; padding: 1px 6px; }
+
+/* Panneaux « Widget à l'écran » des onglets : résumé + accès à l'écran de placement */
+.wsum { display: flex; gap: 8px; flex-wrap: wrap; }
+.wsum span { font: 600 12px var(--f-body); padding: 5px 10px; border-radius: 99px; background: var(--well); border: 1px solid var(--edge); color: var(--muted); }
+.wsum b { color: var(--fg); font-family: var(--f-data); }
+.msc-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+.msc-grid figure { margin: 0; width: 86px; height: 96px; border-radius: 14px; display: grid; place-items: center; background: var(--well); border: 1px solid var(--edge); overflow: hidden; position: relative; }
+.msc-grid img { max-width: 78px; max-height: 80px; object-fit: contain; }
+.msc-grid figcaption { position: absolute; left: 0; right: 0; bottom: 2px; text-align: center; font: 600 10px var(--f-body); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px; }

@@ -1080,28 +1080,69 @@ function brancherReglages() {
 }
 let rrT; const renderReglagesBientot = () => { clearTimeout(rrT); rrT = setTimeout(renderReglages, 120); };
 
-/* ════════ Widget en jeu : macros en cours + touches envoyées ════════ */
-let WR = null;
+/* ════════ Widget en jeu : macros en cours, touches envoyées, mascotte ════════ */
+let WR = null, SCENE = null, MASC_ON = () => false, SEQ_T = 0;
+const FINIS = {}; // id → macro terminée il y a moins d'une seconde (ligne « ✓ terminée »)
 function pushWidget(m) {
   if (m.ev === "snapshot") { for (const k in ACTIVES) delete ACTIVES[k]; for (const a of m.active || []) ACTIVES[a.id] = a; }
-  if (m.ev === "macro_state") { if (m.running) ACTIVES[m.id] = { id: m.id, name: m.name, since: Date.now() }; else delete ACTIVES[m.id]; }
-  if (m.ev === "keys") { const l = TOUCHES[m.id] || (TOUCHES[m.id] = []); for (const x of m.labels) l.push({ l: x, t: Date.now() }); TOUCHES[m.id] = l.slice(-7); }
-  if (m.ev === "state" && !(m.running || []).length) for (const k in ACTIVES) delete ACTIVES[k];
-  if (m.ev === "phase" && m.phase !== "ready") for (const k in ACTIVES) delete ACTIVES[k];
+  if (m.ev === "macro_state") {
+    if (m.running) {
+      ACTIVES[m.id] = { id: m.id, name: m.name, since: Date.now() }; delete FINIS[m.id];
+      if (SCENE && MASC_ON()) SCENE.montrer(); // une mascotte au hasard apparaît à l'appui de la macro
+    } else if (ACTIVES[m.id]) {
+      FINIS[m.id] = { ...ACTIVES[m.id], fin: Date.now() }; delete ACTIVES[m.id];
+      if (!Object.keys(ACTIVES).length && SCENE) SCENE.fete(true);
+    }
+  }
+  if (m.ev === "keys") {
+    const l = TOUCHES[m.id] || (TOUCHES[m.id] = []);
+    for (const x of m.labels) l.push({ l: x, t: Date.now(), k: ++SEQ_T });
+    TOUCHES[m.id] = l.slice(-7);
+    if (SCENE) SCENE.sautiller();
+  }
+  if ((m.ev === "state" && !(m.running || []).length) || (m.ev === "phase" && m.phase !== "ready")) {
+    for (const k in ACTIVES) { FINIS[k] = { ...ACTIVES[k], fin: Date.now() }; delete ACTIVES[k]; }
+    if (SCENE && SCENE.visible) SCENE.fete(true);
+  }
   peindreWidget();
 }
+const duree = ms => { const s = Math.floor(ms / 1000); return s < 60 ? `${s} s` : `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, "0")}`; };
 function peindreWidget() {
   if (!WR) return;
-  const liste = Object.values(ACTIVES);
-  if (!liste.length) { if (WR.innerHTML) WR.innerHTML = ""; return; }
   const now = Date.now();
-  WR.innerHTML = `<div class="wbox wmc">${liste.map(a => {
-    const s = Math.floor((now - a.since) / 1000), duree = s < 60 ? `${s} s` : `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, "0")}`;
-    const tk = (TOUCHES[a.id] || []).filter(x => now - x.t < 2500);
-    return `<div class="wmc-m"><div class="wmc-h"><i class="hb" aria-hidden="true">♥</i><b>${esc(a.name)}</b><span class="mono">${duree}</span></div>${tk.length ? `<div class="wmc-k">${tk.map(x => `<kbd style="opacity:${(1 - (now - x.t) / 2500).toFixed(2)}">${esc(x.l)}</kbd>`).join("")}</div>` : ""}</div>`;
-  }).join("")}</div>`;
+  for (const [id, f] of Object.entries(FINIS)) if (now - f.fin > 950) delete FINIS[id];
+  const ids = [...Object.keys(ACTIVES), ...Object.keys(FINIS)];
+  if (!ids.length) { if (WR.firstChild) WR.innerHTML = ""; return; }
+  let box = WR.querySelector(".wmc");
+  if (!box) { WR.innerHTML = '<div class="wbox wmc"></div>'; box = WR.firstElementChild; }
+  for (const el of [...box.children]) if (!ids.includes(el.dataset.id)) el.remove();
+  for (const id of ids) {
+    const a = ACTIVES[id] || FINIS[id], fin = !ACTIVES[id];
+    let el = [...box.children].find(x => x.dataset.id === id);
+    if (!el) {
+      el = document.createElement("div"); el.className = "wmc-m"; el.dataset.id = id;
+      el.innerHTML = '<div class="wmc-h"><i class="hb" aria-hidden="true">♥</i><b></b><span class="mono"></span></div><div class="wmc-flux"></div><div class="wmc-k"></div>';
+      box.appendChild(el);
+    }
+    el.classList.toggle("fin", fin);
+    const nom = el.querySelector("b"); if (nom.textContent !== a.name) nom.textContent = a.name;
+    el.querySelector(".hb").textContent = fin ? "✓" : "♥";
+    el.querySelector(".mono").textContent = fin ? "terminée" : duree(now - a.since);
+    const zone = el.querySelector(".wmc-k"), tk = (TOUCHES[id] || []).filter(x => now - x.t < 2600);
+    const garder = new Set(tk.map(x => String(x.k)));
+    for (const c of [...zone.children]) if (!garder.has(c.dataset.k)) c.remove();
+    const deja = new Set([...zone.children].map(c => c.dataset.k));
+    for (const x of tk) if (!deja.has(String(x.k))) { const c = document.createElement("kbd"); c.dataset.k = x.k; c.textContent = x.l; zone.appendChild(c); }
+    for (const c of zone.children) { const x = tk.find(y => String(y.k) === c.dataset.k); if (x) c.style.opacity = Math.max(.15, 1 - (now - x.t) / 2600).toFixed(2); }
+  }
 }
-function bootWidget(wr) { WR = wr; peindreWidget(); setInterval(peindreWidget, 250); }
+function bootWidget(body, scene, mascotteActive) { WR = body; SCENE = scene || null; MASC_ON = mascotteActive || (() => false); peindreWidget(); setInterval(peindreWidget, 200); }
+/** Aperçu statique du widget (écran de placement). */
+function apercuWidget() {
+  return `<div class="wbox wmc"><div class="wmc-m"><div class="wmc-h"><i class="hb">♥</i><b>Rotation Clerc</b><span class="mono">12 s</span></div><div class="wmc-flux"></div>
+    <div class="wmc-k"><kbd>1</kbd><kbd>2</kbd><kbd>▼ Maj</kbd><kbd>Clic gauche</kbd></div></div>
+    <div class="wmc-m"><div class="wmc-h"><i class="hb">♥</i><b>Burst</b><span class="mono">3 s</span></div><div class="wmc-flux"></div><div class="wmc-k"><kbd>"</kbd></div></div></div>`;
+}
 
 /* ════════ Interface publique ════════ */
 return {
@@ -1115,6 +1156,7 @@ return {
   busy: () => !!(captureRacc || captureCle || menuOuvert),
   escape() { if (menuOuvert) { fermerMenu(); return true; } return false; },
   bootWidget,
+  apercuWidget,
   onSettings() { if ($("#mcSettings")) { renderStatut(); renderReglages(); } }
 };
 })();

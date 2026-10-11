@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>PichetMeter</title>
+<style>
+/* Animation de lancement : verre bleu nuit, mascotte animée, barre de chargement */
+:root { --bleu: #2f6bff; --cyan: #8cc4ff; --rose: #ff7aa8; --ease: cubic-bezier(.2, .8, .2, 1); --spring: cubic-bezier(.3, 1.45, .5, 1); }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; color: #eef4ff; user-select: none; }
+.card { position: absolute; inset: 22px; border-radius: 30px; overflow: hidden; display: grid; grid-template-rows: 1fr auto; justify-items: center; padding: 18px 30px 26px;
+  background: linear-gradient(160deg, rgba(36, 74, 170, .86), rgba(6, 15, 44, .94)); border: 1px solid rgba(190, 215, 255, .28);
+  box-shadow: 0 24px 60px rgba(0, 6, 26, .55), inset 0 1px 0 rgba(255, 255, 255, .22);
+  animation: entree .7s var(--spring) both; }
+.card::before { content: ""; position: absolute; top: 0; left: 50%; width: 132px; height: 3px; margin-left: -66px; border-radius: 0 0 3px 3px;
+  background: linear-gradient(90deg, #2f6bff 0 33.3%, #fff 33.3% 66.6%, #e63946 66.6%); }
+.card::after { content: ""; position: absolute; inset: -40%; background: conic-gradient(from 0deg, transparent 0 70%, rgba(140, 196, 255, .14) 80%, transparent 90%); animation: tour 6s linear infinite; pointer-events: none; }
+body.fin .card { animation: sortie .5s var(--ease) forwards; }
+@keyframes entree { from { opacity: 0; transform: translateY(26px) scale(.86); } }
+@keyframes sortie { to { opacity: 0; transform: translateY(-12px) scale(.92); filter: blur(4px); } }
+@keyframes tour { to { transform: rotate(360deg); } }
+.scene { position: relative; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; z-index: 1; }
+.halo { position: absolute; width: 190px; height: 190px; border-radius: 50%; top: 50%; left: 50%; margin: -95px 0 0 -95px;
+  background: radial-gradient(circle, rgba(140, 196, 255, .42), rgba(47, 107, 255, .12) 55%, transparent 70%); animation: halo 2.4s ease-in-out infinite; }
+@keyframes halo { 50% { transform: scale(1.12); opacity: .75; } }
+.masc { position: relative; height: 172px; max-width: 250px; object-fit: contain; filter: drop-shadow(0 10px 18px rgba(0, 6, 26, .55));
+  animation: pop .8s var(--spring) .15s both, flotte 2.6s ease-in-out 1s infinite; transform-origin: 50% 100%; }
+.masc.saut { animation: saut .6s var(--spring) !important; }
+@keyframes pop { from { opacity: 0; transform: scale(.2) translateY(40px); } }
+@keyframes flotte { 50% { transform: translateY(-7px); } }
+@keyframes saut { 0% { transform: none; } 35% { transform: translateY(-26px) scale(1.06, .95); } 70% { transform: translateY(0) scale(1.08, .9); } 100% { transform: none; } }
+.ombre { width: 120px; height: 14px; border-radius: 50%; background: rgba(0, 6, 26, .45); filter: blur(5px); margin-top: -6px; animation: ombre 2.6s ease-in-out 1s infinite; }
+@keyframes ombre { 50% { transform: scaleX(.82); opacity: .7; } }
+.bas { width: 100%; display: grid; gap: 9px; z-index: 1; animation: monte .6s var(--ease) .25s both; }
+@keyframes monte { from { opacity: 0; transform: translateY(12px); } }
+h1 { margin: 0; text-align: center; font: 800 28px/1.1 "Segoe UI Variable Display", "Segoe UI", sans-serif; letter-spacing: -.01em;
+  background: linear-gradient(100deg, #fff 0%, #cfe0ff 40%, #ffffff 50%, #8cc4ff 60%, #fff 100%); background-size: 250% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: brille 3s linear infinite; }
+@keyframes brille { from { background-position: 100% 0; } to { background-position: -150% 0; } }
+.sous { text-align: center; font: 700 10.5px "Segoe UI", sans-serif; letter-spacing: .3em; color: var(--cyan); margin-top: -4px; }
+.barre { position: relative; height: 10px; border-radius: 99px; background: rgba(0, 8, 30, .55); box-shadow: inset 0 1px 4px rgba(0, 0, 0, .5); overflow: hidden; }
+.barre i { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: 99px; background: linear-gradient(90deg, #2f6bff, #8cc4ff 70%, #ff9ec0);
+  box-shadow: 0 0 12px rgba(140, 196, 255, .8); transition: width .55s var(--ease); }
+.barre i::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .6), transparent); background-size: 60% 100%; background-repeat: no-repeat; animation: reflet 1.2s linear infinite; }
+@keyframes reflet { from { background-position: -60% 0; } to { background-position: 160% 0; } }
+.ligne { display: flex; justify-content: space-between; font-size: 12.5px; color: #a6b9de; font-weight: 600; }
+.ligne b { font: 700 12px "Cascadia Mono", Consolas, monospace; color: #eef4ff; }
+.etoile, .coeur { position: absolute; pointer-events: none; z-index: 2; }
+.etoile { color: #cfe0ff; font-size: 12px; animation: scint 2.2s ease-in-out infinite; text-shadow: 0 0 8px #8cc4ff; }
+@keyframes scint { 0%, 100% { opacity: 0; transform: scale(.4) rotate(0); } 50% { opacity: 1; transform: scale(1) rotate(40deg); } }
+.coeur { color: var(--rose); font-size: 18px; text-shadow: 0 0 10px rgba(255, 122, 168, .9); animation: coeur 1.3s var(--ease) forwards; }
+@keyframes coeur { from { opacity: 1; transform: translate(0, 0) scale(.5); } to { opacity: 0; transform: translate(var(--dx), -130px) scale(1.25) rotate(var(--r)); } }
+body.calme *, body.calme *::before, body.calme *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+</style>
+</head>
+<body>
+<div class="card" id="card">
+  <div class="scene" id="scene"><div class="halo"></div><img class="masc" id="masc" alt="" draggable="false"><div class="ombre"></div></div>
+  <div class="bas">
+    <h1>PichetMeter</h1>
+    <div class="sous" id="sous">AION 2</div>
+    <div class="barre" role="progressbar" aria-label="Chargement" aria-valuemin="0" aria-valuemax="100" id="barre"><i id="prog"></i></div>
+    <div class="ligne"><span id="etape">Démarrage…</span><b id="pct">0 %</b></div>
+  </div>
+</div>
+<script>
+(() => {
+  "use strict";
+  const q = new URLSearchParams(location.search), $ = id => document.getElementById(id);
+  const img = $("masc");
+  img.src = q.get("m") || "img/logo.png";
+  img.onerror = () => { if (!img.src.endsWith("img/logo.png")) img.src = "img/logo.png"; };
+  $("sous").textContent = "AION 2 · VERSION " + (q.get("v") || "");
+  if (q.get("a") === "0" || matchMedia("(prefers-reduced-motion: reduce)").matches) document.body.classList.add("calme");
+  const card = $("card");
+  for (let i = 0; i < 14; i++) {
+    const e = document.createElement("span");
+    e.className = "etoile"; e.textContent = i % 3 ? "✦" : "★";
+    e.style.left = (6 + Math.random() * 88) + "%"; e.style.top = (6 + Math.random() * 60) + "%";
+    e.style.animationDelay = (Math.random() * 2.2).toFixed(2) + "s"; e.style.fontSize = (8 + Math.random() * 9) + "px";
+    card.appendChild(e);
+  }
+  function coeurs(n) {
+    const r = img.getBoundingClientRect(), c = card.getBoundingClientRect();
+    for (let i = 0; i < n; i++) setTimeout(() => {
+      const h = document.createElement("span");
+      h.className = "coeur"; h.textContent = "♥";
+      h.style.left = (r.left - c.left + r.width / 2 - 8 + (Math.random() - .5) * 60) + "px"; h.style.top = (r.top - c.top + r.height * .35) + "px";
+      h.style.setProperty("--dx", ((Math.random() - .5) * 120).toFixed(0) + "px"); h.style.setProperty("--r", ((Math.random() - .5) * 60).toFixed(0) + "deg");
+      card.appendChild(h); setTimeout(() => h.remove(), 1400);
+    }, i * 90);
+  }
+  let affiche = 0, cible = 0, fini = false;
+  function etape(p, t) {
+    cible = Math.max(cible, Math.min(1, p));
+    $("prog").style.width = (cible * 100).toFixed(1) + "%";
+    $("barre").setAttribute("aria-valuenow", String(Math.round(cible * 100)));
+    if (t) $("etape").textContent = t;
+    if (cible >= 1 && !fini) { fini = true; img.classList.remove("saut"); void img.offsetWidth; img.classList.add("saut"); coeurs(9); }
+  }
+  (function compteur() { affiche += (cible - affiche) * .12; $("pct").textContent = Math.round(affiche * 100) + " %"; requestAnimationFrame(compteur); })();
+  const b = window.__bridge;
+  if (b) b.onPush(m => { if (m.type !== "splash") return; if (m.fin) document.body.classList.add("fin"); else etape(m.p, m.t); });
+  else { let p = 0; const t = setInterval(() => { p += .2; etape(p, p >= 1 ? "Prêt !" : "Chargement…"); if (p >= 1) clearInterval(t); }, 500); } // aperçu hors application
+})();
+</script>
+</body>
+</html>

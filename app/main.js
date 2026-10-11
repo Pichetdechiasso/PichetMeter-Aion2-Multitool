@@ -10,6 +10,7 @@ const fs = require("fs");
 const net = require("net");
 const dns = require("dns").promises;
 const readline = require("readline");
+const { pathToFileURL } = require("url");
 const { spawn } = require("child_process");
 const { lireNombre, SuiviCombat } = require("./dpslogic");
 const { Analyseur, DemoGroupe } = require("./reseau");
@@ -99,6 +100,7 @@ const CMD_FICHIERS = new Set(["import", "export", "export_all"]);
 /* ════════ Fenêtre principale ════════ */
 let main = null;
 let mainVisible = true;
+let principalePrete = false, splashEnCours = null;
 function ecran() {
   if (statut.rectDip) { try { return screen.getDisplayMatching(statut.rectDip); } catch { /* écran déconnecté */ } }
   return screen.getPrimaryDisplay();
@@ -136,6 +138,8 @@ function creerPrincipale() {
   main.loadFile(UI);
   main.once("ready-to-show", async () => {
     appliquerAffichage();
+    principalePrete = true;
+    if (splashEnCours) await splashEnCours; // l'interface glisse à l'écran une fois l'animation de lancement terminée
     if (!mainVisible) return;
     await envoyerFond();
     if (!mainVisible || !vivante(main)) return;
@@ -189,7 +193,7 @@ async function basculer() {
 const KINDS = ["timers", "ping", "map", "dps", "cd", "macro"];
 const widgets = {};
 function configWidget(kind) {
-  if (kind === "toast") { const a = S.alerts || {}; return { size: a.size || "m", opacity: 97, click: true, pos: a.pos || "br" }; }
+  if (kind === "toast") { const a = S.alerts || {}; return { size: a.size || "m", scale: a.scale, opacity: 97, click: true, pos: a.pos || "br", x: a.x, y: a.y }; }
   return W(kind);
 }
 function ouvrirWidget(kind) {
@@ -292,6 +296,7 @@ function deplace(kind) {
 const jeuDevant = () => !!statut.fg || (!!statut.fgpid && statut.fgpid === process.pid);
 const filtrePremierPlan = () => IS_WIN && !!(S.display && S.display.widgetsFg) && !!assistant.pret;
 function doitAfficher(kind) {
+  if (vivante(placement)) return false; // écran de placement ouvert : il montre ses propres aperçus
   const o = widgets[kind];
   if (o && o.apercu > Date.now()) return true;
   if (kind === "toast") return false;
@@ -465,6 +470,89 @@ function basculerViseur() {
   diffuserReglages();
   synchroniserViseur();
   majTray();
+}
+
+/* ════════ Mascottes (GIF animés ou PNG transparents) ════════ */
+// Dossiers : les tiennes (%APPDATA%\PichetMeter\mascottes), celles de la version perso (app\mascottes), celles de Pichet Macro
+function dossiersMascottes() {
+  const d = [path.join(DATA, "mascottes"), path.join(__dirname, "mascottes")];
+  if (process.env.LOCALAPPDATA) d.push(path.join(process.env.LOCALAPPDATA, "PichetMacro", "mascottes"));
+  return d;
+}
+function mascottes() {
+  const vus = new Set(), out = [];
+  for (const dossier of dossiersMascottes()) {
+    let noms = [];
+    try { noms = fs.readdirSync(dossier); } catch { continue; }
+    for (const n of noms.sort()) {
+      if (!/\.(gif|png|webp|apng)$/i.test(n) || vus.has(n.toLowerCase())) continue;
+      vus.add(n.toLowerCase());
+      out.push({ nom: n.replace(/\.[^.]+$/, ""), url: pathToFileURL(path.join(dossier, n)).href });
+    }
+  }
+  return out;
+}
+
+/* ════════ Écran de placement des widgets (page transparente sur tout l'écran) ════════ */
+let placement = null;
+function ouvrirPlacement(kind) {
+  if (vivante(placement)) { placement.focus(); return true; }
+  const b = ecran().bounds;
+  placement = new BrowserWindow({ x: b.x, y: b.y, width: b.width, height: b.height, show: false, frame: false, transparent: true, backgroundColor: "#00000000",
+    resizable: false, movable: false, skipTaskbar: true, hasShadow: false, alwaysOnTop: true, title: `${APP_NAME} · placement des widgets`, webPreferences: PREFS });
+  placement.setAlwaysOnTop(true, "screen-saver");
+  securiser(placement);
+  placement.loadFile(UI, { hash: "w=layout" + (kind ? "&k=" + encodeURIComponent(kind) : "") });
+  placement.webContents.on("did-finish-load", () => {
+    const d = ecran();
+    pousser(placement, { type: "layout", bounds: d.bounds, wa: d.workArea });
+    pousser(placement, { type: "dps", etat: dpsEtat });
+    pousser(placement, { type: "cd", debuts: cdDebuts });
+  });
+  placement.once("ready-to-show", () => { if (!vivante(placement)) return; placement.setBounds(b); placement.show(); placement.focus(); });
+  placement.on("closed", () => { placement = null; synchroniserWidgets(); if (!mainVisible) basculer(); });
+  // l'interface et les vrais widgets se retirent pendant le placement
+  if (mainVisible && vivante(main)) { main.hide(); mainVisible = false; pousser(main, { type: "hidden", v: true }); }
+  synchroniserWidgets();
+  return true;
+}
+
+/* ════════ Animation de lancement ════════ */
+let splash = null;
+function etapeSplash(p, t) { if (vivante(splash)) pousser(splash, { type: "splash", p, t }); }
+async function sequenceSplash() {
+  const debut = Date.now();
+  const jusqua = (ok, max) => new Promise(r => { const t0 = Date.now(); const f = () => { if (ok() || Date.now() - t0 > max) r(); else setTimeout(f, 80); }; f(); });
+  await jusqua(() => vivante(splash) && splash.isVisible(), 3000);
+  etapeSplash(.14, "Chargement des réglages…");
+  await jusqua(() => principalePrete, 6000);
+  etapeSplash(.38, "Interface prête");
+  await jusqua(() => !IS_WIN || assistant.pret || !!assistant.erreur, 3500);
+  etapeSplash(.58, "Module Windows");
+  if (macrosActives()) {
+    etapeSplash(.7, macros.texte || "Moteur de macros…");
+    await jusqua(() => ["ready", "error", "stopped"].includes(macros.phase), 7000);
+    etapeSplash(.86, macros.phase === "ready" ? "Macros prêtes" : "Macros : voir l'onglet");
+  } else etapeSplash(.86, "Widgets");
+  await attendre(Math.max(0, 1700 - (Date.now() - debut)));
+  etapeSplash(1, "Prêt !");
+  await attendre(700);
+  if (vivante(splash)) pousser(splash, { type: "splash", fin: true });
+  await attendre(520);
+  if (vivante(splash)) splash.destroy();
+  splash = null;
+}
+function lancerSplash() {
+  if (S.display && S.display.splash === false) return null;
+  const d = screen.getPrimaryDisplay().workArea, W = 480, H = 400;
+  const liste = mascottes(), m = liste.length ? liste[Math.floor(Math.random() * liste.length)].url : "";
+  splash = new BrowserWindow({ x: d.x + Math.round((d.width - W) / 2), y: d.y + Math.round((d.height - H) / 2), width: W, height: H, show: false, frame: false, transparent: true,
+    resizable: false, skipTaskbar: true, focusable: false, hasShadow: false, alwaysOnTop: true, backgroundColor: "#00000000", title: APP_NAME, icon: ICON, webPreferences: PREFS });
+  splash.setAlwaysOnTop(true, "screen-saver");
+  securiser(splash);
+  splash.loadFile(path.join(__dirname, "splash.html"), { query: { m, v: app.getVersion(), a: animations() ? "1" : "0" } });
+  splash.once("ready-to-show", () => { if (vivante(splash)) splash.showInactive(); });
+  return sequenceSplash().catch(e => { log("Animation de lancement :", e); if (vivante(splash)) splash.destroy(); splash = null; });
 }
 
 /* ════════ Raccourcis globaux ════════ */
@@ -1148,6 +1236,19 @@ const API = {
   open_logs: () => { shell.openPath(DATA); return true; },
   open_licence: () => { shell.openPath(path.join(__dirname, "COPYING.txt")); return true; },
   // ── Macros ──
+  mascots_list: () => mascottes(),
+  mascots_folder: () => { const d = path.join(DATA, "mascottes"); fs.mkdirSync(d, { recursive: true }); shell.openPath(d); return true; },
+  layout_open: (e, kind) => ouvrirPlacement(kind ? String(kind) : ""),
+  layout_close: () => { if (vivante(placement)) placement.close(); return true; },
+  layout_save: (e, cfgs, alertes) => {
+    S.widgets = S.widgets || {};
+    for (const [k, v] of Object.entries(cfgs || {})) if (KINDS.includes(k) && v && typeof v === "object") S.widgets[k] = { ...W(k), ...v };
+    if (alertes && typeof alertes === "object") S.alerts = { ...(S.alerts || {}), ...alertes };
+    ecrireReglages(); diffuserReglages();
+    for (const k of [...KINDS, "toast"]) { appliquerWidget(k); placer(k); }
+    if (vivante(placement)) placement.close();
+    return true;
+  },
   macro_status: async () => { if (IS_WIN) await macros.verifierAutonome(); return macros.etat(); },
   macro_start: () => macros.demarrer(true),
   macro_enable: (e, on) => {
@@ -1187,6 +1288,7 @@ ipcMain.handle("api", async (e, methode, args) => {
 function demarrer() {
   Menu.setApplicationMenu(null);
   log("Démarrage", APP_NAME, app.getVersion(), "Electron", process.versions.electron);
+  splashEnCours = lancerSplash();
   creerPrincipale();
   enregistrerRaccourcis();
   assistant.demarrer();
@@ -1197,7 +1299,7 @@ function demarrer() {
   creerTray();
   // widgets épinglés préparés en arrière-plan pour un affichage instantané
   setTimeout(() => { for (const k of KINDS) if (W(k).pinned) ouvrirWidget(k); }, 1500);
-  if (macrosActives()) setTimeout(() => macros.demarrer(true), 1200);
+  if (macrosActives()) setTimeout(() => macros.demarrer(true), splashEnCours ? 0 : 1200);
   screen.on("display-metrics-changed", () => { appliquerAffichage(); for (const k of KINDS) placer(k); synchroniserViseur(); });
 }
 if (!PREMIERE_INSTANCE) { log("PichetMeter est déjà lancé : l'instance ouverte est réaffichée"); app.quit(); }

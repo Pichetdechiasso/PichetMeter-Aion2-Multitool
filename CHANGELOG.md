@@ -1,5 +1,12 @@
 # Journal des versions
 
+## 2.1.0 (version personnelle)
+
+- **Écran de placement des widgets** (`#w=layout`) : page transparente sur tout l'écran avec un aperçu de chaque widget ; déplacement avec magnétisme, taille continue (50 à 250 %, coin), opacité, clic à travers, affichage en jeu et mascotte. Remplace les options de position des onglets.
+- **Mascottes animées** (`mascottes.js`) dans les widgets Macros, DPS meter et Timers ; dossier personnel `%APPDATA%\PichetMeter\mascottes`.
+- **Widget Macros** réécrit (rendu incrémental, animations d'entrée, flux de touches, fin de macro).
+- **Animation de lancement** (`splash.html`) avec étapes de chargement réelles (interface, module Windows, moteur de macros).
+
 ## 2.0.0 (version personnelle)
 
 - **Pichet Macro intégré** : onglet **Macros** (liste, éditeur de nœuds façon Blueprint, panneau Détails, enregistrement, lecture, réglages du driver) et widget en jeu des macros en cours. Le moteur de Pichet Macro (`app/macro/`, driver Interception) tourne sans Qt ; PichetMeter le pilote en JSON (`app/macros.js`). Macros et réglages partagés avec Pichet Macro (`~/.pichet_macro`).

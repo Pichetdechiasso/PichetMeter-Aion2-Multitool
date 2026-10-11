@@ -1,4 +1,4 @@
-﻿PICHETMETER — version 2.0.0 (version personnelle : PichetMeter + Pichet Macro)
+﻿PICHETMETER — version 2.1.0 (version personnelle : PichetMeter + Pichet Macro)
 Compagnon pour Aion 2 : armurerie, classement, tâches, timers, DPS meter de groupe, cooldowns,
 viseur et carte, affichés par-dessus le jeu.
 Créateur : @atomedims · Discord : https://discord.gg/KrkJrjrDJt
@@ -34,6 +34,16 @@ DANS LE JEU
 - Option « Seulement quand le jeu est au premier plan » (Paramètres > Modules en jeu) :
   les widgets se cachent dès que tu passes sur Discord, ton navigateur, etc.
 - L'icône dans la zone de notification (près de l'horloge) permet aussi d'afficher l'overlay ou de quitter.
+
+NOUVEAUTÉS 2.1.0 (version personnelle)
+- Écran de placement des widgets : une page transparente par-dessus le jeu montre tous les widgets.
+  Glisse-les (magnétisme sur les bords et entre widgets), tire leur coin pour la taille, règle opacité,
+  clic à travers, affichage en jeu et mascotte. Bouton « Placer et régler les widgets » dans chaque onglet.
+- Mascottes animées dans les widgets : Macros (à l'appui d'une macro), DPS meter (pendant les combats),
+  Timers (5 minutes avant la fin d'un timer, avec une bulle). Tirées au hasard, jamais deux fois de suite.
+  Ajoute les tiennes (GIF ou PNG transparents) : Paramètres > Mascottes > Ouvrir le dossier.
+- Widget Macros animé : entrée en glissé, battement, flux des touches envoyées, fin en « ✓ terminée ».
+- Animation de lancement avec mascotte et barre de chargement (désactivable dans Paramètres).
 
 NOUVEAUTÉS 2.0.0 (version personnelle)
 - Pichet Macro intégré : nouvel onglet « Macros » avec l'éditeur de nœuds, l'enregistrement (F8),

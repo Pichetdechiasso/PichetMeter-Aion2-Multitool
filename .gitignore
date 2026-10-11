@@ -11,3 +11,6 @@ Thumbs.db
 # Python
 __pycache__/
 *.pyc
+
+# Mascottes personnelles (jamais publiées)
+app/mascottes/
