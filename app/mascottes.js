@@ -96,7 +96,7 @@ window.Mascottes = (() => {
       if (this.etat === "off") { if (apres) apres(); return; }
       clearTimeout(this.minuteur);
       this.etat = "idle"; this.classes("fete"); this.coeurs(9);
-      const combos = [["danse", "confetti"], ["explosion", "etoiles"], ["tourne", "confetti"], ["secoue", "explosion"], ["danse", "etoiles"]];
+      const combos = [["danse", "confetti"], ["explosion", "etoiles"], ["tourne", "confetti"], ["danse", "explosion"], ["danse", "etoiles"]];
       for (const e of combos[Math.floor(Math.random() * combos.length)]) this.effet(e);
       this.minuteur = setTimeout(() => { if (puisCacher) this.cacher(apres); else { this.classes("idle"); if (apres) apres(); } }, reduit() ? 300 : 2300);
     }

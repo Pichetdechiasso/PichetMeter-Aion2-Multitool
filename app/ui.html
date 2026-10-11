@@ -751,9 +751,9 @@ body.widget.xh svg { display: block; width: 300px; height: 300px; }
 /* ════════ Couche « verre » (glassmorphism) ════════ */
 .neu-extruded { background: var(--bg); border: 1px solid var(--edge); }
 .topbar { position: relative; z-index: 20; }
-.card.neu-extruded, .topbar, .menu, .welcome .box { -webkit-backdrop-filter: blur(14px) saturate(150%); backdrop-filter: blur(14px) saturate(150%); }
+.menu, .welcome .box { -webkit-backdrop-filter: blur(14px) saturate(150%); backdrop-filter: blur(14px) saturate(150%); }
 .shell, body.desktop:not(.winmode):not(.widget) .shell { background: var(--panel); }
-body.desktop:not(.winmode):not(.widget) .shell { -webkit-backdrop-filter: blur(22px) saturate(160%); backdrop-filter: blur(22px) saturate(160%);
+body.desktop:not(.winmode):not(.widget) .shell { 
   border: 1px solid var(--edge); box-shadow: 0 30px 90px rgba(0, 6, 26, .45), inset 0 1px 0 rgba(255, 255, 255, .18); }
 .shell::before { content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 132px; height: 3px; border-radius: 0 0 3px 3px; z-index: 3;
   background: linear-gradient(90deg, var(--bleu) 0 33.3%, var(--blanc) 33.3% 66.6%, var(--rouge) 66.6% 100%); opacity: .9; }
@@ -978,6 +978,8 @@ body.desktop:not(.winmode):not(.widget) #backdrop { display: block; position: fi
 body.desktop:not(.winmode):not(.widget) .shell { width: 100vw; height: 100vh; border-radius: 0 28px 28px 0; padding: 16px 0 0 18px; border-left: 0;
   transform-origin: 0 50%; transition: transform .38s var(--ease-out), opacity .24s var(--ease-out); }
 body.desktop:not(.winmode):not(.widget) #backdrop { transition: transform .38s var(--ease-out), opacity .3s var(--ease-out); }
+body.desktop:not(.winmode):not(.widget) .shell, body.desktop:not(.winmode):not(.widget) #backdrop { will-change: transform, opacity; backface-visibility: hidden; }
+#backdrop .img { transform: translateZ(0); }
 body.desktop.ov-out:not(.widget):not(.winmode) .shell, body.desktop.ov-out:not(.widget):not(.winmode) #backdrop {
   opacity: .15; transform: translateX(-102%); transition: transform .19s var(--ease-in), opacity .19s var(--ease-in); pointer-events: none; }
 body.desktop:not(.winmode):not(.widget) .shell::before { left: 22px; transform: none; }
@@ -988,7 +990,7 @@ body.desktop:not(.winmode):not(.widget) #drawerGrip { display: block; position: 
 body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
 /* Verre dépoli renforcé : panneaux translucides sur le jeu flouté */
 :root:not([data-theme="light"]) body.desktop:not(.winmode):not(.widget) .shell { background: linear-gradient(165deg, rgba(46, 88, 190, .30), rgba(6, 16, 46, .55));
-  -webkit-backdrop-filter: blur(26px) saturate(170%); backdrop-filter: blur(26px) saturate(170%); border: 1px solid rgba(190, 215, 255, .2); border-left: 0;
+  border: 1px solid rgba(190, 215, 255, .2); border-left: 0;
   box-shadow: 20px 0 70px rgba(0, 6, 26, .5), inset -1px 0 0 rgba(255, 255, 255, .1), inset 0 1px 0 rgba(255, 255, 255, .12); }
 :root:not([data-theme="light"]) .card.neu-extruded, :root:not([data-theme="light"]) .topbar.neu-extruded {
   background: linear-gradient(155deg, rgba(255, 255, 255, .10), rgba(255, 255, 255, .025)); border: 1px solid rgba(190, 215, 255, .16);
@@ -3631,11 +3633,17 @@ function bootWidget(kind) {
     corps = $("#wBody");
     if (MASC_KINDS.includes(kind)) installerMascotte(kind);
   }
+  let taille = [0, 0], retrecir = null;
   const fit = () => {
     if (kind === "crosshair" || kind === "picker") return;
     const vide = corps === wr ? !wr.firstElementChild : (!corps.firstElementChild && !$("#wSlot").classList.contains("on"));
-    const r = wr.getBoundingClientRect();
-    api()?.widget_fit(kind, vide ? 0 : Math.ceil(r.width), vide ? 0 : Math.ceil(r.height));
+    const r = wr.getBoundingClientRect(), w = vide ? 0 : Math.ceil(r.width), h = vide ? 0 : Math.ceil(r.height);
+    const envoyer = (x, y) => { if (x === taille[0] && y === taille[1]) return; taille = [x, y]; api()?.widget_fit(kind, x, y); };
+    clearTimeout(retrecir);
+    if (vide || w >= taille[0] && h >= taille[1] || !taille[0]) { envoyer(w, h); return; }
+    // plus petit : on garde la taille actuelle (agrandie si besoin), puis on rétrécit quand le contenu ne bouge plus
+    envoyer(Math.max(w, taille[0]), Math.max(h, taille[1]));
+    retrecir = setTimeout(() => { const q = wr.getBoundingClientRect(); taille = [0, 0]; envoyer(Math.ceil(q.width), Math.ceil(q.height)); }, 1500);
   };
   if (kind !== "crosshair" && kind !== "picker") {
     const zoom = () => { wr.style.zoom = kind === "map" ? 1 : wEchelle(kind); requestAnimationFrame(fit); };
@@ -3649,7 +3657,7 @@ function bootWidget(kind) {
         .map(x => ({ ...x, k: x.n.ready ? 0 : finEnCours(x.t, x.n, now) ? 1 : x.n.at })).sort((a, b) => a.k - b.k).slice(0, 5).map(x => x.t);
       $("#wTimers").innerHTML = ts.map(wTimerRow).join("") || '<span class="note">Aucun timer actif</span>'; tickTimers();
     };
-    paint(); setInterval(() => { tickTimers(); mascotteTimers(); }, 1000); setInterval(paint, 15000); onSettingsChanged.push(paint);
+    paint(); setInterval(tickTimers, 1000); setInterval(paint, 15000); onSettingsChanged.push(paint);
   }
   if (kind === "ping") {
     corps.innerHTML = `<div class="wbox wp pywebview-drag-region">
@@ -3744,7 +3752,7 @@ if (!WIDGET) $$("[data-reglages]").forEach(rangerReglages);
 window.rangerReglages = rangerReglages;
 
 /* ════════ Mascottes des widgets (Macros, DPS meter, Timers) ════════ */
-const MASC_KINDS = ["macro", "dps", "timers"];
+const MASC_KINDS = ["macro", "dps"]; // pas de mascotte sur le widget Timers
 const mascOn = k => !!(S.mascots && S.mascots.on !== false && S.mascots[k] !== false);
 const wEchelle = k => { const c = k === "toast" ? (S.alerts || {}) : (S.widgets[k] || {}); return Math.max(.4, Math.min(3, +c.scale || SCALE[c.size] || 1)); };
 const wCorps = () => $("#wBody") || $("#widgetRoot");
@@ -3820,11 +3828,10 @@ async function renderMascSettings() {
   box.innerHTML = `<div class="card-head"><div><h2>Mascottes &amp; animations</h2><span class="sub">Tes mascottes animées dans les widgets</span></div></div>
     <label class="set-item"><span><span class="t">Mascottes animées</span><span class="d">Une mascotte au hasard, jamais deux fois de suite la même</span></span>
       <span class="switch"><input type="checkbox" data-msc="on" role="switch" ${m.on !== false ? "checked" : ""}><span class="track"></span><span class="knob"></span></span></label>
-    <div class="form-row"><span class="label">Widgets</span><div class="chips">${tg("macro", "Macros · à l'appui")}${tg("dps", "DPS meter · en combat")}${tg("timers", "Timers · avant la fin")}</div></div>
+    <div class="form-row"><span class="label">Widgets</span><div class="chips">${tg("macro", "Macros · à l'appui")}${tg("dps", "DPS meter · en combat")}</div></div>
     <label class="set-item"><span><span class="t">Effets spéciaux</span><span class="d">Explosions, danses, pirouettes, confettis et étoiles</span></span>
       <span class="switch"><input type="checkbox" data-msc="fx" role="switch" ${m.fx !== false ? "checked" : ""}><span class="track"></span><span class="knob"></span></span></label>
     <div class="form-row"><span class="label">Taille des mascottes</span><div class="slider-row"><input type="range" min="60" max="220" step="5" value="${m.size || 110}" data-msc="size" aria-label="Taille des mascottes"><span class="mono" id="mscSzV">${m.size || 110} px</span></div></div>
-    <label class="form-row"><span class="label">Timers : apparition avant la fin (minutes)</span><input class="field sm mono" type="number" min="1" max="60" value="${m.lead || 5}" data-msc="lead" style="max-width:120px"></label>
     <label class="set-item"><span><span class="t">Animation de lancement</span><span class="d">Mascotte et barre de chargement au démarrage du logiciel</span></span>
       <span class="switch"><input type="checkbox" id="optSplash" role="switch" ${S.display.splash !== false ? "checked" : ""}><span class="track"></span><span class="knob"></span></span></label>
     <h3 class="reg-t">Mes mascottes</h3>
@@ -3983,7 +3990,7 @@ function bootLayout() {
     box.innerHTML = `<h3>${esc(L_NOMS[k])}</h3>
       ${k === "toast" ? '<p class="note">Les alertes d\'événements apparaissent ici.</p>' : sw("pinned", !!c.pinned, "Afficher en jeu", "Quand l'interface est masquée")}
       ${k === "toast" ? "" : sw("click", !!c.click, "Clic à travers", "Les clics passent au jeu")}
-      ${masc ? sw("masc", M.on !== false && M[k] !== false, "Mascotte animée", k === "macro" ? "À l'appui d'une macro" : k === "dps" ? "Pendant les combats" : `${M.lead || 5} min avant la fin d'un timer`) : ""}
+      ${masc ? sw("masc", M.on !== false && M[k] !== false, "Mascotte animée", k === "macro" ? "À l'appui d'une macro" : "Pendant les combats") : ""}
       ${k === "map" ? `<p class="note">Taille : ${mapTaille().join(" × ")} px (tire le coin)</p>` : `<div class="form-row"><span class="label">Taille</span><div class="slider-row"><input type="range" min="50" max="250" step="5" data-i="scale" value="${Math.round(echelle(k) * 100)}"><span class="mono">${Math.round(echelle(k) * 100)} %</span></div></div>`}
       ${k === "toast" || k === "map" ? "" : `<div class="form-row"><span class="label">Opacité</span><div class="slider-row"><input type="range" min="20" max="100" step="5" data-i="opacity" value="${c.opacity ?? 90}"><span class="mono">${c.opacity ?? 90} %</span></div></div>`}
       <div class="lt-chips"><button type="button" class="btn sm" data-i="defaut">Position par défaut</button></div>`;

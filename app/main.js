@@ -279,8 +279,10 @@ function placer(kind) {
       y += p[0] === "b" ? -(a.h + 8) : a.h + 8;
     }
   }
+  const cible = { x: Math.round(x), y: Math.round(y), width: o.w, height: o.h }, b = o.win.getBounds();
+  if (b.x === cible.x && b.y === cible.y && b.width === cible.width && b.height === cible.height) return; // rien ne bouge : pas de redimensionnement
   o.placement = Date.now();
-  o.win.setBounds({ x: Math.round(x), y: Math.round(y), width: o.w, height: o.h });
+  o.win.setBounds(cible);
   if (o.vue) o.vue.setBounds({ x: 0, y: ENTETE_CARTE, width: o.w, height: Math.max(0, o.h - ENTETE_CARTE) });
 }
 function deplace(kind) {

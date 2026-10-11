@@ -1,5 +1,11 @@
 # Journal des versions
 
+## 2.2.1 (version personnelle)
+
+- Widget DPS : mise à jour en place (`dps-course.js`, morph par clé `data-jid`), bannière en position absolue, taille de fenêtre stable (rétrécissement différé de 1,5 s, `placer` ignore les positions identiques) : plus de tremblement.
+- Fluidité : effets de dépassement sans `filter`, transitions de largeur des barres, suppression des flous empilés (cartes, coque, nœuds de l'éditeur).
+- Widget Timers sans mascotte.
+
 ## 2.2.0 (version personnelle)
 
 - **DPS meter** : animations de course (`dps-course.js`, FLIP), bannière de leader, couronne, défilement des chiffres, palettes Néon et Podium.

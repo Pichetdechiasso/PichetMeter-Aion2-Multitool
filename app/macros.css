@@ -80,7 +80,7 @@
 
 .mg-node { position: absolute; width: 214px; border-radius: 14px; cursor: default; user-select: none; color: #eef4ff;
   background: linear-gradient(160deg, rgba(26, 44, 92, .86), rgba(9, 18, 44, .9)); border: 1px solid color-mix(in srgb, var(--nc) 45%, rgba(170, 205, 255, .18));
-  box-shadow: 0 10px 26px rgba(0, 6, 26, .5), inset 0 1px 0 rgba(255, 255, 255, .1); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  box-shadow: 0 10px 26px rgba(0, 6, 26, .5), inset 0 1px 0 rgba(255, 255, 255, .1);
   transition: box-shadow .2s, border-color .2s; }
 .mg-node:hover { border-color: color-mix(in srgb, var(--nc) 75%, transparent); }
 .mg-node.sel { box-shadow: 0 0 0 2px var(--nc), 0 12px 32px rgba(0, 6, 26, .6), 0 0 22px color-mix(in srgb, var(--nc) 45%, transparent); }
@@ -105,7 +105,7 @@
 .mg-pin.out:hover { transform: scale(1.35); background: #fff; }
 .mg-nh .mg-pin.out { margin-left: auto; }
 .mg-hud { position: absolute; right: 10px; bottom: 10px; display: flex; align-items: center; gap: 6px; padding: 5px; border-radius: 13px;
-  background: rgba(8, 18, 44, .72); border: 1px solid rgba(170, 205, 255, .18); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+  background: rgba(8, 18, 44, .72); border: 1px solid rgba(170, 205, 255, .18); }
 .mg-hud .sep { width: 1px; height: 18px; background: rgba(170, 205, 255, .2); }
 .mg-hud .mono { font-size: 11px; min-width: 40px; text-align: center; color: #cfe0ff; }
 .mg-hud .btn svg { width: 14px; height: 14px; }
