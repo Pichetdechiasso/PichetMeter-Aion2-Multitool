@@ -994,6 +994,17 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
   background: linear-gradient(155deg, rgba(255, 255, 255, .10), rgba(255, 255, 255, .025)); border: 1px solid rgba(190, 215, 255, .16);
   box-shadow: 0 10px 30px rgba(0, 6, 26, .3), inset 0 1px 0 rgba(255, 255, 255, .14); }
 :root[data-theme="light"] .card.neu-extruded { background: linear-gradient(155deg, rgba(255, 255, 255, .62), rgba(255, 255, 255, .34)); border: 1px solid rgba(255, 255, 255, .8); }
+/* ════════ Réglages en onglets ════════ */
+.reg-nav { grid-column: 1 / -1; display: flex; gap: 6px; flex-wrap: wrap; padding: 6px; border-radius: 18px; background: var(--well); border: 1px solid var(--edge); }
+.reg-nav button { display: inline-flex; align-items: center; gap: 7px; font: 700 13px var(--f-body); color: var(--muted); background: transparent; border: 0; padding: 8px 13px; border-radius: 12px; cursor: pointer;
+  transition: background .2s, color .2s, box-shadow .2s; }
+.reg-nav button svg { width: 16px; height: 16px; }
+.reg-nav button:hover { color: var(--fg); background: rgba(255, 255, 255, .06); }
+.reg-nav button[aria-selected="true"] { color: var(--fg); background: linear-gradient(135deg, rgba(79, 149, 255, .38), rgba(37, 99, 235, .2)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 3px 10px rgba(0, 10, 40, .25); }
+.reg-nav button[aria-selected="true"] svg { color: var(--cyan); }
+[data-reglages] > [data-sec]:not([hidden]) { animation: vueIn .35s var(--ease-out) both; }
+.reg-t { font: 800 11px var(--f-body); letter-spacing: .12em; text-transform: uppercase; color: var(--cyan); margin: 6px 0 -4px; padding-top: 10px; border-top: 1px solid var(--line); }
+#view-params[data-reglages] { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
 </style>
 <link rel="stylesheet" href="macros.css">
 <link rel="stylesheet" href="widgets.css">
@@ -1217,8 +1228,8 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
       <div class="timers" id="timerList"></div>
       <p class="note">Horaires des serveurs Europe relevés par la communauté depuis l'ouverture. Si un événement démarre à une autre heure chez toi, clique <b>Recaler</b> au moment où il commence : le timer se cale dessus. Le crayon permet aussi de modifier l'horaire.</p>
     </section>
-    <div class="span-5 stack">
-      <section class="card neu-extruded" id="srvCard">
+    <div class="span-5 stack" data-reglages="timers" data-ordre="Timer,Alertes,Serveur,Widget">
+      <section class="card neu-extruded" id="srvCard" data-sec="Serveur">
         <div class="card-head"><div><h2>Serveur des événements</h2><span class="sub">Les horaires en heure serveur suivent son fuseau</span></div>
           <span class="badge info" id="srvClock">--:--</span></div>
         <div class="two">
@@ -1230,7 +1241,7 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
         <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sm" id="srvRefresh">Actualiser la liste des serveurs</button><button class="btn sm" id="srvMine">Prendre mon serveur</button></div>
         <p class="note" id="srvNote">La liste vient de l'armurerie officielle : les nouveaux serveurs y apparaissent dès leur ouverture.</p>
       </section>
-      <section class="card neu-extruded">
+      <section class="card neu-extruded" data-sec="Timer">
         <div class="card-head"><div><h2 id="tfTitle">Ajouter un timer</h2><span class="sub">Boss de terrain, sortie de légion, craft…</span></div></div>
         <form class="tform" id="tForm" autocomplete="off">
           <div class="form-row full"><label class="label" for="tfName">Nom</label><input class="field sm" id="tfName" required maxlength="40" placeholder="Ex : Boss de terrain Ignis"></div>
@@ -1257,7 +1268,7 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
           </div>
         </form>
       </section>
-      <section class="card neu-extruded" id="alertCard">
+      <section class="card neu-extruded" id="alertCard" data-sec="Alertes">
         <div class="card-head"><div><h2>Alertes</h2><span class="sub">Pop-up affichée même quand l'overlay est masqué</span></div>
           <button class="btn sm primary" id="testToast">Tester l'alerte</button></div>
         <div class="form-row"><span class="label">Prévenir</span>
@@ -1274,7 +1285,7 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
             <div class="slider-row"><input type="range" id="alVol" min="0" max="100" step="5" aria-label="Volume de l'alerte"><span class="mono" id="alVolV"></span></div></div>
         </div>
       </section>
-      <section class="card neu-extruded wpanel" data-widget="timers"></section>
+      <section class="card neu-extruded wpanel" data-widget="timers" data-sec="Widget"></section>
     </div>
   </div>
 
@@ -1312,9 +1323,9 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
           <tbody id="dpsHist"></tbody></table></div>
       </section>
     </div>
-    <div class="span-4 stack">
-      <section class="card neu-extruded">
-        <div class="card-head"><div><h2>Source des données</h2><span class="sub">D'où viennent les chiffres</span></div></div>
+    <div class="span-4 stack" data-reglages="dps" data-ordre="Source,Apparence,Widget">
+      <section class="card neu-extruded" data-sec="Source">
+        <div class="card-head"><div><h2>Source &amp; combat</h2><span class="sub">D'où viennent les chiffres, quand un combat commence et finit</span></div></div>
         <div class="seg" id="dpsSource"><button data-v="reseau">Réseau · tout le groupe</button><button data-v="ecran">Écran · toi seul</button></div>
         <div id="srcReseau" class="stack" style="gap:14px">
           <div class="xh-state" id="capState" role="status" aria-live="polite"><i class="dot"></i><span id="capTxt">…</span></div>
@@ -1331,7 +1342,7 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
           <p class="note">Lecture passive, comme NotMeter ou A2Tools : rien n'est envoyé au jeu ni modifié. Format des paquets documenté par le projet open source RATmeter (GPL-3.0).</p>
           <label class="set-item" for="dpsDot"><span><span class="t">Dégâts sur la durée (DoT)</span><span class="d">Poisons, saignements, brûlures</span></span>
             <span class="switch"><input type="checkbox" id="dpsDot" role="switch"><span class="track"></span><span class="knob"></span></span></label>
-          <label class="set-item" for="dpsBoss"><span><span class="t">Boss uniquement</span><span class="d">Le compteur ne démarre que contre un boss (ou un mannequin d'entraînement) ; les monstres normaux sont ignorés</span></span>
+          <label class="set-item" for="dpsBoss"><span><span class="t">Boss uniquement</span><span class="d">Boss, world boss (reconnu dès que 5 joueurs le frappent) et mannequins ; les monstres normaux sont ignorés</span></span>
             <span class="switch"><input type="checkbox" id="dpsBoss" role="switch"><span class="track"></span><span class="knob"></span></span></label>
         </div>
         <div id="srcEcran" class="stack" style="gap:14px" hidden>
@@ -1353,9 +1364,10 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
         <div class="form-row"><span class="label">Fin du combat après</span>
           <div class="seg" data-dpsk="idle"><button data-v="5">5 s</button><button data-v="10">10 s</button><button data-v="20">20 s</button><button data-v="45">45 s</button></div></div>
       </section>
-      <section class="card neu-extruded">
+      <section class="card neu-extruded" data-sec="Apparence">
         <div class="card-head"><div><h2>Apparence du widget</h2><span class="sub">Aperçu en direct</span></div></div>
         <div class="wprev" id="dpsPrev"></div>
+        <h3 class="reg-t">Contenu</h3>
         <div class="form-row"><span class="label">Disposition</span>
           <div class="seg" data-dpsv="layout"><button data-v="bars">Barres</button><button data-v="compact">Compacte</button></div></div>
         <div class="form-row"><span class="label">Joueurs affichés</span>
@@ -1365,18 +1377,22 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
         <div class="form-row"><span class="label">Colonnes</span><div class="chips" id="dpsCols"></div></div>
         <div class="form-row"><span class="label">Chiffres</span>
           <div class="seg" data-dpsv="fmt"><button data-v="short">Abrégés (12,3 k)</button><button data-v="full">Complets</button></div></div>
+        <h3 class="reg-t">Couleurs &amp; animations</h3>
         <div class="form-row"><span class="label">Couleur des barres</span>
-          <div class="seg" data-dpsv="tint"><button data-v="class">Par classe</button><button data-v="one">Une seule couleur</button></div></div>
+          <div class="seg" data-dpsv="tint"><button data-v="class">Par classe</button><button data-v="neon">Néon</button><button data-v="podium">Podium</button><button data-v="one">Une couleur</button></div></div>
         <div class="form-row" id="dpsColorRow"><span class="label">Couleur</span><div class="swatches" data-color="dps"></div></div>
         <label class="set-item" for="dpsGraph"><span><span class="t">Courbe des 60 dernières secondes</span></span>
           <span class="switch"><input type="checkbox" id="dpsGraph" role="switch"><span class="track"></span><span class="knob"></span></span></label>
-        <div class="form-row"><span class="label">Hors combat</span>
+        <label class="set-item" for="dpsCourse"><span><span class="t">Animations de course</span><span class="d">Dépassements animés, badge ▲, bannière « Nouveau leader », chiffres qui défilent</span></span>
+          <span class="switch"><input type="checkbox" id="dpsCourse" role="switch"><span class="track"></span><span class="knob"></span></span></label>
+        <h3 class="reg-t">Hors combat</h3>
+        <div class="form-row"><span class="label">Affichage hors combat</span>
           <div class="seg" data-dpsv="hors"><button data-v="show">Visible</button><button data-v="fade">Transparent</button><button data-v="hide">Masqué</button></div>
           <span class="note" id="dpsHorsNote"></span></div>
         <div class="form-row" id="dpsHorsOpRow"><span class="label">Opacité hors combat</span>
           <div class="slider-row"><input type="range" id="dpsHorsOp" min="10" max="70" step="5" aria-label="Opacité du widget hors combat"><span class="mono" id="dpsHorsOpV"></span></div></div>
       </section>
-      <section class="card neu-extruded wpanel" data-widget="dps"></section>
+      <section class="card neu-extruded wpanel" data-widget="dps" data-sec="Widget"></section>
     </div>
   </div>
 
@@ -1466,8 +1482,8 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
         <div class="map-actions"><button class="btn sm" id="mapReload">Recharger</button><button class="btn sm" id="mapOpen">Ouvrir dans le navigateur</button></div></div>
       <div class="map-host" id="mapHost"><p class="note" id="mapHostNote">La carte s'affiche ici dans l'application de bureau.</p></div>
     </section>
-    <div class="span-4 stack">
-      <section class="card neu-extruded">
+    <div class="span-4 stack" data-reglages="carte" data-ordre="Carte,Widget">
+      <section class="card neu-extruded" data-sec="Carte">
         <div class="card-head"><div><h2>Carte utilisée</h2><span class="sub">Cartes communautaires, tenues à jour par leurs auteurs</span></div></div>
         <div class="map-src" id="mapSrc" role="radiogroup" aria-label="Carte utilisée"></div>
         <form class="map-url" id="mapUrlForm" autocomplete="off" hidden>
@@ -1479,7 +1495,7 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
         <p class="note">Les points que tu coches sont enregistrés par le site, sur cet ordinateur. L'onglet et le widget partagent la même progression.
           Le widget se déplace par sa barre de titre et se redimensionne par ses bords ; clique dedans pour naviguer (molette pour zoomer, glisser pour déplacer).</p>
       </section>
-      <section class="card neu-extruded wpanel" data-widget="map"></section>
+      <section class="card neu-extruded wpanel" data-widget="map" data-sec="Widget"></section>
     </div>
   </div>
 
@@ -1526,8 +1542,8 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
   <!-- ═════════ Vue : Macros (moteur Pichet Macro) ═════════ -->
   <div class="view" id="view-macros" hidden></div>
 
-  <div class="view auto-grid" id="view-params" hidden>
-    <section class="card neu-extruded" id="modCard">
+  <div class="view auto-grid" id="view-params" hidden data-reglages="params" data-ordre="Général,Affichage,Widgets,Mascottes,Diagnostic">
+    <section class="card neu-extruded" id="modCard" data-sec="Widgets">
       <div class="card-head"><div><h2>Modules en jeu</h2><span class="sub">Affichés par-dessus le jeu quand l'overlay est masqué</span></div></div>
       <div class="mod-list" id="modList"></div>
       <button class="btn primary" type="button" data-layout="" style="justify-self:start">Placer et régler les widgets à l'écran</button>
@@ -1535,7 +1551,7 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
         <span class="switch"><input type="checkbox" id="optWfg" role="switch"><span class="track"></span><span class="knob"></span></span></label>
       <p class="note warn-note" id="wfgNote" hidden>Jeu non détecté : les widgets restent cachés jusqu'à son lancement. S'il tourne déjà, indique son processus dans Diagnostic.</p>
     </section>
-    <section class="card neu-extruded">
+    <section class="card neu-extruded" data-sec="Affichage">
       <div class="card-head"><h2>Affichage</h2></div>
       <div class="form-row"><span class="label">Fenêtre de l'interface</span>
         <div class="seg" id="dispMode"><button data-v="full">Tiroir à gauche</button><button data-v="window">Fenêtrée</button></div>
@@ -1549,8 +1565,8 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
         <span class="switch"><input type="checkbox" id="optAnim" role="switch"><span class="track"></span><span class="knob"></span></span></label>
       <p class="note">Le jeu doit être en mode fenêtré ou plein écran fenêtré (sans bordure) pour que l'overlay et les widgets restent visibles par-dessus.</p>
     </section>
-    <section class="card neu-extruded" id="mascCard"></section>
-    <section class="card neu-extruded">
+    <section class="card neu-extruded" id="mascCard" data-sec="Mascottes"></section>
+    <section class="card neu-extruded" data-sec="Général">
       <div class="card-head"><h2>Raccourci &amp; performances</h2></div>
       <div class="form-row"><span class="label">Afficher / masquer l'overlay</span>
         <input class="field" id="hotkeyInput" readonly style="font-family:var(--f-data);text-align:center;cursor:pointer;caret-color:transparent" aria-label="Raccourci, cliquer puis presser une combinaison">
@@ -1558,21 +1574,21 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
       <div class="form-row"><span class="label">Limite d'images de l'overlay</span>
         <div class="seg" id="fpsSeg"><button data-v="30">30 IPS</button><button data-v="60">60 IPS</button><button data-v="sync">Synchro jeu</button></div></div>
     </section>
-    <section class="card neu-extruded">
+    <section class="card neu-extruded" data-sec="Général">
       <div class="card-head"><h2>Comportement</h2></div>
       <label class="set-item" for="optSync"><span><span class="t">Auto-sync du personnage</span><span class="d">Ouvre ta fiche au démarrage</span></span>
         <span class="switch"><input type="checkbox" id="optSync" role="switch"><span class="track"></span><span class="knob"></span></span></label>
       <label class="set-item" for="optNotif"><span><span class="t">Alertes d'événements</span><span class="d">Réglages dans l'onglet Timers</span></span>
         <span class="switch"><input type="checkbox" id="optNotif" role="switch"><span class="track"></span><span class="knob"></span></span></label>
     </section>
-    <section class="card neu-extruded">
+    <section class="card neu-extruded" data-sec="Général">
       <div class="card-head"><h2>Confidentialité &amp; comptes</h2></div>
       <label class="set-item" for="optStreamer"><span><span class="t">Mode streamer</span><span class="d">Floute les pseudos affichés</span></span>
         <span class="switch"><input type="checkbox" id="optStreamer" role="switch"><span class="track"></span><span class="knob"></span></span></label>
       <div class="set-item"><span><span class="t">Comptes enregistrés</span><span class="d" id="acctCount">—</span></span>
         <button class="btn sm" id="manageAccts">Gérer</button></div>
     </section>
-    <section class="card neu-extruded">
+    <section class="card neu-extruded" data-sec="Diagnostic">
       <div class="card-head"><div><h2>Diagnostic</h2><span class="sub" id="diagVer"></span></div><button class="btn sm" id="diagRefresh">Actualiser</button></div>
       <div class="tasks" id="diagList"></div>
       <form class="game-proc" id="gameProcForm" autocomplete="off">
@@ -1600,6 +1616,7 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
 <div class="tip" id="tip" hidden></div>
 
 <script src="mascottes.js"></script>
+<script src="dps-course.js"></script>
 <script src="macros-ui.js"></script>
 <script src="i18n.js"></script>
 <script>
@@ -1632,7 +1649,7 @@ const DEFAULTS = {
     macro: { pinned: true, opacity: 92, pos: "tc", size: "m", click: true }
   },
   macro: { enabled: true, hideOnRun: true },
-  mascots: { on: true, macro: true, dps: true, timers: true, size: 110, lead: 5 },
+  mascots: { on: true, macro: true, dps: true, timers: true, size: 110, lead: 5, fx: true },
   dps: { v: 3, enabled: true, source: "reseau", demo: false, interval: 1, idle: 10, dot: true, bossOnly: false, zones: {},
     view: { layout: "bars", who: "all", rows: 8, cols: ["dps", "share", "dmg", "crit"], fmt: "short", tint: "class", graph: false, color: "#22d3ee", hors: "show", horsOp: 30 } },
   cd: { v: 2, skills: [], view: { orient: "row", hideReady: false, names: false, secs: true, glow: true } },
@@ -1774,7 +1791,6 @@ const NAV = [
   ["taches", "Tâches", '<path d="M10 6h10M10 12h10M10 18h10"/><path d="m3 6 1.5 1.5L7 5M3 12l1.5 1.5L7 11M3 18l1.5 1.5L7 17"/>'],
   ["timers", "Timers", '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/>'],
   ["dps", "DPS meter", '<path d="M4 20V11M10 20V5M16 20v-6M22 20H2"/>'],
-  ["cd", "Cooldowns", '<path d="M7 3h10M7 21h10M8 3v3a4 4 0 0 0 8 0V3M8 21v-3a4 4 0 0 1 8 0v3"/>'],
   ["macros", "Macros", '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>'],
   ["viseur", "Viseur", '<circle cx="12" cy="12" r="8"/><path d="M12 2v6M12 16v6M2 12h6M16 12h6"/>'],
   ["carte", "Carte", '<path d="m9 4-6 2v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>'],
@@ -1782,7 +1798,7 @@ const NAV = [
   ["params", "Paramètres", '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>'],
   ["infos", "Infos", '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.6v.2"/>']
 ];
-const MOD_VIEWS = ["timers", "dps", "cd", "macros", "viseur", "carte", "ping"];
+const MOD_VIEWS = ["timers", "dps", "macros", "viseur", "carte", "ping"];
 $("#sideNav").innerHTML = '<i class="glider" aria-hidden="true"></i>' + NAV.map(([v, t, ic], i) => `<button role="tab" data-view="${v}" aria-selected="${i === 0}">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ic}</svg>${esc(t)}${v === "taches" ? '<span class="nbadge" id="taskBadge" hidden></span>' : ""}${MOD_VIEWS.includes(v) ? `<i class="mdot" data-mdot="${v}" aria-hidden="true"></i>` : v === "macros" ? '<i class="mdot" data-mcdot aria-hidden="true"></i>' : ""}</button>`).join("") +
   `<div class="side-foot"><span>Masquer l'overlay</span><span><kbd>Échap</kbd> ou <kbd id="hkFoot">Alt + C</kbd></span>
@@ -2476,6 +2492,7 @@ $("#tfType").addEventListener("change", showFields);
 function editTimer(id) {
   const t = allTimers().find(x => x.id === id); if (!t) return;
   editing = t; const s = t.sched;
+  ouvrirSec("timers", "Timer");
   $("#tfTitle").textContent = "Modifier : " + t.name; $("#tfSubmit").textContent = "Enregistrer"; $("#tfCancel").hidden = false;
   $("#tfName").value = t.name; $("#tfName").disabled = t.preset; $("#tfType").value = s.type; $("#tfType").disabled = t.preset;
   const utc = s.tz === "utc", vers = serverTz();
@@ -2815,7 +2832,6 @@ function widgetChanged(k) { saveNow().then(() => api()?.widget_update(k)); }
 const MODS = {
   timers: { w: "timers", nom: "Timers", fr: "les prochains événements", en: "the next events" },
   dps: { w: "dps", nom: "DPS meter", fr: "le DPS meter", en: "the DPS meter" },
-  cd: { w: "cd", nom: "Cooldowns", fr: "les cooldowns", en: "the cooldowns" },
   viseur: { w: null, nom: "Viseur", fr: "le viseur", en: "the crosshair" },
   carte: { w: "map", nom: "Carte", fr: "la carte", en: "the map" },
   ping: { w: "ping", nom: "Ping", fr: "l'indicateur de ping", en: "the ping indicator" },
@@ -2838,7 +2854,8 @@ function modDetail(v, on) {
 function renderModules() {
   if (WIDGET) return;
   $$("[data-modbar]").forEach(el => {
-    const v = el.dataset.modbar, on = modOn(v);
+    const v = el.dataset.modbar; if (!MODS[v]) return;
+    const on = modOn(v);
     el.classList.toggle("on", on);
     el.innerHTML = `<label><span class="mi">${navIcon(v)}</span><span class="tx"><b>${esc(L("Afficher en jeu", "Show in game"))}</b><span>${esc(modDetail(v, on))}</span></span>
       <span class="switch lg"><input type="checkbox" role="switch" data-modsw="${v}" ${on ? "checked" : ""} aria-label="${esc(L("Afficher en jeu : ", "Show in game: ") + MODS[v].nom)}"><span class="track"></span><span class="knob"></span></span></label>`;
@@ -2848,7 +2865,7 @@ function renderModules() {
       <span><span class="t">${esc(MODS[v].nom)}</span><span class="d">${esc(on ? L("Affiché en jeu", "Shown in game") : L("Masqué en jeu", "Hidden in game"))}</span></span>
       <button type="button" class="btn sm go" data-gomod="${v}">${esc(L("Régler", "Settings"))}</button>
       <label class="switch"><input type="checkbox" role="switch" data-modsw="${v}" ${on ? "checked" : ""} aria-label="${esc(L("Afficher en jeu : ", "Show in game: ") + MODS[v].nom)}"><span class="track"></span><span class="knob"></span></label></div>`; }).join("");
-  $$("[data-mdot]").forEach(d => d.classList.toggle("on", modOn(d.dataset.mdot)));
+  $$("[data-mdot]").forEach(d => { if (MODS[d.dataset.mdot]) d.classList.toggle("on", modOn(d.dataset.mdot)); });
 }
 document.addEventListener("change", e => { const t = e.target.closest("[data-modsw]"); if (t) setMod(t.dataset.modsw, t.checked); });
 document.addEventListener("click", e => { const b = e.target.closest("[data-gomod]"); if (b) switchView(b.dataset.gomod); });
@@ -2973,11 +2990,27 @@ function cibleWidget(cb) {
   const r = cb.pvMax ? Math.max(0, Math.min(1, (cb.pv ?? cb.pvMax) / cb.pvMax)) : null;
   return `<div class="wq-tg${cb.boss ? " boss" : ""}"><div class="wq-tgl"><span class="nm">${esc(nomCible(cb))}</span>${cb.boss ? "<em>Boss</em>" : ""}<b>${r != null ? `${fmtDps(cb.pv ?? cb.pvMax, "short")} / ${fmtDps(cb.pvMax, "short")} · ${Math.round(r * 100)} %` : ""}</b></div>${r != null ? `<i class="bar"><i style="width:${(r * 100).toFixed(1)}%"></i></i>` : ""}</div>`;
 }
+const PODIUM = ["#ffcf4a", "#d8e2ee", "#ee9b5c", "#6d8fd8"];
+function teinteDps(j, i) {
+  const v = S.dps.view;
+  if (v.tint === "one") return v.color;
+  if (v.tint === "podium") return PODIUM[Math.min(i, 3)];
+  return clsColor(j.classe);
+}
+// Rendu du widget / de l'aperçu avec les animations de course (dépassements, leader, chiffres)
+function rendreDps(box, st, cible) {
+  const c = st.combat || {}, js = (c.joueurs || []);
+  window.CourseDps.rendre(box, cible === "table" ? null : dpsWidgetHTML(st), {
+    actif: S.dps.view.course !== false && st.enCombat, debut: c.debut, valeur: ".c-dps", fmt: x => fmtDps(Math.round(x)),
+    nom: id => { const i = js.findIndex(j => String(j.id) === String(id)); return i >= 0 ? nomJoueur(js[i], i) : ""; },
+    banniere: ".wq-sum", surLeader: (id, ligne) => { if (WIDGET === "dps" && SCENE && mascOn("dps") && ligne.classList.contains("moi")) { SCENE.montrer(); SCENE.effet("explosion"); SCENE.effet("danse"); } }
+  });
+}
 function dpsWidgetHTML(st) {
   const v = S.dps.view, c = st.combat, cols = (v.cols && v.cols.length ? v.cols : ["dps", "share", "dmg", "crit"]);
   const rows = joueursAffiches(st).slice(0, +v.rows || 8);
   const max = Math.max(1, ...rows.map(j => j.total));
-  const tint = j => v.tint === "one" ? v.color : clsColor(j.classe);
+  const tint = (j, i) => teinteDps(j, i);
   const etat = etatCourt(st);
   const lock = (S.widgets.dps || {}).click;
   const T = { dps: "DPS", share: "Part", dmg: "Dégâts", crit: "Crit" };
@@ -2985,12 +3018,12 @@ function dpsWidgetHTML(st) {
       <span class="wq-lock" title="${lock ? "Clic à travers activé" : "Déplaçable"}">${svg(lock ? "lock" : "unlock")}</span></div>
     <div class="wq-sum"><span>Dégâts totaux <b>${c ? fmtDps(c.total) : "—"}</b></span><span class="wq-big">${c ? fmtDps(c.dps) : "—"}<small>DPS</small></span></div>${cibleWidget(c && c.cible)}`;
   const entete = `<div class="wq-row wq-h"><span></span><span>Joueur</span>${cols.map(k => `<span class="n">${T[k]}${k === "dps" ? " ↓" : ""}</span>`).join("")}</div>`;
-  const ligne = (j, i) => `<div class="wq-row${j.moi ? " moi" : ""}" style="--c:${esc(tint(j))}"><i class="fill" style="width:${(j.total / max * 100).toFixed(1)}%"></i>
+  const ligne = (j, i) => `<div class="wq-row${j.moi ? " moi" : ""}" data-jid="${j.id}" data-v="${j.dps}" style="--c:${esc(tint(j, i))}"><i class="fill" style="width:${(j.total / max * 100).toFixed(1)}%"></i>
       <span class="ic" title="${esc(clsName(j.classe) || "Classe inconnue")}">${clsIcon(j.classe)}</span><span class="nmw"><span class="nm">${esc(nomJoueur(j, i))}</span>${j.nom ? `<button type="button" class="wq-insp" data-winsp="${j.id}" title="${esc(L("Inspecter ", "Inspect ") + nomJoueur(j, i))}" aria-label="${esc(L("Inspecter ", "Inspect ") + nomJoueur(j, i))}">${svg("search", 2.4)}</button>` : ""}</span>${cols.map(k => `<span class="n c-${k}">${valCol(j, k)}</span>`).join("")}</div>`;
   const corps = rows.length ? entete + rows.map(ligne).join("") : `<div class="wq-e">${esc(etat || "Aucun combat")}</div>`;
   const graph = v.graph ? `<svg class="dsp" viewBox="0 0 120 22" preserveAspectRatio="none" aria-hidden="true">${sparkSvg(st.serie, 120, 22)}</svg>` : "";
   const pied = rows.length && etat ? `<div class="wq-e sm">${esc(etat)}</div>` : "";
-  return `<div class="wq pywebview-drag-region${v.layout === "compact" ? " compact" : ""}" style="--dpsc:${esc(v.color)};--ncol:${cols.length}">${tete}<div class="wq-l">${corps}</div>${graph}${pied}</div>`;
+  return `<div class="wq pywebview-drag-region${v.layout === "compact" ? " compact" : ""} t-${esc(v.tint || "class")}${st.enCombat ? " live" : ""}" style="--dpsc:${esc(v.color)};--ncol:${cols.length}">${tete}<div class="wq-l">${corps}</div>${graph}${pied}</div>`;
 }
 function renderDpsChart(serie) {
   const el = $("#dpsChart"); if (!el) return;
@@ -3012,7 +3045,7 @@ function messageVide(st) {
 }
 function renderDps() {
   const st = DPS;
-  if (WIDGET === "dps") { if (!DPS_APPUI) wCorps().innerHTML = dpsWidgetHTML(st); mascotteDps(st); return; }
+  if (WIDGET === "dps") { if (!DPS_APPUI) rendreDps(wCorps(), st); mascotteDps(st); return; }
   if (WIDGET || !$("#kDps")) return;
   const c = st.combat, js = (c && c.joueurs) || [], moi = js.find(j => j.moi);
   $("#dpsCard").style.setProperty("--dpsc", S.dps.view.color);
@@ -3045,11 +3078,13 @@ function renderDps() {
   const max = Math.max(1, ...js.map(j => j.total));
   const tete = `<div class="dm-row dm-h" role="row"><span>#</span><span>Joueur</span><span class="n">DPS</span><span class="n">Dégâts</span><span class="n">Part</span><span class="n">Crit</span><span class="n x">Parfait</span><span class="n x">Dos</span><span class="n x">Coups</span><span class="n x">Max</span><span class="n">Morts</span></div>`;
   const inspBtn = (j, i) => j.nom ? `<button type="button" class="insp" data-insp="${j.id}" title="${esc(L("Inspecter ", "Inspect ") + nomJoueur(j, i))}" aria-label="${esc(L("Inspecter ", "Inspect ") + nomJoueur(j, i))}">${svg("search")}</button>` : "";
-  if (!DPS_APPUI) $("#dmTable").innerHTML = js.length ? tete + js.map((j, i) => `<div class="dm-row${j.moi ? " moi" : ""}${DPS_SEL === j.id ? " sel" : ""}" data-pid="${j.id}" role="row" tabindex="0" style="--c:${clsColor(j.classe)}" aria-expanded="${DPS_SEL === j.id}">
+  if (!DPS_APPUI) window.CourseDps.rendre($("#dmTable"), js.length ? tete + js.map((j, i) => `<div class="dm-row${j.moi ? " moi" : ""}${DPS_SEL === j.id ? " sel" : ""}" data-pid="${j.id}" data-jid="${j.id}" data-v="${j.dps}" role="row" tabindex="0" style="--c:${teinteDps(j, i)}" aria-expanded="${DPS_SEL === j.id}">
       <i class="fill" style="width:${(j.total / max * 100).toFixed(1)}%"></i><span class="rk">${i + 1}</span>
       <span class="who"><i class="cls" title="${esc(clsName(j.classe) || "Classe inconnue")}">${clsIcon(j.classe)}</i><span class="nm">${esc(nomJoueur(j, i))}</span>${inspBtn(j, i)}${j.moi ? "<em>moi</em>" : j.groupe ? '<em class="g">groupe</em>' : ""}</span>
-      <span class="n">${fmtDps(j.dps)}</span><span class="n">${fmtDps(j.total)}</span><span class="n">${pct(j.part)}</span><span class="n">${j.coups ? j.crit + " %" : "—"}</span><span class="n x">${j.coups ? j.parfait + " %" : "—"}</span><span class="n x">${j.coups ? j.dos + " %" : "—"}</span><span class="n x">${j.coups || "—"}</span><span class="n x">${j.max ? fmtDps(j.max) : "—"}</span><span class="n">${j.morts || 0}</span></div>`).join("")
-    : `<p class="dm-empty">${esc(messageVide(st))}</p>`;
+      <span class="n c-dps">${fmtDps(j.dps)}</span><span class="n">${fmtDps(j.total)}</span><span class="n">${pct(j.part)}</span><span class="n">${j.coups ? j.crit + " %" : "—"}</span><span class="n x">${j.coups ? j.parfait + " %" : "—"}</span><span class="n x">${j.coups ? j.dos + " %" : "—"}</span><span class="n x">${j.coups || "—"}</span><span class="n x">${j.max ? fmtDps(j.max) : "—"}</span><span class="n">${j.morts || 0}</span></div>`).join("")
+    : `<p class="dm-empty">${esc(messageVide(st))}</p>`, { actif: S.dps.view.course !== false && st.enCombat, debut: c && c.debut, valeur: ".c-dps", fmt: x => fmtDps(Math.round(x)),
+      nom: id => { const i = js.findIndex(j => String(j.id) === String(id)); return i >= 0 ? nomJoueur(js[i], i) : ""; } });
+  $("#dmTable").classList.toggle("t-podium", S.dps.view.tint === "podium"); $("#dmTable").classList.toggle("t-neon", S.dps.view.tint === "neon");
   // Détail des compétences du joueur choisi
   const sel = js.find(j => j.id === DPS_SEL), det = $("#dmDetail");
   det.hidden = !sel;
@@ -3087,7 +3122,7 @@ function renderDps() {
     const txt = (st.textes || [])[i];
     r.textContent = st.source === "ecran" && st.lecture && S.dps.zones[z] ? (txt ? `Lu : ${txt}` : "Rien de lisible") : "";
   });
-  $("#dpsPrev").innerHTML = dpsWidgetHTML(st);
+  rendreDps($("#dpsPrev"), st);
 }
 function renderDpsControls() {
   if (WIDGET || !$("#dpsToggle")) return;
@@ -3100,6 +3135,8 @@ function renderDpsControls() {
   $$("[data-dpsv]").forEach(seg => $$("button", seg).forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === String(d.view[seg.dataset.dpsv])))));
   $("#dpsCols").innerHTML = COLS.map(([k, t]) => `<button class="chip" data-m="${k}" aria-pressed="${(d.view.cols || []).includes(k)}">${t}</button>`).join("");
   $("#dpsGraph").checked = !!d.view.graph;
+  $("#dpsCourse").checked = d.view.course !== false;
+  $("#dpsColorRow").hidden = d.view.tint !== "one";
   $("#dpsDot").checked = d.dot !== false;
   $("#dpsBoss").checked = !!d.bossOnly;
   const hors = d.view.hors || "show";
@@ -3141,6 +3178,7 @@ $("#dpsCols").addEventListener("click", e => {
   saveNow(); renderDpsControls();
 });
 $("#dpsGraph").addEventListener("change", e => { S.dps.view.graph = e.target.checked; saveNow(); renderDps(); });
+$("#dpsCourse").addEventListener("change", e => { S.dps.view.course = e.target.checked; saveNow(); renderDps(); });
 $("#dpsDot").addEventListener("change", e => { S.dps.dot = e.target.checked; saveNow(); });
 $("#dpsBoss").addEventListener("change", e => { S.dps.bossOnly = e.target.checked; saveNow(); renderDps(); });
 $("#dpsHorsOp").addEventListener("input", e => {
@@ -3674,6 +3712,37 @@ function bootWidget(kind) {
   setTimeout(fit, 60);
 }
 
+/* ════════ Réglages rangés en onglets (une section à la fois) ════════ */
+const REG_IC = { "Général": '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
+  "Affichage": '<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>', "Widgets": '<rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/><rect x="13" y="10" width="8" height="11" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/>',
+  "Mascottes": '<path d="M12 21s-7-4.4-9.3-9A5.3 5.3 0 0 1 12 6.6 5.3 5.3 0 0 1 21.3 12C19 16.6 12 21 12 21z"/>', "Diagnostic": '<path d="M3 12h4l3-8 4 16 3-8h4"/>',
+  "Source": '<path d="M4 20V11M10 20V5M16 20v-6M22 20H2"/>', "Apparence": '<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18c1.7 0 2-1.5 1-2.5-1-1-.5-2.5 1-2.5h2a5 5 0 0 0 5-5c0-4.4-4-8-9-8z"/>',
+  "Widget": '<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M7 9h6M7 13h10"/>', "Timer": '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/>',
+  "Alertes": '<path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/>', "Serveur": '<rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/>',
+  "Carte": '<path d="m9 4-6 2v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>', "Moteur": '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>' };
+const lireSec = cle => { try { return localStorage.getItem("pm-reg-" + cle) || ""; } catch { return ""; } };
+function ouvrirSec(cle, sec) {
+  const box = $(`[data-reglages="${cle}"]`); if (!box) return;
+  try { localStorage.setItem("pm-reg-" + cle, sec); } catch {}
+  $$(":scope > [data-sec]", box).forEach(c => c.hidden = c.dataset.sec !== sec);
+  $$(":scope > .reg-nav button", box).forEach(b => b.setAttribute("aria-selected", String(b.dataset.sec === sec)));
+}
+function rangerReglages(box) {
+  if (!box || box.dataset.range) return;
+  box.dataset.range = "1";
+  const cle = box.dataset.reglages, ordre = (box.dataset.ordre || "").split(",").filter(Boolean);
+  const secs = [...new Set([...ordre, ...$$(":scope > [data-sec]", box).map(c => c.dataset.sec)])].filter(x => $(`:scope > [data-sec="${x}"]`, box));
+  const nav = document.createElement("div");
+  nav.className = "reg-nav"; nav.setAttribute("role", "tablist");
+  nav.innerHTML = secs.map(x => `<button type="button" role="tab" data-sec="${esc(x)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${REG_IC[x] || REG_IC["Général"]}</svg>${esc(x)}</button>`).join("");
+  nav.addEventListener("click", e => { const b = e.target.closest("[data-sec]"); if (b) ouvrirSec(cle, b.dataset.sec); });
+  box.prepend(nav);
+  const garde = lireSec(cle);
+  ouvrirSec(cle, secs.includes(garde) ? garde : secs[0]);
+}
+if (!WIDGET) $$("[data-reglages]").forEach(rangerReglages);
+window.rangerReglages = rangerReglages;
+
 /* ════════ Mascottes des widgets (Macros, DPS meter, Timers) ════════ */
 const MASC_KINDS = ["macro", "dps", "timers"];
 const mascOn = k => !!(S.mascots && S.mascots.on !== false && S.mascots[k] !== false);
@@ -3683,6 +3752,7 @@ let SCENE = null;
 function installerMascotte(kind) {
   const wrap = $("#wWrap");
   SCENE = new window.Mascottes.Scene($("#wSlot"));
+  window.Mascottes.fx = () => !S.mascots || S.mascots.fx !== false;
   window.Mascottes.charger(api());
   const maj = () => {
     const on = mascOn(kind);
@@ -3698,7 +3768,7 @@ let dpsCombat = false;
 function mascotteDps(st) {
   if (!SCENE) return;
   if (!mascOn("dps")) { if (SCENE.visible) SCENE.cacher(); dpsCombat = !!st.enCombat; return; }
-  if (st.enCombat && !dpsCombat) SCENE.montrer();           // début du combat : une mascotte arrive
+  if (st.enCombat && !dpsCombat) { SCENE.montrer(); setTimeout(() => SCENE.effet("explosion"), 260); } // début du combat : une mascotte arrive
   else if (!st.enCombat && dpsCombat) SCENE.fete(true);     // fin du combat : saut de joie, puis elle repart
   else if (st.enCombat && Math.random() < .3) SCENE.sautiller();
   dpsCombat = !!st.enCombat;
@@ -3715,7 +3785,13 @@ function mascotteTimers() {
     const reste = n.at - now;
     if (reste > 0 && reste <= lead && (!proche || reste < proche.reste)) proche = { t, reste };
   }
-  if (proche) { SCENE.montrer(); SCENE.bulle(`${proche.t.name} · ${fmtLeft(proche.reste)}`); if (proche.reste < 10000) SCENE.sautiller(); }
+  if (proche) {
+    const arrive = !SCENE.visible;
+    SCENE.montrer(); SCENE.bulle(`${proche.t.name} · ${fmtLeft(proche.reste)}`);
+    if (arrive) setTimeout(() => SCENE.effet("danse"), 500);
+    else if (proche.reste < 10000) SCENE.sautiller();
+    else if (proche.reste < 60000 && Math.round(proche.reste / 1000) % 15 === 0) SCENE.effet("danse");
+  }
   else if (SCENE.visible) SCENE.fete(true); // le timer est arrivé au bout
 }
 /* Paramètres : carte « Mascottes & animations » */
@@ -3735,6 +3811,8 @@ async function renderMascSettings() {
       const k = e.target.closest("[data-msck]");
       if (k) { const v = k.dataset.msck; if (S.mascots.on === false) { S.mascots.on = true; S.mascots[v] = true; } else S.mascots[v] = !mascOn(v); save(); renderMascSettings(); renderWidgetPanels(); }
       if (e.target.closest("#mscDir")) api()?.mascots_folder();
+      if (e.target.closest("#mscAdd")) { if (!DESKTOP) return notify("Mascottes", "L'ajout se fait dans l'application de bureau."); api().mascots_add().then(r => { if (r && r.ok === false) notify("Mascottes", r.error); renderMascSettings(); }); }
+      const del = e.target.closest("[data-mscdel]"); if (del) api()?.mascots_remove(del.dataset.mscdel).then(() => renderMascSettings());
       if (e.target.closest("#mscRef")) { box.dataset.liste = ""; renderMascSettings(); }
     });
   }
@@ -3743,15 +3821,18 @@ async function renderMascSettings() {
     <label class="set-item"><span><span class="t">Mascottes animées</span><span class="d">Une mascotte au hasard, jamais deux fois de suite la même</span></span>
       <span class="switch"><input type="checkbox" data-msc="on" role="switch" ${m.on !== false ? "checked" : ""}><span class="track"></span><span class="knob"></span></span></label>
     <div class="form-row"><span class="label">Widgets</span><div class="chips">${tg("macro", "Macros · à l'appui")}${tg("dps", "DPS meter · en combat")}${tg("timers", "Timers · avant la fin")}</div></div>
+    <label class="set-item"><span><span class="t">Effets spéciaux</span><span class="d">Explosions, danses, pirouettes, confettis et étoiles</span></span>
+      <span class="switch"><input type="checkbox" data-msc="fx" role="switch" ${m.fx !== false ? "checked" : ""}><span class="track"></span><span class="knob"></span></span></label>
     <div class="form-row"><span class="label">Taille des mascottes</span><div class="slider-row"><input type="range" min="60" max="220" step="5" value="${m.size || 110}" data-msc="size" aria-label="Taille des mascottes"><span class="mono" id="mscSzV">${m.size || 110} px</span></div></div>
     <label class="form-row"><span class="label">Timers : apparition avant la fin (minutes)</span><input class="field sm mono" type="number" min="1" max="60" value="${m.lead || 5}" data-msc="lead" style="max-width:120px"></label>
     <label class="set-item"><span><span class="t">Animation de lancement</span><span class="d">Mascotte et barre de chargement au démarrage du logiciel</span></span>
       <span class="switch"><input type="checkbox" id="optSplash" role="switch" ${S.display.splash !== false ? "checked" : ""}><span class="track"></span><span class="knob"></span></span></label>
+    <h3 class="reg-t">Mes mascottes</h3>
     <div class="msc-grid" id="mscGrid"></div>
-    <div class="chips"><button type="button" class="btn sm" id="mscDir">Ouvrir le dossier des mascottes</button><button type="button" class="btn sm" id="mscRef">Actualiser</button></div>
-    <p class="note">Ajoute tes GIF animés ou PNG transparents dans le dossier, puis Actualiser.</p>`;
+    <div class="chips"><button type="button" class="btn sm primary" id="mscAdd">Ajouter des mascottes (.gif, .png)</button><button type="button" class="btn sm" id="mscDir">Ouvrir le dossier</button><button type="button" class="btn sm" id="mscRef">Actualiser</button></div>
+    <p class="note">GIF animés ou PNG à fond transparent. Survole une mascotte ajoutée pour la retirer (✕).</p>`;
   const liste = await window.Mascottes.charger(api());
-  const g = $("#mscGrid"); if (g) g.innerHTML = liste.map(x => `<figure><img src="${esc(x.url)}" alt="" loading="lazy"><figcaption>${esc(x.nom)}</figcaption></figure>`).join("") || '<p class="note">Aucune mascotte trouvée.</p>';
+  const g = $("#mscGrid"); if (g) g.innerHTML = liste.map(x => `<figure><img src="${esc(x.url)}" alt="" loading="lazy"><figcaption>${esc(x.nom)}</figcaption>${x.perso ? `<button type="button" class="msc-del" data-mscdel="${esc(x.url)}" title="Retirer" aria-label="Retirer ${esc(x.nom)}">✕</button>` : ""}</figure>`).join("") || '<p class="note">Aucune mascotte trouvée.</p>';
 }
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-layout]"); if (!b) return;
@@ -3761,7 +3842,7 @@ document.addEventListener("click", e => {
 /* ════════ Écran de placement des widgets (page transparente sur tout l'écran) ════════ */
 let LAYOUT_INFO = null;
 const L_NOMS = { timers: "Timers", ping: "Ping", dps: "DPS meter", cd: "Cooldowns", macro: "Macros", map: "Carte", toast: "Alertes" };
-const L_KINDS = ["timers", "ping", "dps", "cd", "macro", "map", "toast"];
+const L_KINDS = ["timers", "ping", "dps", "macro", "map", "toast"];
 function dpsApercu() {
   const membres = [[901, (activeAcct() || {}).name || "Moi", 15, 52000, true], [902, "Kaelthys", 11, 61000], [903, "Sylvaine", 14, 47000], [904, "Elowen", 17, 15000]];
   const duree = 84000, joueurs = membres.map(([id, nom, classe, base, moi]) => ({ id, nom, classe, moi: !!moi, groupe: true, total: base * 84, dps: base, crit: 31, coups: 200, dos: 18, parfait: 9, double: 7, max: 41000, dot: 0, morts: 0, comp: [] }));

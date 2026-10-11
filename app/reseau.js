@@ -379,6 +379,8 @@ function nomMob(code) {
 }
 
 const SEUIL_BOSS = 10000000;
+const RAID = 5;               // world boss : une cible frappée par au moins 5 joueurs différents est un boss
+const PAUSE_BOSS = 60000;     // boss encore en vie : le combat survit aux phases d'invulnérabilité et aux replis
 
 /* ════════ Joueurs et monstres ════════ */
 class Entites {
@@ -456,8 +458,13 @@ class Combat {
   constructor({ inactif = 10000, historique = [] } = {}) {
     this.inactif = inactif; this.historique = historique; this.cur = null; this.dernier = null; this.surFin = null; this.entites = null;
   }
+  // Délai avant de clore le combat : allongé tant que la cible principale est un boss encore en vie (world boss)
+  limite(c) {
+    if (!c || !this.entites || !this.bossVivant) return this.inactif;
+    return this.bossVivant(c) ? Math.max(this.inactif, PAUSE_BOSS) : this.inactif;
+  }
   ajouter(ev) {
-    if (this.cur && ev.t - this.cur.dernier > this.inactif) this.terminer();
+    if (this.cur && ev.t - this.cur.dernier > this.limite(this.cur)) this.terminer();
     if (!this.cur) {
       this.cur = { debut: ev.t, dernier: ev.t, total: 0, joueurs: new Map(), cibles: new Map(), derniers: new Map(), secondes: new Map() };
       this.dernier = this.cur;
@@ -499,7 +506,7 @@ class Combat {
       if (this.surFin) this.surFin(this.historique);
     }
   }
-  tick(t) { if (this.cur && t - this.cur.dernier > this.inactif) this.terminer(); }
+  tick(t) { if (this.cur && t - this.cur.dernier > this.limite(this.cur)) this.terminer(); }
   reinitialiser() { this.cur = null; this.dernier = null; }
   duree(c) { return Math.max(1000, c.dernier - c.debut); }
   ident(id) {
@@ -509,7 +516,7 @@ class Combat {
   }
   resume(c) {
     const d = this.duree(c);
-    const joueurs = [...c.joueurs.values()].sort((a, b) => b.total - a.total).slice(0, 24)
+    const joueurs = [...c.joueurs.values()].sort((a, b) => b.total - a.total).slice(0, 40)
       .map(j => ({ ...this.ident(j.id), total: j.total, dps: Math.round(j.total / d * 1000) }));
     const moi = joueurs.find(j => j.moi);
     return { debut: c.debut, duree: d, total: c.total, dps: Math.round(c.total / d * 1000), cible: this.cible(c), moi: moi ? { dps: moi.dps, total: moi.total } : null, joueurs };
@@ -542,7 +549,7 @@ class Combat {
     let combat = null;
     if (c) {
       const d = this.duree(c);
-      const joueurs = [...c.joueurs.values()].sort((a, b) => b.total - a.total).slice(0, 24).map(j => {
+      const joueurs = [...c.joueurs.values()].sort((a, b) => b.total - a.total).slice(0, 40).map(j => {
         const nh = Math.max(1, j.coups);
         const comp = [...j.comp.values()].sort((a, b) => b.total - a.total).slice(0, 16).map(k => {
           const n = noms && (noms.get(k.code) || noms.get(Math.floor(k.code / 10000) * 10000));
@@ -556,7 +563,7 @@ class Combat {
       });
       combat = { debut: c.debut, duree: d, total: c.total, dps: Math.round(c.total / d * 1000), cible: this.cible(c), joueurs };
     }
-    return { enCombat: !!this.cur && t - this.cur.dernier <= this.inactif, combat, serie: this.serie(c, t), historique: this.historique };
+    return { enCombat: !!this.cur && t - this.cur.dernier <= this.limite(this.cur), combat, serie: this.serie(c, t), historique: this.historique };
   }
 }
 
@@ -568,6 +575,10 @@ class Analyseur {
     this.entites = new Entites();
     this.combat = new Combat({ inactif, historique });
     this.combat.entites = this.entites;
+    this.combat.bossVivant = c => { const id = this.ciblePrincipale(c); if (id == null || !this.estBoss(id)) return false; const m = this.entites.mobs.get(id); return !m || m.pv == null || m.pv > 0; };
+    this.bossConnus = new Set();  // cibles reconnues comme world boss (gardées tant que la session dure)
+    this.attaquants = new Map(); // cible → Map(joueur → dernier coup) : détection des world boss
+    this.enAttente = new Map();  // « Boss uniquement » : coups gardés le temps de savoir si la cible est un boss
     this.noms = new Map();
     this.dot = dot;
     this.stats = { paquets: 0, degats: 0, erreurs: 0, dernierDegat: 0 };
@@ -638,19 +649,39 @@ class Analyseur {
   }
   // Boss (ou mannequin d'entraînement) : d'après la table des monstres ; monstre absent de la table :
   // ses points de vie (au moins SEUIL_BOSS) le désignent comme boss.
+  // World boss : souvent absent de la table, ou apparu avant ton arrivée (pas de fiche du monstre) ; reconnu à ses
+  // gros PV ou au nombre de joueurs qui le frappent.
   estBoss(id) {
     const m = this.entites.mobs.get(id);
-    if (!m) return false;
-    if (m.boss) return true;
-    const info = m.code ? nomMob(m.code) : null;
-    if (info) return info.boss || info.mannequin;
-    return (m.pvMax || m.pv || 0) >= SEUIL_BOSS;
+    if (m) {
+      if (m.boss) return true;
+      const info = m.code ? nomMob(m.code) : null;
+      if (info && (info.boss || info.mannequin)) return true;
+      if ((m.pvMax || m.pv || 0) >= SEUIL_BOSS) return true;
+    }
+    if (this.bossConnus.has(id)) return true;
+    const a = this.attaquants.get(id);
+    if (a && a.size >= RAID) { this.bossConnus.add(id); if (this.bossConnus.size > 100) this.bossConnus.delete(this.bossConnus.values().next().value); return true; }
+    return false;
+  }
+  ciblePrincipale(c) {
+    let id = null, max = -1;
+    for (const [k, v] of c.cibles) if (v > max && c.dernier - (c.derniers.get(k) || 0) <= 20000) { max = v; id = k; }
+    return id;
+  }
+  noterAttaquant(cible, source, t) {
+    let a = this.attaquants.get(cible);
+    if (!a) {
+      a = new Map(); this.attaquants.set(cible, a);
+      if (this.attaquants.size > 300) { const vieux = this.attaquants.keys().next().value; this.attaquants.delete(vieux); }
+    }
+    a.set(source, t);
+    for (const [k, v] of a) if (t - v > 30000) a.delete(k);
   }
   degats(d, t, dot) {
     if (d.degats <= 0) return;
     const base = baseCompetence(d.code);
     if (SOINS.has(base)) return;
-    if (this.bossOnly && !this.estBoss(d.cible)) return; // option « Boss uniquement »
     let classe;
     if (theostone(d.code)) {
       const p = this.entites.sessions.get(d.acteur);
@@ -668,7 +699,20 @@ class Analyseur {
     this.entites.joueur(source, invocation ? null : classe);
     this.stats.degats++;
     this.stats.dernierDegat = t;
-    this.combat.ajouter({ t, source, cible: d.cible, code: d.code, degats: d.degats, crit: !!d.crit, dos: !!d.dos, parfait: !!d.parfait, double: !!d.double, dot });
+    this.noterAttaquant(d.cible, source, t);
+    const ev = { t, source, cible: d.cible, code: d.code, degats: d.degats, crit: !!d.crit, dos: !!d.dos, parfait: !!d.parfait, double: !!d.double, dot };
+    if (this.bossOnly) { // option « Boss uniquement » : les coups sur une cible inconnue attendent qu'elle se révèle boss
+      if (!this.estBoss(d.cible)) {
+        let l = this.enAttente.get(d.cible);
+        if (!l) { l = []; this.enAttente.set(d.cible, l); if (this.enAttente.size > 200) this.enAttente.delete(this.enAttente.keys().next().value); }
+        l.push(ev);
+        while (l.length && (l.length > 4000 || t - l[0].t > 30000)) l.shift();
+        return;
+      }
+      const l = this.enAttente.get(d.cible);
+      if (l) { this.enAttente.delete(d.cible); for (const x of l) this.combat.ajouter(x); }
+    }
+    this.combat.ajouter(ev);
   }
   etat(t = Date.now()) { this.combat.tick(t); return this.combat.etat(t, this.noms); }
 }

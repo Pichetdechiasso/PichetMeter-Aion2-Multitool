@@ -27,3 +27,19 @@ const vide = (() => { const a = new Analyseur({ bossOnly: true }); a.entites.mob
 assert.strictEqual(vide.combat, null, "un combat contre un monstre normal n'est pas ouvert");
 assert.strictEqual(vide.enCombat, false);
 console.log("boss.test ok");
+// World boss : absent de la table et sans fiche (apparu avant l'arrivée), reconnu quand 5 joueurs le frappent ;
+// les coups portés avant sont comptés ; le combat survit à une pause de 30 s tant qu'il est en vie.
+(() => {
+  const a = new Analyseur({ bossOnly: true, inactif: 10000 });
+  const t0 = Date.now();
+  for (let i = 0; i < 4; i++) a.degats({ acteur: 100 + i, cible: 9999, code: 11010000, degats: 1000 }, t0 + i, false);
+  assert.strictEqual(a.etat(t0 + 10).combat, null, "4 joueurs : pas encore un world boss");
+  a.degats({ acteur: 104, cible: 9999, code: 11010000, degats: 1000 }, t0 + 20, false);
+  const c = a.etat(t0 + 30).combat;
+  assert.strictEqual(c.total, 5000, "les coups mis en attente sont comptés");
+  assert.strictEqual(c.joueurs.length, 5);
+  assert.strictEqual(a.etat(t0 + 30000).enCombat, true, "pause de 30 s : le combat contre le world boss continue");
+  a.degats({ acteur: 100, cible: 9999, code: 11010000, degats: 1000 }, t0 + 31000, false);
+  assert.strictEqual(a.etat(t0 + 31001).combat.total, 6000, "même combat après la pause");
+  console.log("boss.test world boss ok");
+})();

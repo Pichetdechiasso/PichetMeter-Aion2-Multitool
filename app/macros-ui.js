@@ -314,10 +314,13 @@ function squelette() {
     </section>
     <aside class="card neu-extruded mc-details" id="mcDetails"></aside>
   </section>
-  <section class="card neu-extruded modbar" data-modbar="macros"></section>
-  <section class="card neu-extruded mc-settings" id="mcSettings"></section>
-  <section class="card neu-extruded wpanel" data-widget="macro"></section>`;
+  <div class="mc-reg" data-reglages="macros" data-ordre="Moteur,Widget">
+    <section class="card neu-extruded mc-settings" id="mcSettings" data-sec="Moteur"></section>
+    <section class="card neu-extruded modbar" data-modbar="macros" data-sec="Widget"></section>
+    <section class="card neu-extruded wpanel" data-widget="macro" data-sec="Widget"></section>
+  </div>`;
 
+  if (window.rangerReglages) window.rangerReglages($(".mc-reg", v));
   $("#mcTabs").addEventListener("click", e => { const b = e.target.closest("[data-t]"); if (!b) return; PALETTE = b.dataset.t === "nodes"; renderSide(); });
   v.addEventListener("click", clicVue);
   brancherEditeur();
@@ -1088,7 +1091,7 @@ function pushWidget(m) {
   if (m.ev === "macro_state") {
     if (m.running) {
       ACTIVES[m.id] = { id: m.id, name: m.name, since: Date.now() }; delete FINIS[m.id];
-      if (SCENE && MASC_ON()) SCENE.montrer(); // une mascotte au hasard apparaît à l'appui de la macro
+      if (SCENE && MASC_ON()) { const deja = SCENE.visible; SCENE.montrer(); if (!deja) setTimeout(() => SCENE.effet("explosion"), 260); else SCENE.effet("tourne"); } // une mascotte au hasard apparaît à l'appui de la macro
     } else if (ACTIVES[m.id]) {
       FINIS[m.id] = { ...ACTIVES[m.id], fin: Date.now() }; delete ACTIVES[m.id];
       if (!Object.keys(ACTIVES).length && SCENE) SCENE.fete(true);
@@ -1098,7 +1101,7 @@ function pushWidget(m) {
     const l = TOUCHES[m.id] || (TOUCHES[m.id] = []);
     for (const x of m.labels) l.push({ l: x, t: Date.now(), k: ++SEQ_T });
     TOUCHES[m.id] = l.slice(-7);
-    if (SCENE) SCENE.sautiller();
+    if (SCENE) { SCENE.sautiller(); if (SEQ_T % 12 === 0) SCENE.effet(SEQ_T % 24 === 0 ? "danse" : "etoiles"); }
   }
   if ((m.ev === "state" && !(m.running || []).length) || (m.ev === "phase" && m.phase !== "ready")) {
     for (const k in ACTIVES) { FINIS[k] = { ...ACTIVES[k], fin: Date.now() }; delete ACTIVES[k]; }

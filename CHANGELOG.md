@@ -1,5 +1,13 @@
 # Journal des versions
 
+## 2.2.0 (version personnelle)
+
+- **DPS meter** : animations de course (`dps-course.js`, FLIP), bannière de leader, couronne, défilement des chiffres, palettes Néon et Podium.
+- **World boss** (`reseau.js`) : détection par PV ou par nombre d'attaquants (5), coups mis en attente avec « Boss uniquement », combat maintenu 60 s tant que le boss vit, 40 joueurs.
+- **Réglages en onglets** (`data-reglages` / `data-sec`) dans Paramètres, DPS meter, Timers, Carte et Macros.
+- **Cooldowns** : onglet, widget et suivi des touches retirés.
+- **Mascottes** : 6 nouvelles, ajout / retrait manuel, effets (explosion, confettis, étoiles, danse, pirouette, secousse).
+
 ## 2.1.0 (version personnelle)
 
 - **Écran de placement des widgets** (`#w=layout`) : page transparente sur tout l'écran avec un aperçu de chaque widget ; déplacement avec magnétisme, taille continue (50 à 250 %, coin), opacité, clic à travers, affichage en jeu et mascotte. Remplace les options de position des onglets.

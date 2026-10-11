@@ -190,7 +190,7 @@ async function basculer() {
 }
 
 /* ════════ Widgets épinglés ════════ */
-const KINDS = ["timers", "ping", "map", "dps", "cd", "macro"];
+const KINDS = ["timers", "ping", "map", "dps", "macro"]; // onglet Cooldowns retiré (2.2)
 const widgets = {};
 function configWidget(kind) {
   if (kind === "toast") { const a = S.alerts || {}; return { size: a.size || "m", scale: a.scale, opacity: 97, click: true, pos: a.pos || "br", x: a.x, y: a.y }; }
@@ -487,7 +487,7 @@ function mascottes() {
     for (const n of noms.sort()) {
       if (!/\.(gif|png|webp|apng)$/i.test(n) || vus.has(n.toLowerCase())) continue;
       vus.add(n.toLowerCase());
-      out.push({ nom: n.replace(/\.[^.]+$/, ""), url: pathToFileURL(path.join(dossier, n)).href });
+      out.push({ nom: n.replace(/\.[^.]+$/, ""), url: pathToFileURL(path.join(dossier, n)).href, perso: dossier === path.join(DATA, "mascottes") });
     }
   }
   return out;
@@ -1020,7 +1020,7 @@ function choisirZone(nomZone, avant = null) {
 /* ════════ Cooldowns de compétences ════════ */
 let cdDebuts = {};
 const cdMinuteurs = {};
-const competences = () => (S.cd && S.cd.skills) || [];
+const competences = () => []; // onglet Cooldowns retiré (2.2) : plus de suivi des touches
 function declencher(id) {
   const s = competences().find(x => x.id === id);
   if (!s) return false;
@@ -1237,6 +1237,27 @@ const API = {
   open_licence: () => { shell.openPath(path.join(__dirname, "COPYING.txt")); return true; },
   // ── Macros ──
   mascots_list: () => mascottes(),
+  mascots_add: async () => {
+    const r = await dialog.showOpenDialog(vivante(main) ? main : undefined, { title: "Ajouter des mascottes", properties: ["openFile", "multiSelections"],
+      filters: [{ name: "Images animées ou transparentes", extensions: ["gif", "png", "webp", "apng"] }] });
+    if (r.canceled) return [];
+    const d = path.join(DATA, "mascottes"); fs.mkdirSync(d, { recursive: true });
+    const ajoutes = [];
+    for (const f of r.filePaths) {
+      if (!/\.(gif|png|webp|apng)$/i.test(f) || fs.statSync(f).size > 25e6) continue;
+      const ext = path.extname(f).toLowerCase(), base = path.basename(f, path.extname(f)).replace(/[^\w .-]+/g, "_").slice(0, 60) || "mascotte";
+      let nom = base + ext, i = 2;
+      while (fs.existsSync(path.join(d, nom))) nom = `${base}-${i++}${ext}`;
+      fs.copyFileSync(f, path.join(d, nom)); ajoutes.push(nom);
+    }
+    return ajoutes;
+  },
+  mascots_remove: (e, url) => {
+    const d = path.join(DATA, "mascottes");
+    let f; try { f = require("url").fileURLToPath(String(url)); } catch { return false; }
+    if (path.dirname(path.resolve(f)) !== path.resolve(d)) return false; // seulement les mascottes ajoutées par toi
+    try { fs.unlinkSync(f); return true; } catch { return false; }
+  },
   mascots_folder: () => { const d = path.join(DATA, "mascottes"); fs.mkdirSync(d, { recursive: true }); shell.openPath(d); return true; },
   layout_open: (e, kind) => ouvrirPlacement(kind ? String(kind) : ""),
   layout_close: () => { if (vivante(placement)) placement.close(); return true; },

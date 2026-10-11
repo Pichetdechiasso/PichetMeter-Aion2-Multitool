@@ -10,7 +10,7 @@ window.Mascottes = (() => {
 
   async function charger(api) {
     try { LISTE = (api && await api.mascots_list()) || []; } catch { LISTE = []; }
-    if (!Array.isArray(LISTE) || !LISTE.length) LISTE = ["rem-ram", "yukari", "chika"].map(n => ({ nom: n, url: `mascottes/${n}.gif` })); // aperçu hors application
+    if (!Array.isArray(LISTE) || !LISTE.length) LISTE = ["rem-ram", "yukari", "chika", "frieren", "reze", "sparkle", "yor", "chibi-blonde", "danseuse"].map(n => ({ nom: n, url: `mascottes/${n}.gif` })); // aperçu hors application
     return LISTE;
   }
   function auHasard() {
@@ -26,7 +26,10 @@ window.Mascottes = (() => {
       this.slot = slot; this.etat = "off"; this.dernierSaut = 0; this.minuteur = null;
       slot.innerHTML = '<div class="msc-bulle" hidden></div><img class="msc-img" alt="" draggable="false"><i class="msc-ombre"></i>';
       this.img = slot.querySelector(".msc-img"); this.bulleEl = slot.querySelector(".msc-bulle");
-      this.img.addEventListener("animationend", e => { if (e.animationName === "mscHop") this.img.classList.remove("hop"); });
+      this.img.addEventListener("animationend", e => {
+        const fin = { mscHop: "hop", mscDanse: "danse", mscTourne: "tourne", mscSecoue: "secoue" }[e.animationName];
+        if (fin) this.img.classList.remove(fin);
+      });
       this.img.addEventListener("error", () => { if (this.etat !== "off") { const u = auHasard(); if (u && u !== this.img.getAttribute("src")) this.img.src = u; } });
     }
     get visible() { return this.etat === "in" || this.etat === "idle"; }
@@ -38,6 +41,7 @@ window.Mascottes = (() => {
       if (!u) return this;
       this.img.src = u; this.etat = "in";
       this.slot.classList.add("on"); this.classes("in");
+      setTimeout(() => this.effet("etoiles"), 120);
       this.minuteur = setTimeout(() => { if (this.etat === "in") { this.etat = "idle"; this.classes("idle"); } }, reduit() ? 10 : 650);
       return this;
     }
@@ -65,12 +69,36 @@ window.Mascottes = (() => {
         this.slot.appendChild(h); setTimeout(() => h.remove(), 1300);
       }, i * 85);
     }
-    /** Petite fête (saut de joie + pluie de cœurs) puis départ. */
+    /** Effets : explosion, confettis, étoiles, onde, danse, tourne, secoue. */
+    effet(nom) {
+      if (this.etat === "off" || reduit() || (window.Mascottes.fx && !window.Mascottes.fx())) return this;
+      const anim = { danse: "danse", tourne: "tourne", secoue: "secoue" }[nom];
+      if (anim) { this.img.classList.remove("hop", "danse", "tourne", "secoue"); void this.img.offsetWidth; this.img.classList.add(anim); return this; }
+      const COUL = ["#ff5a7a", "#ffcf4a", "#8cc4ff", "#7cf5c4", "#c79bff", "#ff9e5c", "#ffffff"];
+      const ajout = (cls, styles, vie) => { const p = document.createElement("i"); p.className = cls; for (const [k, v] of Object.entries(styles)) p.style.setProperty(k, v); this.slot.appendChild(p); setTimeout(() => p.remove(), vie); };
+      if (nom === "explosion") {
+        ajout("msc-onde", {}, 700);
+        for (let i = 0; i < 22; i++) {
+          const a = (i / 22) * Math.PI * 2 + Math.random() * .3, d = 38 + Math.random() * 34;
+          ajout("msc-p", { "--dx": (Math.cos(a) * d).toFixed(0) + "px", "--dy": (Math.sin(a) * d).toFixed(0) + "px", "--c": COUL[i % COUL.length], "--t": (.55 + Math.random() * .35).toFixed(2) + "s" }, 1000);
+        }
+      } else if (nom === "confetti") {
+        for (let i = 0; i < 26; i++) ajout("msc-conf", { left: (Math.random() * 100).toFixed(0) + "%", "--c": COUL[i % COUL.length], "--r": ((Math.random() - .5) * 720).toFixed(0) + "deg",
+          "--dx": ((Math.random() - .5) * 50).toFixed(0) + "px", "--t": (1 + Math.random() * .8).toFixed(2) + "s", "animation-delay": (Math.random() * .35).toFixed(2) + "s" }, 2300);
+      } else if (nom === "etoiles") {
+        for (let i = 0; i < 12; i++) ajout("msc-star", { left: (8 + Math.random() * 84).toFixed(0) + "%", top: (6 + Math.random() * 70).toFixed(0) + "%", "--c": COUL[(i * 3) % COUL.length],
+          "animation-delay": (Math.random() * .6).toFixed(2) + "s", "font-size": (9 + Math.random() * 10).toFixed(0) + "px" }, 1700);
+      }
+      return this;
+    }
+    /** Fête au hasard (danse + confettis, explosion + étoiles, pirouette + cœurs…) puis départ. */
     fete(puisCacher = true, apres) {
       if (this.etat === "off") { if (apres) apres(); return; }
       clearTimeout(this.minuteur);
       this.etat = "idle"; this.classes("fete"); this.coeurs(9);
-      this.minuteur = setTimeout(() => { if (puisCacher) this.cacher(apres); else { this.classes("idle"); if (apres) apres(); } }, reduit() ? 300 : 1500);
+      const combos = [["danse", "confetti"], ["explosion", "etoiles"], ["tourne", "confetti"], ["secoue", "explosion"], ["danse", "etoiles"]];
+      for (const e of combos[Math.floor(Math.random() * combos.length)]) this.effet(e);
+      this.minuteur = setTimeout(() => { if (puisCacher) this.cacher(apres); else { this.classes("idle"); if (apres) apres(); } }, reduit() ? 300 : 2300);
     }
     cacher(apres) {
       clearTimeout(this.minuteur);
@@ -79,5 +107,5 @@ window.Mascottes = (() => {
       this.minuteur = setTimeout(() => { this.etat = "off"; this.classes(); this.slot.classList.remove("on"); this.img.removeAttribute("src"); if (apres) apres(); }, reduit() ? 10 : 420);
     }
   }
-  return { charger, auHasard, Scene, get liste() { return LISTE; } };
+  return { charger, auHasard, Scene, fx: null, get liste() { return LISTE; } };
 })();

@@ -183,3 +183,4 @@ body.desktop:not(.winmode):not(.widget) .winctl { gap: 6px; }
   .mc-help { min-height: 0; }
 }
 .mg-addmenu { align-items: start; } .mg-addmenu .mc-cat { align-content: start; }
+.mc-reg { display: grid; gap: 14px; }
