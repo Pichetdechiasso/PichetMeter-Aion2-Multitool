@@ -1,5 +1,12 @@
 # Journal des versions
 
+## 2.3.1 (version personnelle)
+
+- **Potions** : prototypes ctypes complets pour la capture GDI (`potions.py`) ; les handles 64 bits provoquaient « OverflowError: int too long to convert » au calibrage et à chaque lecture. Le bitmap est désélectionné avant `GetDIBits`. Erreurs de `potions_read` (aperçu) non journalisées ; résultats `{ ok: false }` du pont gérés dans l'onglet.
+- **Loupe** : capture par `getUserMedia` (`chromeMediaSource: "desktop"`, source fournie par `zoom_source`) au lieu de `getDisplayMedia`, qui exige un geste de l'utilisateur ; repli sur `getDisplayMedia` au clic, erreur détaillée dans le journal (`zoom_error`).
+- **Classement** : onglet, vue et code retirés.
+- **Personnage** : l'armurerie officielle renvoie actuellement `equipmentList: null` et `ItemLevel: 0` pour tous les personnages ; message explicite et « — » au lieu de 0.
+
 ## 2.3.0 (version personnelle)
 
 - **Thème Y2K × Cyberpunk** (`app/theme-cyber.css`, chargé en dernier) : panneaux noir mat, titres chromés (Orbitron), texte Chakra Petch, lignes de balayage, néons cyan `#00e5ff` / magenta `#ff2bd6` / vert `#39ff88` sur les éléments interactifs ; thème sombre forcé ; widgets, écran de placement et animation de lancement restylés.

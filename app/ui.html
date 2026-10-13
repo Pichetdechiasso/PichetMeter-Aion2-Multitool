@@ -1131,6 +1131,7 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
 
       <div class="card neu-extruded" id="gearCard" hidden>
         <div class="card-head"><div><h2>Équipement</h2><span class="sub">Survole une pièce pour le détail</span></div></div>
+        <p class="note warn-note" id="gearVide" hidden>L'armurerie officielle (aion2.plaync.com) renvoie en ce moment une fiche sans équipement ni niveau d'objet, pour tous les personnages : NCSOFT ne publie plus ces données. Elles réapparaîtront ici dès qu'elles seront de nouveau publiées (bouton « Actualiser »).</p>
         <div class="game">
           <div class="paperdoll">
             <div class="slotcol" id="gearLeft"></div>
@@ -1155,42 +1156,6 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
           <div class="boards" id="boards"></div>
           <div id="boardDetail" class="gm"></div>
         </div>
-      </div>
-    </section>
-  </div>
-
-  <!-- ═════════ Vue : Classement ═════════ -->
-  <div class="view" id="view-classement" hidden>
-    <section class="card neu-extruded">
-      <div class="card-head"><div><h2>Classement</h2><span class="sub" id="lbSub">Clique une ligne pour inspecter le personnage</span></div>
-        <span class="badge info" id="lbSeason" hidden></span></div>
-      <div class="seg" id="lbMode" style="max-width:520px"><button data-v="perso" aria-pressed="true">Mes personnages et favoris</button><button data-v="officiel" aria-pressed="false">Classements officiels</button></div>
-      <div id="lbPerso" class="stack" style="gap:12px">
-        <form class="lb-add" id="lbAddForm" autocomplete="off">
-          <input class="field sm" id="lbAddName" placeholder="Ajouter un joueur au classement (pseudo)" aria-label="Pseudo à ajouter">
-          <select class="field sm" id="lbAddServer" aria-label="Serveur du joueur"></select>
-          <button class="btn sm primary" type="submit">Ajouter</button>
-        </form>
-        <p class="err" id="lbPErr" hidden></p>
-        <div class="table-wrap"><table>
-          <thead><tr><th>#</th><th>Personnage</th><th>Classe</th><th>Serveur</th><th class="num">Puissance de combat</th><th class="num">Niveau d'objet</th><th class="num">Niveau</th><th></th></tr></thead>
-          <tbody id="lbPBody"></tbody></table></div>
-        <p class="note">Tes comptes, tes favoris et les joueurs ajoutés ici, classés avec les données de l'armurerie officielle.</p>
-      </div>
-      <div id="lbOff" class="stack" style="gap:12px" hidden>
-      <form class="lb-filters" id="lbForm">
-        <div class="form-row"><label class="label" for="lbType">Contenu</label><select class="field sm" id="lbType"></select></div>
-        <div class="form-row"><label class="label" for="lbServer">Serveur</label><select class="field sm" id="lbServer"></select></div>
-        <div class="form-row"><label class="label" for="lbClass">Classe</label><select class="field sm" id="lbClass"></select></div>
-        <div class="form-row"><label class="label" for="lbName">Nom</label><input class="field sm" id="lbName" placeholder="Filtrer par pseudo"></div>
-      </form>
-      <p class="err" id="lbErr" hidden></p>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Rang</th><th>Évol.</th><th>Personnage</th><th>Classe</th><th>Légion</th><th>Grade</th><th class="num">Points</th></tr></thead>
-          <tbody id="lbBody"></tbody>
-        </table>
-      </div>
       </div>
     </section>
   </div>
@@ -1784,7 +1749,6 @@ onSettingsChanged.push(applyTheme);
 /* ════════ Navigation latérale ════════ */
 const NAV = [
   ["perso", "Personnage", '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>'],
-  ["classement", "Classement", '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/>'],
   ["timers", "Timers", '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/>'],
   ["dps", "DPS meter", '<path d="M4 20V11M10 20V5M16 20v-6M22 20H2"/>'],
   ["macros", "Macros", '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>'],
@@ -1823,7 +1787,6 @@ function switchView(v) {
   }
   placerGlider();
   $("#main").scrollTop = 0;
-  if (v === "classement") { $("#lbAddServer").innerHTML = $("#lbServer").innerHTML; if (activeAcct()) $("#lbAddServer").value = activeAcct().serverId; lbSetMode(S.lbMode || "perso"); }
   onView(v);
 }
 $$("#sideNav [data-view]").forEach(b => b.addEventListener("click", () => switchView(b.dataset.view)));
@@ -2065,7 +2028,9 @@ function renderProfile() {
   $("#pMeta").innerHTML = clsImgNom(p.className || ref.className, "md") + esc([p.className, p.raceName, p.characterLevel ? "Niv. " + p.characterLevel : null, p.serverName || ref.serverName, p.regionName ? "Légion " + p.regionName : null].filter(Boolean).join(" · "));
   $("#pTitle").textContent = p.titleName || "";
   $("#pCP").textContent = fmt(p.combatPower);
-  $("#pIL").textContent = fmt(itemLevel(info));
+  const il = itemLevel(info);
+  $("#pIL").textContent = il ? fmt(il) : "—";
+  $("#pIL").title = il ? "" : "Niveau d'objet non publié par l'armurerie officielle";
   renderFavBtn();
   const ranks = info?.ranking?.rankingList || [];
   $("#pRanks").innerHTML = ranks.length ? ranks.map(r => `<div class="rank-chip">${r.gradeIcon ? `<img src="${esc(r.gradeIcon)}" alt="" referrerpolicy="no-referrer">` : ""}
@@ -2109,6 +2074,8 @@ function itemTile(it, big) {
 function renderGear() {
   const eq = current.equipment || {}, list = eq.equipment?.equipmentList || [];
   $("#gearCard").hidden = false;
+  const vide = !list.length && !(eq.petwing && (eq.petwing.wing || eq.petwing.pet));
+  $("#gearVide").hidden = !vide; $("#gearCard .game").hidden = vide;
   const main = list.filter(s => !isArcana(s)).sort((a, b) => a.slotPos - b.slotPos);
   const slotRow = s => `<div class="slot">${itemTile(s, true)}<span class="nm"><b style="color:${gradeColor(s.grade)}">${esc(s.name)}</b><small>${esc(slotLabel(s.slotPosName))}${s.enchantLevel ? " · +" + s.enchantLevel : ""}${s.exceedLevel ? " · ★" + s.exceedLevel : ""}</small></span></div>`;
   $("#gearLeft").innerHTML = main.filter(s => !isAccessory(s.slotPosName)).map(slotRow).join("") || '<p class="gm">Aucune pièce</p>';
@@ -2177,100 +2144,9 @@ async function onAccountChanged() {
   if (!S.timers.server.serverId && (S.timers.server.region || "eu") === (a.region || "eu")) { S.timers.server = { ...S.timers.server, serverId: +a.serverId, serverName: a.serverName }; save(); renderSrv(); }
   await loadServers(a.region); await loadClasses(a.region);
   serverOptions($("#searchServer"), { all: true, value: "" });
-  serverOptions($("#lbServer"), { value: a.serverId });
-  $("#lbClass").innerHTML = '<option value="0">Toutes les classes</option>' + CLASSES.map(c => `<option value="${c.id}">${esc(c.text || c.name)}</option>`).join("");
   await loadMine();
   if (S.autosync && !current && a.characterId) inspect(a);
-  if (!$("#view-classement").hidden) loadBoard();
 }
-
-/* ════════ Classement ════════ */
-$("#lbType").innerHTML = RANK_TYPES.map(([v, t]) => `<option value="${v}">${t}</option>`).join("");
-let lbTimer, lbSeq = 0;
-async function loadBoard() {
-  if (!$("#lbServer").value) return;
-  const seq = ++lbSeq, err = $("#lbErr"), body = $("#lbBody"); err.hidden = true;
-  body.innerHTML = `<tr><td colspan="7" class="muted">Chargement…</td></tr>`;
-  try {
-    const d = await call("ranking", +$("#lbType").value, +$("#lbServer").value, +$("#lbClass").value || 0, $("#lbName").value.trim(), region());
-    if (seq !== lbSeq) return;
-    const rows = d?.rankingList || [];
-    $("#lbSeason").hidden = !d?.season;
-    if (d?.season) $("#lbSeason").textContent = `Saison ${d.season.seasonNo ?? ""}${d.season.endDate ? " · fin le " + new Date(d.season.endDate).toLocaleDateString(LOC) : ""}`;
-    if (!d?.season) { body.innerHTML = `<tr><td colspan="7" class="muted">L'armurerie officielle ne publie aucun classement en ce moment : NCSOFT a fermé les classements publics (aucune saison ouverte). Utilise « Mes personnages et favoris » en attendant leur retour.</td></tr>`; return; }
-    if (!rows.length) { body.innerHTML = `<tr><td colspan="7" class="muted">Aucun joueur classé pour ces filtres.</td></tr>`; return; }
-    body.innerHTML = rows.map((r, i) => `<tr data-i="${i}"><td class="rk">${fmt(r.rank)}</td><td>${moveTxt(r.rankChange)}</td><td><b class="pname">${esc(r.characterName)}</b></td><td class="cls-cell">${clsImgNom(r.className)}${esc(r.className || "")}</td>
-        <td><span class="pname">${esc(r.guildName || "—")}</span></td><td>${r.gradeIcon ? `<img class="grade-ic" src="${esc(r.gradeIcon)}" alt="" referrerpolicy="no-referrer"> ` : ""}${esc(r.gradeName || "")}</td><td class="num">${fmt(r.point)}</td></tr>`).join("");
-    $$("#lbBody tr[data-i]").forEach(tr => tr.addEventListener("click", () => {
-      const r = rows[+tr.dataset.i];
-      inspect({ name: r.characterName, serverId: +$("#lbServer").value, characterId: r.characterId, className: r.className, imageUrl: r.profileImage });
-    }));
-  } catch (ex) { if (seq !== lbSeq) return; body.innerHTML = ""; err.textContent = "Classement indisponible : " + ex.message; err.hidden = false; }
-}
-["lbType", "lbServer", "lbClass"].forEach(id => $("#" + id).addEventListener("change", loadBoard));
-$("#lbName").addEventListener("input", () => { clearTimeout(lbTimer); lbTimer = setTimeout(loadBoard, 450); });
-$("#lbForm").addEventListener("submit", e => { e.preventDefault(); loadBoard(); });
-
-/* Classement personnel : comptes, favoris et joueurs ajoutés, classés par puissance de combat */
-const lbCache = new Map();
-function lbRefs() {
-  const out = [], vu = new Set();
-  const add = (r, tag) => { if (!r || !r.name) return; const k = `${r.serverId}:${String(r.name).toLowerCase()}`; if (vu.has(k)) return; vu.add(k); out.push({ ...r, tag }); };
-  S.accounts.forEach(a => add({ name: a.name, serverId: a.serverId, characterId: a.characterId, region: a.region }, "compte"));
-  S.favorites.forEach(f => add(f, "favori"));
-  (S.lbExtra || []).forEach(f => add(f, "ajouté"));
-  return out;
-}
-async function lbFiche(r) {
-  const k = `${r.serverId}:${String(r.name).toLowerCase()}`;
-  const c = lbCache.get(k); if (c && Date.now() - c.t < 300000) return c.d;
-  let id = r.characterId;
-  if (!id) {
-    const hits = (await call("search", r.name, r.serverId, r.region || region())) || [];
-    const h = hits.find(x => x.name.toLowerCase() === String(r.name).toLowerCase() && +x.serverId === +r.serverId);
-    if (!h) throw new Error("introuvable");
-    id = h.characterId;
-  }
-  const f = await call("character", r.serverId, id, r.region || region());
-  const p = f?.info?.profile || {};
-  const d = { ref: { name: p.characterName || r.name, serverId: r.serverId, characterId: id, className: p.className, imageUrl: p.profileImage }, cp: p.combatPower || 0, il: +itemLevel(f.info) || 0, lv: p.characterLevel || p.level || null, cls: p.className || "" };
-  lbCache.set(k, { t: Date.now(), d });
-  return d;
-}
-let lbPSeq = 0;
-async function loadPersoBoard() {
-  const seq = ++lbPSeq, body = $("#lbPBody"), refs = lbRefs();
-  if (!refs.length) { body.innerHTML = `<tr><td colspan="8" class="muted">Ajoute des favoris depuis l'onglet Personnage, ou un pseudo ci-dessus.</td></tr>`; return; }
-  body.innerHTML = `<tr><td colspan="8" class="muted">Chargement de ${refs.length} personnage${refs.length > 1 ? "s" : ""}…</td></tr>`;
-  const res = await Promise.all(refs.map(r => lbFiche(r).then(d => ({ r, d })).catch(e => ({ r, e: e.message }))));
-  if (seq !== lbPSeq) return;
-  const ok = res.filter(x => x.d).sort((a, b) => b.d.cp - a.d.cp || b.d.il - a.d.il), ko = res.filter(x => !x.d);
-  body.innerHTML = ok.map((x, i) => `<tr data-k="${i}"><td class="rk">${i + 1}</td><td><b class="pname">${esc(x.d.ref.name)}</b> <span class="badge${x.r.tag === "compte" ? " ok" : ""}">${x.r.tag}</span></td><td class="cls-cell">${clsImgNom(x.d.cls)}${esc(x.d.cls)}</td><td>${esc(serverName(x.r.serverId))}</td>
-      <td class="num">${fmt(x.d.cp)}</td><td class="num">${fmt(x.d.il)}</td><td class="num">${fmt(x.d.lv)}</td><td>${x.r.tag === "ajouté" ? `<button class="btn icon sm danger" data-rm="${i}" title="Retirer" aria-label="Retirer ${esc(x.d.ref.name)}">${svg("x")}</button>` : ""}</td></tr>`).join("")
-    + ko.map(x => `<tr><td></td><td>${esc(x.r.name)}</td><td colspan="6" class="muted">Indisponible (${esc(x.e)})</td></tr>`).join("");
-  $$("#lbPBody tr[data-k]").forEach(tr => tr.addEventListener("click", e => {
-    const x = ok[+tr.dataset.k];
-    if (e.target.closest("[data-rm]")) { S.lbExtra = (S.lbExtra || []).filter(f => !(String(f.name).toLowerCase() === String(x.r.name).toLowerCase() && +f.serverId === +x.r.serverId)); save(); loadPersoBoard(); return; }
-    inspect(x.d.ref);
-  }));
-}
-function lbSetMode(m) {
-  S.lbMode = m; save();
-  $$("#lbMode button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === m)));
-  $("#lbPerso").hidden = m !== "perso"; $("#lbOff").hidden = m === "perso";
-  if (m === "perso") loadPersoBoard(); else loadBoard();
-}
-$("#lbMode").addEventListener("click", e => { const b = e.target.closest("button"); if (b) lbSetMode(b.dataset.v); });
-$("#lbAddForm").addEventListener("submit", async e => {
-  e.preventDefault();
-  const name = $("#lbAddName").value.trim(), serverId = +$("#lbAddServer").value, err = $("#lbPErr");
-  if (!name) return;
-  err.hidden = true;
-  try { await lbFiche({ name, serverId }); }
-  catch (ex) { err.textContent = `« ${name} » introuvable sur ${serverName(serverId)}.`; err.hidden = false; return; }
-  S.lbExtra = [...(S.lbExtra || []), { name, serverId }]; save();
-  $("#lbAddName").value = ""; loadPersoBoard();
-});
 
 /* ════════ Timers ════════ */
 // Horaires des serveurs Global / Europe relevés par la communauté depuis l'ouverture du 5 octobre 2026.
@@ -3643,7 +3519,9 @@ if (!WIDGET && $("#view-potion")) {
     try {
       const r = recal ? await api().potion_recalibrate() : await api().potion_pick();
       if (!r) return;
+      if (r.ok === false) throw new Error(r.error || "erreur");
       if (r.erreur) throw new Error(r.erreur);
+      if (!r.zone || !r.couleur) throw new Error("lecture de la barre impossible");
       Object.assign(potCfg(), { zone: r.zone, couleur: r.couleur });
       POT.png = r.png || ""; POT.v = r.v;
       await saveNow(); renderPotions();
@@ -3674,7 +3552,7 @@ if (!WIDGET && $("#view-loupe")) {
   const z = () => (S.widgets.zoom = S.widgets.zoom || { ...DEFAULTS.widgets.zoom });
   $("#zPick").addEventListener("click", async () => {
     if (!DESKTOP) { notify(L("Loupe", "Magnifier"), L("La sélection se fait dans l'application de bureau.", "Selection works in the desktop app.")); return; }
-    try { await api().zoom_pick(); } catch (e) { notify(L("Loupe", "Magnifier"), e.message); }
+    try { const r = await api().zoom_pick(); if (r && r.ok === false) throw new Error(r.error); } catch (e) { notify(L("Loupe", "Magnifier"), e.message); }
   });
   $("#view-loupe").addEventListener("click", e => {
     const b = e.target.closest("[data-zl] button"); if (!b) return;
@@ -3733,14 +3611,24 @@ function bootLoupe(wr) {
     lancement = (async () => {
       try {
         const fps = +cfg().fps || 30;
-        const f = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: { ideal: fps, max: fps } }, audio: false });
+        let f;
+        try {
+          // capture de l'écran choisi, sans demande à l'utilisateur (source fournie par le processus principal)
+          const src = await api().zoom_source();
+          if (!src || !src.id) throw new Error("écran introuvable");
+          f = await navigator.mediaDevices.getUserMedia({ audio: false, video: { mandatory: { chromeMediaSource: "desktop", chromeMediaSourceId: src.id, maxWidth: src.w, maxHeight: src.h, maxFrameRate: fps } } });
+        } catch (e1) {
+          try { f = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: { ideal: fps, max: fps } }, audio: false }); }
+          catch (e2) { api()?.zoom_error(`${e1.name || ""} ${e1.message} | ${e2.name || ""} ${e2.message}`); throw e1; }
+        }
         if (!visible) { f.getTracks().forEach(t => t.stop()); return; }
         flux = f; vid.srcObject = f; await vid.play(); msg(""); dessiner(); boucle();
         f.getVideoTracks()[0].addEventListener("ended", () => { arreter(); if (visible) setTimeout(demarrer, 1500); });
-      } catch (e) { arreter(); msg(L("Capture de l'écran impossible : ", "Screen capture failed: ") + (e.message || e)); }
+      } catch (e) { arreter(); msg(L("Capture de l'écran impossible : ", "Screen capture failed: ") + (e.message || e) + L(" · clique ici pour réessayer", " · click here to retry")); }
       finally { lancement = null; }
     })();
   }
+  $("#wzMsg").addEventListener("click", () => { if (!flux) demarrer(); }); // un clic autorise aussi la capture classique
   window.__loupeVisible = v => { visible = v; if (v) demarrer(); else arreter(); };
   const appliquer = () => {
     dimensionner();

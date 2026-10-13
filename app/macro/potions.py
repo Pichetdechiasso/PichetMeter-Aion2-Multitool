@@ -45,32 +45,58 @@ if IS_WIN:
                     ("biBitCount", wintypes.WORD), ("biCompression", wintypes.DWORD), ("biSizeImage", wintypes.DWORD),
                     ("biXPelsPerMeter", wintypes.LONG), ("biYPelsPerMeter", wintypes.LONG), ("biClrUsed", wintypes.DWORD), ("biClrImportant", wintypes.DWORD)]
 
-    _gdi32.CreateCompatibleDC.restype = wintypes.HDC
-    _gdi32.CreateCompatibleBitmap.restype = wintypes.HBITMAP
-    _gdi32.SelectObject.restype = wintypes.HGDIOBJ
-    _user32.GetDC.restype = wintypes.HDC
-    _user32.GetForegroundWindow.restype = wintypes.HWND
-    _kernel32.OpenProcess.restype = wintypes.HANDLE
+    # Prototypes complets : sans eux, ctypes passe les handles 64 bits comme des int 32 bits (« int too long to convert »)
+    def _proto(f, res, *args):
+        f.restype, f.argtypes = res, list(args)
+
+    _proto(_user32.GetDC, wintypes.HDC, wintypes.HWND)
+    _proto(_user32.ReleaseDC, ctypes.c_int, wintypes.HWND, wintypes.HDC)
+    _proto(_user32.GetForegroundWindow, wintypes.HWND)
+    _proto(_user32.GetWindowThreadProcessId, wintypes.DWORD, wintypes.HWND, ctypes.POINTER(wintypes.DWORD))
+    _proto(_gdi32.CreateCompatibleDC, wintypes.HDC, wintypes.HDC)
+    _proto(_gdi32.CreateCompatibleBitmap, wintypes.HBITMAP, wintypes.HDC, ctypes.c_int, ctypes.c_int)
+    _proto(_gdi32.SelectObject, wintypes.HGDIOBJ, wintypes.HDC, wintypes.HGDIOBJ)
+    _proto(_gdi32.BitBlt, wintypes.BOOL, wintypes.HDC, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, wintypes.HDC, ctypes.c_int, ctypes.c_int, wintypes.DWORD)
+    _proto(_gdi32.GetDIBits, ctypes.c_int, wintypes.HDC, wintypes.HBITMAP, wintypes.UINT, wintypes.UINT, ctypes.c_void_p, ctypes.POINTER(BITMAPINFOHEADER), wintypes.UINT)
+    _proto(_gdi32.DeleteObject, wintypes.BOOL, wintypes.HGDIOBJ)
+    _proto(_gdi32.DeleteDC, wintypes.BOOL, wintypes.HDC)
+    _proto(_kernel32.OpenProcess, wintypes.HANDLE, wintypes.DWORD, wintypes.BOOL, wintypes.DWORD)
+    _proto(_kernel32.QueryFullProcessImageNameW, wintypes.BOOL, wintypes.HANDLE, wintypes.DWORD, wintypes.LPWSTR, ctypes.POINTER(wintypes.DWORD))
+    _proto(_kernel32.CloseHandle, wintypes.BOOL, wintypes.HANDLE)
 
 
 def capturer(x: int, y: int, w: int, h: int) -> bytes:
     """Pixels BGRA (ligne par ligne, de haut en bas) d'une zone de l'écran."""
     if not IS_WIN:
         raise OSError("lecture de l'écran disponible uniquement sous Windows")
+    x, y, w, h = int(x), int(y), int(w), int(h)
     ecran = _user32.GetDC(None)
+    if not ecran:
+        raise OSError("écran inaccessible")
     dc = _gdi32.CreateCompatibleDC(ecran)
     bmp = _gdi32.CreateCompatibleBitmap(ecran, w, h)
+    if not dc or not bmp:
+        if bmp:
+            _gdi32.DeleteObject(bmp)
+        if dc:
+            _gdi32.DeleteDC(dc)
+        _user32.ReleaseDC(None, ecran)
+        raise OSError("capture de l'écran impossible (mémoire graphique)")
     ancien = _gdi32.SelectObject(dc, bmp)
+    selectionne = True
     try:
         if not _gdi32.BitBlt(dc, 0, 0, w, h, ecran, x, y, 0x00CC0020 | 0x40000000):  # SRCCOPY | CAPTUREBLT
             raise OSError("capture de l'écran refusée")
+        _gdi32.SelectObject(dc, ancien)  # GetDIBits veut un bitmap qui n'est plus sélectionné
+        selectionne = False
         info = BITMAPINFOHEADER(ctypes.sizeof(BITMAPINFOHEADER), w, -h, 1, 32, 0, 0, 0, 0, 0, 0)
         tampon = ctypes.create_string_buffer(w * h * 4)
         if not _gdi32.GetDIBits(dc, bmp, 0, h, tampon, ctypes.byref(info), 0):
             raise OSError("lecture des pixels impossible")
         return tampon.raw
     finally:
-        _gdi32.SelectObject(dc, ancien)
+        if selectionne:
+            _gdi32.SelectObject(dc, ancien)
         _gdi32.DeleteObject(bmp)
         _gdi32.DeleteDC(dc)
         _user32.ReleaseDC(None, ecran)

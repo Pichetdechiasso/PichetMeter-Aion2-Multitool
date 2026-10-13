@@ -1260,7 +1260,16 @@ const API = {
   // ── Macros ──
   potion_pick: () => choisirZone("pv", z => macros.commande("potions_calibrate", { zone: z }, 15000)),
   potion_recalibrate: async () => { const z = S.potions && S.potions.zone; if (!z) throw new Error("choisis d'abord la barre de vie"); return macros.commande("potions_calibrate", { zone: z }, 15000); },
-  potion_read: () => macros.phase === "ready" ? macros.commande("potions_read", {}, 4000) : -1,
+  potion_read: () => macros.phase === "ready" ? macros.commande("potions_read", {}, 4000).catch(() => -1) : -1, // lecture d'aperçu : pas d'erreur au journal toutes les 0,5 s
+  zoom_source: async () => {
+    // écran où la zone de la loupe a été choisie : identifiant de capture + taille en pixels réels
+    const rel = W("zoom").rel || {};
+    const sources = await desktopCapturer.getSources({ types: ["screen"], thumbnailSize: { width: 0, height: 0 } });
+    const src = sources.find(x => String(x.display_id) === String(rel.display)) || sources[0];
+    const d = screen.getAllDisplays().find(x => String(x.id) === String(rel.display)) || screen.getPrimaryDisplay();
+    return src ? { id: src.id, w: Math.round(d.bounds.width * d.scaleFactor), h: Math.round(d.bounds.height * d.scaleFactor) } : null;
+  },
+  zoom_error: (e, texte) => { log("Loupe : capture impossible :", String(texte).slice(0, 400)); return true; },
   zoom_pick: () => choisirZone("zoom", (z, rel) => {
     S.widgets = S.widgets || {};
     S.widgets.zoom = { ...W("zoom"), rel, phys: z, pinned: true }; // zone choisie : la loupe s'affiche en jeu

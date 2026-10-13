@@ -247,3 +247,4 @@ body.widget.wm #widgetRoot { padding: 0; display: inline-block; vertical-align: 
 .wz-ph svg { width: 34px; height: 34px; color: var(--cy, #00e5ff); filter: drop-shadow(0 0 8px rgba(0, 229, 255, .7)); }
 .wz-ph b { font: 800 14px var(--f-display, sans-serif); letter-spacing: .1em; text-transform: uppercase; }
 .wz-ph small { color: #95a6c4; }
+.wz-msg { cursor: pointer; }
