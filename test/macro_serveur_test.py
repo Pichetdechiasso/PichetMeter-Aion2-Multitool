@@ -105,3 +105,38 @@ assert len(r["added"]) == 1 and r["added"][0]["id"] != m["id"] and r["added"][0]
 # fichier de Pichet Macro : macro au format pack
 assert os.path.isfile(os.path.join(TMP, ".pichet_macro", "macros", m["id"] + ".json"))
 print("macro_serveur : OK")
+
+# ── Auto-potions : lecture d'une barre rouge remplie à 40 %, potion F1 sous 60 %, F2 sous 35 % ──
+import potions  # noqa: E402
+
+W, H = 200, 10
+def barre(part):
+    px = bytearray()
+    for y in range(H):
+        for x in range(W):
+            px += bytes((30, 30, 200, 255)) if x < W * part else bytes((20, 20, 20, 255))  # BGRA : rouge
+    return bytes(px)
+assert abs(potions.ratio(barre(0.4), W, H, [200, 30, 30], 70) - 0.4) < 0.02
+assert potions.couleur_mediane(barre(1), W, H) == [200, 30, 30]
+assert potions.png(barre(0.5), W, H).startswith("iVBOR")
+envois = []
+class Pilote:
+    available = True
+    def send_key(self, sc, ext, down): envois.append((sc, down))
+ap = potions.AutoPotions(Pilote(), lambda *a, **k: None)
+part = [1.0]
+ap.capture = lambda x, y, w, h: barre(part[0])
+ap.devant = lambda: True
+ap.configurer({"enabled": True, "zone": {"x": 0, "y": 0, "w": W, "h": H}, "couleur": [200, 30, 30],
+               "regles": [{"touche": "F1", "actif": True, "seuil": 60, "delai": 3000}, {"touche": "F2", "actif": True, "seuil": 35, "delai": 6000}]})
+ap.pas(100.0)
+assert envois == [], "vie pleine : aucune potion"
+part[0] = 0.4
+ap.pas(101.0)
+assert envois == [(0x3B, True), (0x3B, False)], envois
+ap.pas(102.0)
+assert len(envois) == 2, "délai de F1 respecté"
+part[0] = 0.3
+ap.pas(103.0)
+assert envois[-2:] == [(0x3C, True), (0x3C, False)], "F2, plus urgente, sous 35 %"
+print("auto-potions : OK")

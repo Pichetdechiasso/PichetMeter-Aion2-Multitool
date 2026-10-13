@@ -15,7 +15,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $ElectronVersion = 'v44.5.1'
-$AppVersion = '2.2.1'
+$AppVersion = '2.3.0'
 $AppName = 'PichetMeter'
 $ExeName = 'PichetMeter.exe'
 $Icone = 'PichetMeter.ico'

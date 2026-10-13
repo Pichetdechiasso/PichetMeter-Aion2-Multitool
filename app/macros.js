@@ -12,7 +12,7 @@ const { spawn, execFile } = require("child_process");
 const IS_WIN = process.platform === "win32";
 const COMMANDES = new Set(["hello", "list", "save", "create", "duplicate", "delete", "examples", "example_names", "settings",
   "pause_hotkeys", "play", "stop_all", "record", "capture_key", "capture_cancel", "cursor", "driver", "driver_reopen",
-  "driver_install", "driver_uninstall", "reboot", "foreground", "import", "export", "export_all"]);
+  "driver_install", "driver_uninstall", "reboot", "foreground", "import", "export", "export_all", "potions_config", "potions_calibrate", "potions_read"]);
 
 function executer(exe, args, { timeout = 15000, cwd } = {}) {
   return new Promise(resolve => {

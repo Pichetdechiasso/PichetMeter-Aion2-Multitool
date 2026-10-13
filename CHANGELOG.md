@@ -1,5 +1,14 @@
 # Journal des versions
 
+## 2.3.0 (version personnelle)
+
+- **Thème Y2K × Cyberpunk** (`app/theme-cyber.css`, chargé en dernier) : panneaux noir mat, titres chromés (Orbitron), texte Chakra Petch, lignes de balayage, néons cyan `#00e5ff` / magenta `#ff2bd6` / vert `#39ff88` sur les éléments interactifs ; thème sombre forcé ; widgets, écran de placement et animation de lancement restylés.
+- **Personnage** : bouton « Actualiser » (`character(..., force)` ignore le cache de 2 min).
+- **Potions** (`app/macro/potions.py`, commandes `potions_config` / `potions_calibrate` / `potions_read`) : lecture de la barre de vie par capture GDI et correspondance de couleur, touches F1–F4 par le driver Interception selon des seuils de PV et des délais par touche ; premier plan uniquement ; F10 désactive.
+- **Loupe** (widget `zoom`) : zone choisie à l'écran, flux `getDisplayMedia` (source accordée par `setDisplayMediaRequestHandler` à la seule page `#w=zoom`) recadré dans un canvas ; fenêtre redimensionnable, exclue des captures (`setContentProtection`), capture arrêtée quand le widget est masqué.
+- **Carte** : AION2.run uniquement, plus de widget ni de choix de source.
+- Retirés : module Tâches, « délai de macro conseillé » (Ping).
+
 ## 2.2.1 (version personnelle)
 
 - Widget DPS : mise à jour en place (`dps-course.js`, morph par clé `data-jid`), bannière en position absolue, taille de fenêtre stable (rétrécissement différé de 1,5 s, `placer` ignore les positions identiques) : plus de tremblement.

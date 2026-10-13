@@ -1,4 +1,4 @@
-﻿PICHETMETER — version 2.2.1 (version personnelle : PichetMeter + Pichet Macro)
+﻿PICHETMETER — version 2.3.0 (version personnelle : PichetMeter + Pichet Macro)
 Compagnon pour Aion 2 : armurerie, classement, tâches, timers, DPS meter de groupe, cooldowns,
 viseur et carte, affichés par-dessus le jeu.
 Créateur : @atomedims · Discord : https://discord.gg/KrkJrjrDJt
@@ -34,6 +34,17 @@ DANS LE JEU
 - Option « Seulement quand le jeu est au premier plan » (Paramètres > Modules en jeu) :
   les widgets se cachent dès que tu passes sur Discord, ton navigateur, etc.
 - L'icône dans la zone de notification (près de l'horloge) permet aussi d'afficher l'overlay ou de quitter.
+
+NOUVEAUTÉS 2.3.0 (version personnelle)
+- Nouveau style Y2K × Cyberpunk : panneaux noir mat (texte très lisible), titres chromés, lignes de balayage,
+  néons cyan / magenta / vert réservés aux boutons, interrupteurs et états. Toujours en mode sombre.
+- Personnage : bouton « Actualiser » pour recharger tout de suite la puissance de combat et le niveau d'objet.
+- Onglet Potions : lit ta barre de vie à l'écran et appuie sur F1, F2, F3 ou F4 sous les seuils que tu choisis
+  (délai réglable par touche, seulement quand Aion 2 est au premier plan, F10 coupe tout).
+- Onglet Loupe : choisis une zone de l'écran du jeu, elle s'affiche agrandie en direct dans une fenêtre
+  que tu déplaces et redimensionnes (15, 30 ou 60 images par seconde, invisible dans les captures).
+- Carte : AION2.run uniquement, en grand (plus de widget Carte ni de choix de site).
+- Retirés : le module Tâches et le « délai de macro conseillé » de l'onglet Ping.
 
 NOUVEAUTÉS 2.2.1 (version personnelle)
 - Widget DPS : la fenêtre ne tremble plus (taille stable, bannière flottante, pas de repositionnement inutile).

@@ -6,7 +6,7 @@
 <title>PichetMeter</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=JetBrains+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&family=Chakra+Petch:wght@400;500;600;700&family=Sora:wght@600;700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=JetBrains+Mono:wght@500;600&display=swap">
 <script>
 (function () {
   var w = (location.hash.match(/^#w=(\w+)/) || [])[1];
@@ -343,14 +343,9 @@ td.num { font-family: var(--f-data); font-variant-numeric: tabular-nums; }
 
 /* ── Tâches ── */
 .tasks { display: grid; gap: 10px; }
-.task { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 16px; cursor: pointer; user-select: none;
   box-shadow: var(--extruded-sm); border: 1px solid var(--edge); transition: box-shadow .2s, opacity .2s; }
-.task:hover { box-shadow: 2px 2px 5px var(--sd), -2px -2px 5px var(--sl); }
-.task.done { box-shadow: var(--inset-sm); }
-.task.done .tname { color: var(--muted); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--muted) 60%, transparent); }
 .check { width: 28px; height: 28px; flex: none; border-radius: 9px; display: grid; place-items: center; box-shadow: var(--inset-sm); color: transparent; }
 .check svg { width: 16px; height: 16px; }
-.task.done .check { color: var(--green-glow); filter: drop-shadow(0 0 4px var(--green-glow)); }
 .tname { flex: 1; min-width: 0; font-weight: 700; font-size: 14px; }
 .cnt { display: flex; align-items: center; gap: 6px; }
 .cnt .mono { font-size: 13px; min-width: 36px; text-align: center; }
@@ -364,7 +359,6 @@ td.num { font-family: var(--f-data); font-variant-numeric: tabular-nums; }
 .acc-row.active { box-shadow: var(--inset-sm); }
 .acc-row .bars { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 8px; align-items: center; font-size: 12px; color: var(--muted); }
 .acc-row .bars b { font: 600 12px var(--f-data); color: var(--fg); }
-.addtask { display: grid; grid-template-columns: minmax(0, 1fr) 150px 90px auto; gap: 10px; align-items: end; }
 
 /* ── Timers ── */
 .timers { display: grid; gap: 12px; }
@@ -387,7 +381,9 @@ td.num { font-family: var(--f-data); font-variant-numeric: tabular-nums; }
 
 /* ── Carte ── */
 .map-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.map-host { position: relative; min-height: 420px; height: calc(100vh - 250px); border-radius: var(--r-md); box-shadow: var(--inset);
+.map-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.map-zoom { display: flex; align-items: center; gap: 8px; } .map-zoom input { width: 120px; } .map-zoom .mono { font-size: 12px; min-width: 40px; }
+.map-host { position: relative; min-height: 480px; height: calc(100vh - 190px); border-radius: var(--r-md); box-shadow: var(--inset);
   border: 1px solid var(--edge); display: grid; place-items: center; overflow: hidden; }
 .map-host .note { max-width: 340px; text-align: center; padding: 16px; }
 .map-src { display: grid; gap: 10px; }
@@ -1007,9 +1003,16 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
 [data-reglages] > [data-sec]:not([hidden]) { animation: vueIn .35s var(--ease-out) both; }
 .reg-t { font: 800 11px var(--f-body); letter-spacing: .12em; text-transform: uppercase; color: var(--cyan); margin: 6px 0 -4px; padding-top: 10px; border-top: 1px solid var(--line); }
 #view-params[data-reglages] { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
+.refresh-kpi { box-shadow: none !important; background: none !important; padding: 0 !important; align-content: center; justify-items: start; gap: 6px !important; }
+.refresh-kpi small { font-size: 11px; }
+#refreshBtn.tourne svg { animation: tourneRefresh .8s linear infinite; }
+@keyframes tourneRefresh { to { transform: rotate(360deg); } }
+.kpi b.flash { animation: kpiFlash 1.2s ease; }
+@keyframes kpiFlash { 0% { color: #39ff88; text-shadow: 0 0 14px #39ff88; } 100% { color: inherit; text-shadow: none; } }
 </style>
 <link rel="stylesheet" href="macros.css">
 <link rel="stylesheet" href="widgets.css">
+<link rel="stylesheet" href="theme-cyber.css">
 </head>
 <body>
 <div id="backdrop" aria-hidden="true"><div class="img" id="backdropImg"></div></div>
@@ -1043,7 +1046,7 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
   </form>
 </div>
 
-<div class="shell" id="app">
+<div class="shell" id="app"><i class="balayage" aria-hidden="true"></i>
   <!-- ═════════ Barre supérieure ═════════ -->
   <header class="topbar neu-extruded">
     <div class="brand pywebview-drag-region">
@@ -1114,6 +1117,9 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
             <div class="kpis">
               <div class="kpi"><span class="label">Puissance de combat</span><b id="pCP">—</b></div>
               <div class="kpi"><span class="label">Niveau d'objet</span><b id="pIL">—</b></div>
+              <div class="kpi refresh-kpi"><button class="btn primary" id="refreshBtn" type="button" title="Relire la fiche officielle sans attendre la synchro automatique">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg>Actualiser</button>
+                <small class="muted" id="pMaj">—</small></div>
             </div>
           </div>
           <div class="sub-grid">
@@ -1186,39 +1192,6 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
         </table>
       </div>
       </div>
-    </section>
-  </div>
-
-  <!-- ═════════ Vue : Tâches ═════════ -->
-  <div class="view" id="view-taches" hidden>
-    <div class="auto-grid">
-      <section class="card neu-extruded" data-kind="daily">
-        <div class="card-head"><div><h2>Quotidiennes</h2><span class="sub pname" data-acct-label></span></div><span class="badge info" data-prog="daily"></span></div>
-        <div class="gauge green"><span data-gauge="daily"></span></div>
-        <div class="tasks" data-list="daily"></div>
-        <div class="reset-line"><span>Réinitialisation dans <b class="mono" data-reset="daily">—</b></span><button class="btn sm" data-clear="daily">Tout décocher</button></div>
-      </section>
-      <section class="card neu-extruded" data-kind="weekly">
-        <div class="card-head"><div><h2>Hebdomadaires</h2><span class="sub pname" data-acct-label></span></div><span class="badge info" data-prog="weekly"></span></div>
-        <div class="gauge green"><span data-gauge="weekly"></span></div>
-        <div class="tasks" data-list="weekly"></div>
-        <div class="reset-line"><span>Réinitialisation dans <b class="mono" data-reset="weekly">—</b></span><button class="btn sm" data-clear="weekly">Tout décocher</button></div>
-      </section>
-      <section class="card neu-extruded">
-        <div class="card-head"><div><h2>Tous les comptes</h2><span class="sub">Avancement de chaque personnage · clique pour changer</span></div></div>
-        <div class="acc-sum" id="accSum"></div>
-      </section>
-    </div>
-    <section class="card neu-extruded">
-      <div class="card-head"><div><h2>Ma liste</h2><span class="sub">Liste de départ à adapter à ta routine · les cases se décochent seules au reset</span></div>
-        <button class="btn sm" id="taskEdit" aria-pressed="false">Modifier la liste</button></div>
-      <form class="addtask" id="taskForm" autocomplete="off">
-        <div class="form-row"><label class="label" for="tkName">Nouvelle tâche</label><input class="field sm" id="tkName" maxlength="40" placeholder="Ex : Donjon de la légion" required></div>
-        <div class="form-row"><label class="label" for="tkKind">Fréquence</label><select class="field sm" id="tkKind"><option value="daily">Quotidienne</option><option value="weekly">Hebdomadaire</option></select></div>
-        <div class="form-row"><label class="label" for="tkN">Fois</label><input class="field sm" id="tkN" type="number" min="1" max="20" value="1"></div>
-        <button class="btn primary" type="submit">Ajouter</button>
-      </form>
-      <p class="note">Les heures de reset suivent les timers « Reset quotidien » et « Reset hebdomadaire » : modifie-les dans l'onglet Timers si besoin.</p>
     </section>
   </div>
 
@@ -1478,47 +1451,72 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
 
   <!-- ═════════ Vue : Carte ═════════ -->
   <div class="grid view" id="view-carte" hidden>
-    <section class="card neu-extruded span-12 modbar" data-modbar="carte"></section>
-    <section class="card neu-extruded span-8">
+    <section class="card neu-extruded span-12 map-card">
       <div class="card-head"><div><h2>Carte interactive</h2><span class="sub" id="mapSub"></span></div>
-        <div class="map-actions"><button class="btn sm" id="mapReload">Recharger</button><button class="btn sm" id="mapOpen">Ouvrir dans le navigateur</button></div></div>
+        <div class="map-actions">
+          <label class="map-zoom"><span class="label">Zoom</span><input type="range" id="mapZoom" min="50" max="110" step="5" aria-label="Zoom de la carte"><span class="mono" id="mapZoomV"></span></label>
+          <button class="btn sm" id="mapReload">Recharger</button><button class="btn sm" id="mapOpen">Ouvrir dans le navigateur</button></div></div>
       <div class="map-host" id="mapHost"><p class="note" id="mapHostNote">La carte s'affiche ici dans l'application de bureau.</p></div>
     </section>
-    <div class="span-4 stack" data-reglages="carte" data-ordre="Carte,Widget">
-      <section class="card neu-extruded" data-sec="Carte">
-        <div class="card-head"><div><h2>Carte utilisée</h2><span class="sub">Cartes communautaires, tenues à jour par leurs auteurs</span></div></div>
-        <div class="map-src" id="mapSrc" role="radiogroup" aria-label="Carte utilisée"></div>
-        <form class="map-url" id="mapUrlForm" autocomplete="off" hidden>
-          <input class="field sm" id="mapUrl" type="url" placeholder="https://…" aria-label="Adresse de la carte">
-          <button class="btn sm primary" type="submit">Utiliser</button>
-        </form>
-        <div class="form-row"><span class="label">Zoom de la carte</span>
-          <div class="slider-row"><input type="range" id="mapZoom" min="50" max="110" step="5" aria-label="Zoom de la carte"><span class="mono" id="mapZoomV"></span></div></div>
-        <p class="note">Les points que tu coches sont enregistrés par le site, sur cet ordinateur. L'onglet et le widget partagent la même progression.
-          Le widget se déplace par sa barre de titre et se redimensionne par ses bords ; clique dedans pour naviguer (molette pour zoomer, glisser pour déplacer).</p>
-      </section>
-      <section class="card neu-extruded wpanel" data-widget="map" data-sec="Widget"></section>
-    </div>
   </div>
 
   <!-- ═════════ Vue : Ping ═════════ -->
+  <!-- ═════════ Vue : Auto-potions ═════════ -->
+  <div class="grid view" id="view-potion" hidden>
+    <section class="card neu-extruded span-12 modbar" id="potMaster"></section>
+    <section class="card neu-extruded span-7">
+      <div class="card-head"><div><h2>Barre de vie</h2><span class="sub" id="potSub">Lue directement à l'écran, plusieurs fois par seconde</span></div>
+        <div class="chips"><button class="btn sm primary" type="button" id="potPick">Choisir la barre de vie</button><button class="btn sm" type="button" id="potRecal">Recalibrer</button></div></div>
+      <div class="pot-hp">
+        <div class="pot-gauge" id="potGauge" role="meter" aria-label="Vie lue" aria-valuemin="0" aria-valuemax="100"><span class="pot-fill" id="potFill"></span><div class="pot-marks" id="potMarks"></div></div>
+        <b class="pot-val mono" id="potVal">—</b>
+      </div>
+      <div class="pot-cap" id="potCap"></div>
+      <div class="form-row"><span class="label">Tolérance de couleur</span>
+        <div class="slider-row"><input type="range" min="20" max="140" step="5" id="potTol" aria-label="Tolérance de couleur"><span class="mono" id="potTolV"></span></div>
+        <span class="note">Plus haut : la barre reste lue malgré les effets (poison, bouclier). Plus bas : moins de faux positifs.</span></div>
+      <label class="set-item" for="potFg"><span><span class="t">Seulement quand Aion 2 est au premier plan</span><span class="d">Aucune touche n'est envoyée sur le bureau, Discord ou un navigateur</span></span>
+        <span class="switch"><input type="checkbox" id="potFg" role="switch"><span class="track"></span><span class="knob"></span></span></label>
+      <p class="note">Encadre la partie colorée de ta barre de vie <b>vie pleine</b>, de son bord gauche à son bord droit. <kbd>F10</kbd> (arrêt d'urgence des macros) coupe aussi les potions. Les touches passent par le pilote Interception du module Macros.</p>
+    </section>
+    <section class="card neu-extruded span-5">
+      <div class="card-head"><div><h2>Potions</h2><span class="sub">Une potion par lecture, la plus urgente d'abord</span></div></div>
+      <div class="pot-rules" id="potRules"></div>
+      <h3 class="reg-t">Dernières potions</h3>
+      <ul class="pot-log" id="potLog"></ul>
+    </section>
+  </div>
+
+  <!-- ═════════ Vue : Loupe ═════════ -->
+  <div class="grid view" id="view-loupe" hidden>
+    <section class="card neu-extruded span-12 modbar" data-modbar="loupe"></section>
+    <section class="card neu-extruded span-7">
+      <div class="card-head"><div><h2>Loupe en jeu</h2><span class="sub">Agrandit en direct une zone de l'écran dans une fenêtre que tu places où tu veux</span></div>
+        <button class="btn sm primary" type="button" id="zPick">Choisir la zone</button></div>
+      <div class="zl-stage" id="zStage" aria-label="Zone agrandie sur l'écran"><i class="zl-rect" id="zRect" hidden></i><span class="zl-vide" id="zVide">Aucune zone choisie</span></div>
+      <p class="note" id="zInfo"></p>
+      <ol class="zl-steps"><li>Choisis la zone du jeu à agrandir (mini-carte, buffs du boss, barre de cast…).</li><li>Masque l'interface (<kbd class="hk-txt">Alt + C</kbd>) : la loupe apparaît par-dessus le jeu.</li><li>Tire ses bords pour la redimensionner, son en-tête (au survol) pour la déplacer.</li></ol>
+    </section>
+    <section class="card neu-extruded span-5">
+      <div class="card-head"><h2>Réglages</h2></div>
+      <div class="form-row"><span class="label">Images par seconde</span>
+        <div class="seg" data-zl="fps"><button data-v="15">15</button><button data-v="30">30</button><button data-v="60">60</button></div></div>
+      <div class="form-row"><span class="label">Remplissage</span>
+        <div class="seg" data-zl="fit"><button data-v="contain">Proportions gardées</button><button data-v="fill">Étirer</button></div></div>
+      <div class="form-row"><span class="label">Taille de la fenêtre</span>
+        <div class="seg" data-zl="taille"><button data-v="280x180">Petite</button><button data-v="380x240">Moyenne</button><button data-v="560x350">Grande</button><button data-v="760x470">Très grande</button></div></div>
+      <div class="form-row"><span class="label">Opacité</span>
+        <div class="slider-row"><input type="range" min="30" max="100" step="5" id="zOp" aria-label="Opacité de la loupe"><span class="mono" id="zOpV"></span></div></div>
+      <label class="set-item" for="zLisse"><span><span class="t">Lissage</span><span class="d">Désactivé : pixels nets, plus lisible pour du texte très agrandi</span></span>
+        <span class="switch"><input type="checkbox" id="zLisse" role="switch"><span class="track"></span><span class="knob"></span></span></label>
+      <button class="btn" type="button" data-layout="zoom" style="justify-self:start">Placer et régler les widgets</button>
+      <p class="note">La loupe ne se filme pas elle-même et reste invisible dans les captures (OBS, Discord). Elle ne capture l'écran que lorsqu'elle est affichée.</p>
+    </section>
+  </div>
+
   <div class="grid view" id="view-ping" hidden>
     <section class="card neu-extruded span-12 modbar" data-modbar="ping"></section>
     <div class="span-7 stack">
-      <section class="card neu-extruded">
-        <div class="card-head"><div><h2>Délai de macro conseillé</h2><span class="sub">Valeur à mettre entre deux compétences dans les macros du jeu</span></div>
-          <span class="badge" id="macroBadge">Mesure…</span></div>
-        <div class="macro-val"><strong id="macroRec">—</strong><span class="label">ms</span></div>
-        <div class="macro-stats">
-          <div><span class="label">Minimum</span><b id="macroMin">—</b></div>
-          <div><span class="label">Ping médian</span><b id="macroMed">—</b></div>
-          <div><span class="label">Instabilité</span><b id="macroJit">—</b></div>
-        </div>
-        <div class="macro-line" aria-label="Exemple de macro">
-          <span class="sk">1</span><span class="dl" data-macro-dl>↓— ms</span><span class="sk">2</span><span class="dl" data-macro-dl>↓— ms</span><span class="sk">3</span><span class="dl" data-macro-dl>↓— ms</span><span class="sk">4</span>
-        </div>
-        <p class="note">Calcul : ping des 60 dernières secondes, 90 % des mesures + 10 ms de marge, arrondi à la dizaine. Sous le minimum, la 2ᵉ compétence part avant que le serveur ait validé la 1ʳᵉ ; au-dessus du conseillé, tu ajoutes seulement du délai. Estimation à affiner en jeu.</p>
-      </section>
       <section class="card neu-extruded">
         <div class="card-head"><div><h2>Ping &amp; weaving</h2><span class="sub" id="pingSrc">Mesure en cours…</span></div></div>
         <div class="well">
@@ -1645,25 +1643,21 @@ const DEFAULTS = {
   widgets: {
     timers: { pinned: true, opacity: 85, pos: "tr", size: "m", click: true },
     ping: { pinned: true, opacity: 80, pos: "tl", size: "s", click: true },
-    map: { pinned: false, opacity: 85, pos: "br", size: "m", click: false },
+    zoom: { pinned: false, opacity: 100, pos: "mr", size: "m", click: false, w: 380, h: 240, fps: 30, fit: "contain", lisse: true, rel: null },
     dps: { pinned: true, opacity: 90, pos: "ml", size: "m", click: true },
     cd: { pinned: true, opacity: 95, pos: "bc", size: "m", click: true },
     macro: { pinned: true, opacity: 92, pos: "tc", size: "m", click: true }
   },
   macro: { enabled: true, hideOnRun: true },
+  potions: { enabled: false, zone: null, couleur: null, tol: 70, fgOnly: true, regles: [
+    { touche: "F1", actif: true, seuil: 60, delai: 3000 }, { touche: "F2", actif: true, seuil: 35, delai: 6000 },
+    { touche: "F3", actif: false, seuil: 20, delai: 10000 }, { touche: "F4", actif: false, seuil: 10, delai: 30000 }] },
   mascots: { on: true, macro: true, dps: true, timers: true, size: 110, lead: 5, fx: true },
   dps: { v: 3, enabled: true, source: "reseau", demo: false, interval: 1, idle: 10, dot: true, bossOnly: false, zones: {},
     view: { layout: "bars", who: "all", rows: 8, cols: ["dps", "share", "dmg", "crit"], fmt: "short", tint: "class", graph: false, color: "#22d3ee", hors: "show", horsOp: 30 } },
   cd: { v: 2, skills: [], view: { orient: "row", hideReady: false, names: false, secs: true, glow: true } },
   crosshair: { enabled: false, hotkey: "Ctrl + Maj + V", shape: "crossdot", color: "#3dff8a", thick: 2, len: 8, gap: 4, dot: 2, radius: 12,
-    outline: true, outlineColor: "#000000", outlineW: 1, opacity: 100, anchor: "screen", dx: 0, dy: 0, fgOnly: false, mode: "natif", v: 2 },
-  tasks: {
-    daily: [{ id: "d1", name: "Quêtes quotidiennes", n: 1 }, { id: "d2", name: "Entrées de donjon du jour", n: 2 }, { id: "d3", name: "Faille spatio-temporelle", n: 1 },
-      { id: "d4", name: "Missions de légion", n: 1 }, { id: "d5", name: "Récolte et artisanat", n: 1 }, { id: "d6", name: "Événements de terrain", n: 3 }],
-    weekly: [{ id: "w1", name: "Donjons hebdomadaires", n: 1 }, { id: "w2", name: "Quêtes hebdomadaires", n: 1 }, { id: "w3", name: "Objectifs des Abysses", n: 1 },
-      { id: "w4", name: "Contrat de légion", n: 1 }, { id: "w5", name: "Boutique hebdomadaire", n: 1 }],
-    done: {}
-  }
+    outline: true, outlineColor: "#000000", outlineW: 1, opacity: 100, anchor: "screen", dx: 0, dy: 0, fgOnly: false, mode: "natif", v: 2 }
 };
 const isObj = v => v && typeof v === "object" && !Array.isArray(v);
 const merge = (a, b) => { const o = { ...a }; for (const k in b) o[k] = isObj(b[k]) && isObj(a[k]) ? merge(a[k], b[k]) : b[k]; return o; };
@@ -1686,7 +1680,8 @@ let S = (() => {
     t.v = 2;
   }
   // Cooldowns (1.3) : le widget est affiché en jeu dès qu'une compétence est suivie
-  delete m.macros; delete m.adminAuto; // retirés en 1.8
+  delete m.macros; delete m.adminAuto; delete m.tasks; if (m.widgets) delete m.widgets.map;
+  if (!Array.isArray(m.potions.regles) || m.potions.regles.length !== 4) m.potions.regles = DEFAULTS.potions.regles.map(r => ({ ...r })); // retirés (1.8 ; tâches en 2.3)
   if (saved && saved.cd && saved.cd.v !== 2) { m.cd.v = 2; if ((m.cd.skills || []).length) m.widgets.cd = { ...m.widgets.cd, pinned: true }; }
   return m;
 })();
@@ -1779,7 +1774,7 @@ const isDark = () => (root.dataset.theme || "dark") === "dark";
 const ICON_SUN = '<circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
 const ICON_MOON = '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>';
 function applyTheme() {
-  root.dataset.theme = S.theme || "dark"; // verre bleu nuit par défaut
+  root.dataset.theme = "dark"; // thème Y2K × Cyberpunk (2.3) : toujours sombre, pour la lisibilité
   const ic = $("#themeIcon"); if (ic) ic.innerHTML = isDark() ? ICON_SUN : ICON_MOON;
 }
 applyTheme();
@@ -1790,19 +1785,20 @@ onSettingsChanged.push(applyTheme);
 const NAV = [
   ["perso", "Personnage", '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>'],
   ["classement", "Classement", '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/>'],
-  ["taches", "Tâches", '<path d="M10 6h10M10 12h10M10 18h10"/><path d="m3 6 1.5 1.5L7 5M3 12l1.5 1.5L7 11M3 18l1.5 1.5L7 17"/>'],
   ["timers", "Timers", '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/>'],
   ["dps", "DPS meter", '<path d="M4 20V11M10 20V5M16 20v-6M22 20H2"/>'],
   ["macros", "Macros", '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>'],
+  ["potion", "Potions", '<path d="M9 3h6M10 3v5.5L5.2 17.6A2.3 2.3 0 0 0 7.2 21h9.6a2.3 2.3 0 0 0 2-3.4L14 8.5V3"/><path d="M7.6 14.5h8.8"/>'],
   ["viseur", "Viseur", '<circle cx="12" cy="12" r="8"/><path d="M12 2v6M12 16v6M2 12h6M16 12h6"/>'],
+  ["loupe", "Loupe", '<circle cx="11" cy="11" r="7"/><path d="m20.5 20.5-4.5-4.5M11 8v6M8 11h6"/>'],
   ["carte", "Carte", '<path d="m9 4-6 2v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>'],
   ["ping", "Ping", '<path d="M3 12h4l3-8 4 16 3-8h4"/>'],
   ["params", "Paramètres", '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>'],
   ["infos", "Infos", '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.6v.2"/>']
 ];
-const MOD_VIEWS = ["timers", "dps", "macros", "viseur", "carte", "ping"];
+const MOD_VIEWS = ["timers", "dps", "macros", "potion", "viseur", "loupe", "ping"];
 $("#sideNav").innerHTML = '<i class="glider" aria-hidden="true"></i>' + NAV.map(([v, t, ic], i) => `<button role="tab" data-view="${v}" aria-selected="${i === 0}">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ic}</svg>${esc(t)}${v === "taches" ? '<span class="nbadge" id="taskBadge" hidden></span>' : ""}${MOD_VIEWS.includes(v) ? `<i class="mdot" data-mdot="${v}" aria-hidden="true"></i>` : v === "macros" ? '<i class="mdot" data-mcdot aria-hidden="true"></i>' : ""}</button>`).join("") +
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ic}</svg>${esc(t)}${MOD_VIEWS.includes(v) ? `<i class="mdot" data-mdot="${v}" aria-hidden="true"></i>` : v === "macros" ? '<i class="mdot" data-mcdot aria-hidden="true"></i>' : ""}</button>`).join("") +
   `<div class="side-foot"><span>Masquer l'overlay</span><span><kbd>Échap</kbd> ou <kbd id="hkFoot">Alt + C</kbd></span>
   <button type="button" class="sig" id="sigBtn" title="PichetMeter · Infos" aria-label="PichetMeter · Infos"><img src="img/logo.png" alt="" draggable="false"><span>PichetMeter<small>@atomedims</small></span></button></div>`;
 // Surbrillance glissante de la navigation
@@ -1828,7 +1824,6 @@ function switchView(v) {
   placerGlider();
   $("#main").scrollTop = 0;
   if (v === "classement") { $("#lbAddServer").innerHTML = $("#lbServer").innerHTML; if (activeAcct()) $("#lbAddServer").value = activeAcct().serverId; lbSetMode(S.lbMode || "perso"); }
-  if (v === "taches") renderTasks();
   onView(v);
 }
 $$("#sideNav [data-view]").forEach(b => b.addEventListener("click", () => switchView(b.dataset.view)));
@@ -2003,7 +1998,7 @@ async function inspecterJoueur(nom, serveur) {
   if (connu && !$("#searchErr").hidden) { sel.value = ""; await search(nom, { exact: true }); }
 }
 
-async function inspect(r) {
+async function inspect(r, force) {
   const ref = { name: r.name, serverId: +r.serverId, serverName: r.serverName || serverName(r.serverId), characterId: r.characterId, className: r.className || "", imageUrl: r.imageUrl || "" };
   $("#searchErr").hidden = true;
   if (!ref.characterId) {
@@ -2016,16 +2011,30 @@ async function inspect(r) {
   $("#profileEmpty").hidden = true; $("#profileBody").hidden = false;
   $("#pName").textContent = ref.name; $("#pMeta").textContent = "Chargement de la fiche officielle…";
   try {
-    const data = await call("character", ref.serverId, ref.characterId, region());
-    current = { ref, ...data };
+    const data = await call("character", ref.serverId, ref.characterId, region(), !!force);
+    current = { ref, ...data, majA: Date.now() };
     const p = data.info?.profile || {};
     ref.className = p.className || ref.className; ref.imageUrl = p.profileImage || ref.imageUrl; ref.name = p.characterName || ref.name;
     S.recents = [ref, ...S.recents.filter(x => !sameChar(x, ref))].slice(0, 8);
     S.favorites = S.favorites.map(f => sameChar(f, ref) ? ref : f);
     save(); renderRecents(); renderFavs();
     renderProfile(); renderGear(); renderSkills(); renderDaevanion();
+    $("#pMaj").textContent = (force ? "Actualisé à " : "Mis à jour à ") + new Date().toLocaleTimeString(LOC, { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   } catch (ex) { $("#pMeta").textContent = "Impossible de charger la fiche : " + ex.message; }
 }
+/* Bouton « Actualiser » : relit la fiche officielle sans cache (niveau d'objet, puissance de combat, équipement) */
+$("#refreshBtn").addEventListener("click", async () => {
+  if (!current) return;
+  const b = $("#refreshBtn"); if (b.classList.contains("tourne")) return;
+  b.classList.add("tourne"); b.disabled = true;
+  const avant = { cp: $("#pCP").textContent, il: $("#pIL").textContent };
+  try {
+    await inspect(current.ref, true);
+    const a = activeAcct();
+    if (a && current && sameChar(a, current.ref)) await loadMine(true);
+    for (const [id, v] of [["#pCP", avant.cp], ["#pIL", avant.il]]) { const el = $(id); if (el.textContent !== v) { el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); } }
+  } finally { b.classList.remove("tourne"); b.disabled = false; }
+});
 const isFav = r => S.favorites.some(f => sameChar(f, r));
 $("#favBtn").addEventListener("click", () => {
   if (!current) return;
@@ -2145,7 +2154,7 @@ function renderDaevanion() {
     } catch (ex) { $("#boardDetail").textContent = "Détail indisponible : " + ex.message; }
   }));
 }
-async function loadMine() {
+async function loadMine(force) {
   const a = activeAcct(); mine = null;
   if (!a) return;
   try {
@@ -2154,7 +2163,7 @@ async function loadMine() {
       const h = hits.find(x => x.name.toLowerCase() === a.name.toLowerCase() && +x.serverId === +a.serverId);
       if (h) { a.characterId = h.characterId; a.imageUrl = h.imageUrl || a.imageUrl; save(); renderAccount(); }
     }
-    if (a.characterId) mine = await call("character", a.serverId, a.characterId, a.region);
+    if (a.characterId) mine = await call("character", a.serverId, a.characterId, a.region, !!force);
     const pic = mine?.info?.profile?.profileImage; if (pic && pic !== a.imageUrl) { a.imageUrl = pic; save(); renderAccount(); }
     const sk = mine?.equipment?.skill?.skillList || [];
     if (DESKTOP && sk.length) api().dps_noms(sk.filter(k => k.id && k.name).map(k => [k.id, k.name, k.icon || ""]));
@@ -2163,7 +2172,7 @@ async function loadMine() {
   if (current) renderCompare();
 }
 async function onAccountChanged() {
-  renderAccount(); renderTasks();
+  renderAccount();
   const a = activeAcct(); if (!a) return;
   if (!S.timers.server.serverId && (S.timers.server.region || "eu") === (a.region || "eu")) { S.timers.server = { ...S.timers.server, serverId: +a.serverId, serverName: a.serverName }; save(); renderSrv(); }
   await loadServers(a.region); await loadClasses(a.region);
@@ -2446,7 +2455,6 @@ function tickTimers() {
   $$("[data-reset]").forEach(el => { const t = byId[el.dataset.reset]; if (t) el.textContent = fmtLeft(nextOf(t, now).at - now); });
   if (WIDGET) return;
   const sc = $("#srvClock"); if (sc) { const p = partsIn(serverTz(), now); sc.textContent = `${pad(p.h)}:${pad(p.m)}:${pad(p.s)} serveur`; }
-  checkTaskReset();
   ts.forEach(t => {
     if (!t.enabled || !t.alert || !S.notif) return;
     const n = nextOf(t, now); if (!n.at || n.ready || finEnCours(t, n, now)) return;
@@ -2533,7 +2541,7 @@ $("#tForm").addEventListener("submit", e => {
   else if (editing) Object.assign(S.timers.custom.find(c => c.id === id), { name: $("#tfName").value.trim(), sched });
   else S.timers.custom.push({ id, name: $("#tfName").value.trim(), sub: "Timer personnel", sched });
   S.timers.noalert = S.timers.noalert.filter(x => x !== id); if (!$("#tfAlert").checked) S.timers.noalert.push(id);
-  save(); resetForm(); renderTimers(); renderTasks();
+  save(); resetForm(); renderTimers();
 });
 
 /* Serveur de référence des événements */
@@ -2639,71 +2647,6 @@ $("#alTone").addEventListener("change", e => { S.alerts.tone = e.target.value; s
 $("#alVol").addEventListener("input", e => { S.alerts.volume = +e.target.value; $("#alVolV").textContent = e.target.value + " %"; save(); });
 $("#alVol").addEventListener("change", () => playTone());
 
-/* ════════ Tâches quotidiennes / hebdomadaires ════════ */
-const resetTimer = kind => allTimers().find(t => t.id === kind);
-const lastReset = kind => { const n = nextOf(resetTimer(kind), Date.now()); return n.at - n.cycle; };
-const doneMap = a => S.tasks.done[akey(a)] || {};
-function taskCount(a, task, kind) { const d = doneMap(a)[task.id]; return d && d.t > lastReset(kind) ? Math.min(d.c, task.n) : 0; }
-function progress(a, kind) { const l = S.tasks[kind]; const got = l.filter(t => taskCount(a, t, kind) >= t.n).length; return { got, total: l.length }; }
-function setCount(task, kind, c) {
-  const k = akey(activeAcct()); S.tasks.done[k] = S.tasks.done[k] || {};
-  S.tasks.done[k][task.id] = { c: Math.max(0, Math.min(task.n, c)), t: Date.now() };
-  save(); renderTasks();
-}
-let taskEditMode = false, lastResets = "";
-function renderTasks() {
-  const a = activeAcct();
-  $$("[data-acct-label]").forEach(e => e.textContent = a ? `${a.name} · ${a.serverName}` : "Aucun compte enregistré");
-  ["daily", "weekly"].forEach(kind => {
-    const list = S.tasks[kind], box = $(`[data-list="${kind}"]`);
-    box.innerHTML = list.length ? list.map(t => {
-      const c = taskCount(a, t, kind), done = c >= t.n;
-      const pips = t.n > 1 && t.n <= 8 ? `<span class="pips">${Array.from({ length: t.n }, (_, i) => `<i class="${i < c ? "on" : ""}"></i>`).join("")}</span>` : "";
-      return `<div class="task${done ? " done" : ""}" data-task="${esc(t.id)}" data-kind="${kind}" role="button" tabindex="0" aria-pressed="${done}">
-        <span class="check" aria-hidden="true">${svg("check", 3)}</span><span class="tname">${esc(t.name)}</span>
-        ${t.n > 1 ? `<span class="cnt">${pips}<span class="mono">${c}/${t.n}</span><button class="btn icon xs" data-dec aria-label="Retirer une fois">${svg("minus")}</button></span>` : ""}
-        ${taskEditMode ? `<button class="btn icon xs danger" data-rm aria-label="Supprimer ${esc(t.name)}">${svg("trash")}</button>` : ""}</div>`;
-    }).join("") : '<p class="note">Aucune tâche. Ajoute-en avec le formulaire « Ma liste ».</p>';
-    const p = progress(a, kind);
-    $(`[data-prog="${kind}"]`).textContent = `${p.got} / ${p.total}`;
-    $(`[data-gauge="${kind}"]`).style.width = (p.total ? p.got / p.total * 100 : 0) + "%";
-  });
-  $("#accSum").innerHTML = S.accounts.length ? S.accounts.map((x, i) => {
-    const d = progress(x, "daily"), w = progress(x, "weekly");
-    return `<button class="acc-row${i === S.active ? " active" : ""}" data-i="${i}"><span class="acct-av">${avatar(x.imageUrl, x.name)}</span>
-      <span style="min-width:0;display:grid;gap:4px"><b class="pname" style="font-size:14px">${esc(x.name)} <small class="muted" style="font-weight:600">${esc(x.serverName)}</small></b>
-      <span class="bars"><span>Quot.</span><span class="gauge thin green"><span style="width:${d.total ? d.got / d.total * 100 : 0}%"></span></span><b>${d.got}/${d.total}</b>
-      <span>Hebdo</span><span class="gauge thin cyan"><span style="width:${w.total ? w.got / w.total * 100 : 0}%"></span></span><b>${w.got}/${w.total}</b></span></span></button>`;
-  }).join("") : '<p class="note">Enregistre un compte pour suivre son avancement.</p>';
-  const left = S.tasks.daily.length - progress(a, "daily").got, badge = $("#taskBadge");
-  if (badge) { badge.hidden = left <= 0; badge.textContent = left; }
-  $("#taskEdit").setAttribute("aria-pressed", String(taskEditMode));
-  $("#taskEdit").textContent = taskEditMode ? "Terminer" : "Modifier la liste";
-}
-function checkTaskReset() {
-  const k = Math.floor(lastReset("daily")) + ":" + Math.floor(lastReset("weekly"));
-  if (k !== lastResets) { const first = !lastResets; lastResets = k; if (!first) renderTasks(); }
-}
-$("#view-taches").addEventListener("click", e => {
-  const acc = e.target.closest(".acc-row"); if (acc) return selectAccount(+acc.dataset.i);
-  const clr = e.target.closest("[data-clear]");
-  if (clr) { const k = akey(activeAcct()); S.tasks[clr.dataset.clear].forEach(t => { if (S.tasks.done[k]) delete S.tasks.done[k][t.id]; }); save(); return renderTasks(); }
-  const row = e.target.closest("[data-task]"); if (!row) return;
-  const kind = row.dataset.kind, task = S.tasks[kind].find(t => t.id === row.dataset.task); if (!task) return;
-  if (e.target.closest("[data-rm]")) { S.tasks[kind] = S.tasks[kind].filter(t => t.id !== task.id); save(); return renderTasks(); }
-  const c = taskCount(activeAcct(), task, kind);
-  if (e.target.closest("[data-dec]")) return setCount(task, kind, c - 1);
-  setCount(task, kind, task.n === 1 ? (c ? 0 : 1) : (c >= task.n ? 0 : c + 1));
-});
-$("#view-taches").addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && e.target.matches("[data-task]")) { e.preventDefault(); e.target.click(); } });
-$("#taskEdit").addEventListener("click", () => { taskEditMode = !taskEditMode; renderTasks(); });
-$("#taskForm").addEventListener("submit", e => {
-  e.preventDefault();
-  const name = $("#tkName").value.trim(); if (!name) return;
-  S.tasks[$("#tkKind").value].push({ id: "t" + Date.now().toString(36), name, n: Math.max(1, Math.min(20, +$("#tkN").value || 1)) });
-  $("#tkName").value = ""; $("#tkN").value = 1; save(); renderTasks();
-});
-
 /* ════════ Carte (site communautaire intégré) ════════ */
 const MAP_SOURCES = [
   ["aion2run", "AION2.run", "En français · 114 cartes : cubes cachés, traces, boss, récolte, Kibelisks, quêtes · cases à cocher"],
@@ -2711,17 +2654,15 @@ const MAP_SOURCES = [
   ["wikily", "Wikily.gg", "Boss de zone, donjons scellés, Kibelisks, récolte, cubes cachés · en anglais"],
   ["perso", "Autre carte", "Utilise l'adresse d'un autre site (https://…)"]
 ];
-const MAP_SIZES = { s: [640, 440], m: [920, 630], l: [1260, 860] };
-const mapSize = () => { const w = S.widgets.map || {}; return w.size === "custom" && w.w ? [w.w, w.h] : (MAP_SIZES[w.size] || MAP_SIZES.m); };
+const zoomTaille = c => [Math.max(160, Math.round(+(c && c.w) || 380)), Math.max(100, Math.round(+(c && c.h) || 240))]; // fenêtre de la loupe
 const mapSource = () => MAP_SOURCES.find(x => x[0] === S.map.source) || MAP_SOURCES[0];
 const mapName = () => S.map.source === "perso" ? (() => { try { return new URL(S.map.url).hostname.replace(/^www\./, ""); } catch { return "Autre carte"; } })() : mapSource()[1];
 function renderMapTab() {
-  if (WIDGET || !$("#mapSrc")) return;
-  $("#mapSrc").innerHTML = MAP_SOURCES.map(([id, n, d]) => `<button type="button" role="radio" data-src="${id}" aria-checked="${S.map.source === id}"><span class="t">${esc(n)}</span><span class="d">${esc(d)}</span></button>`).join("");
-  $("#mapUrlForm").hidden = S.map.source !== "perso";
+  if (WIDGET || !$("#mapHost")) return;
+  S.map.source = "aion2run"; // AION2.run uniquement
+  if (false) MAP_SOURCES.map(([id, n, d]) => `<button type="button" role="radio" data-src="${id}" aria-checked="${S.map.source === id}"><span class="t">${esc(n)}</span><span class="d">${esc(d)}</span></button>`).join("");
   $("#mapZoom").value = S.map.zoom || 80; $("#mapZoomV").textContent = (S.map.zoom || 80) + " %";
-  if (document.activeElement !== $("#mapUrl")) $("#mapUrl").value = S.map.url || "";
-  $("#mapSub").textContent = `${mapName()} · progression enregistrée sur cet ordinateur`;
+  $("#mapSub").textContent = "AION2.run · progression enregistrée sur cet ordinateur";
   $("#mapHostNote").textContent = DESKTOP ? "Chargement de la carte…" : "La carte s'affiche ici dans l'application de bureau.";
   syncMapView();
 }
@@ -2737,20 +2678,9 @@ function syncMapView() {
     api()?.map_view(bottom - top < 40 ? null : { x: r.left + 1, y: top + 1, width: r.width - 2, height: bottom - top - 2 });
   });
 }
-$("#mapSrc").addEventListener("click", e => {
-  const b = e.target.closest("[data-src]"); if (!b) return;
-  S.map.source = b.dataset.src; saveNow(); renderMapTab();
-  if (S.map.source === "perso" && !S.map.url) $("#mapUrl").focus();
-});
-$("#mapUrlForm").addEventListener("submit", e => {
-  e.preventDefault();
-  const v = $("#mapUrl").value.trim();
-  if (!/^https:\/\/\S+$/i.test(v)) return notify("Carte", "L'adresse doit commencer par https://");
-  S.map.url = v; saveNow(); renderMapTab();
-});
 $("#mapReload").addEventListener("click", () => api()?.map_reload());
 $("#mapZoom").addEventListener("input", e => { S.map.zoom = +e.target.value; $("#mapZoomV").textContent = e.target.value + " %"; clearTimeout(e.target._t); e.target._t = setTimeout(saveNow, 150); });
-$("#mapOpen").addEventListener("click", () => { if (DESKTOP) api().map_open(); else window.open(S.map.source === "perso" ? S.map.url : ({ aion2run: "https://aion2.run/carte", github: "https://aion2-interactive-map.github.io/aion2-interactive-map/?map=World_L_A", wikily: "https://wikily.gg/aion-2/interactive-map" })[S.map.source], "_blank", "noopener"); });
+$("#mapOpen").addEventListener("click", () => { if (DESKTOP) api().map_open(); else window.open("https://aion2.run/carte", "_blank", "noopener"); });
 if (!WIDGET) {
   new ResizeObserver(syncMapView).observe($("#mapHost"));
   window.addEventListener("resize", syncMapView);
@@ -2771,12 +2701,6 @@ async function tickPing() {
   paintPing();
 }
 const ceil10 = v => Math.ceil(v / 10) * 10;
-function macroCalc() {
-  if (hist.length < 5) return null;
-  const s = [...hist].sort((a, b) => a - b), q = p => s[Math.min(s.length - 1, Math.floor(p * (s.length - 1)))];
-  const med = q(.5), p90 = q(.9);
-  return { med, jit: p90 - med, min: ceil10(med), rec: ceil10(p90 + 10) };
-}
 function paintPing() {
   const src = $("#pingSrc"); if (src) src.textContent = pingSource;
   if (ping == null) return;
@@ -2787,16 +2711,6 @@ function paintPing() {
   const pb = $("#pingBadge"); if (pb) { pb.className = "badge " + cls; pb.textContent = lbl; }
   $$("[data-ping-q]").forEach(q => q.className = "q " + (cls === "ok" ? "" : cls));
   const bm = $("#beatMs"); if (bm) bm.textContent = (600 + ping) + " ms";
-  const m = macroCalc();
-  $$("[data-macro]").forEach(e => e.textContent = m ? m.rec + " ms" : "…");
-  if ($("#macroRec")) {
-    $("#macroRec").textContent = m ? m.rec : "—";
-    $("#macroMin").textContent = m ? m.min + " ms" : "—"; $("#macroMed").textContent = m ? m.med + " ms" : "—"; $("#macroJit").textContent = m ? "±" + m.jit + " ms" : "—";
-    $$("[data-macro-dl]").forEach(e => e.textContent = m ? `↓${m.rec}ms` : "↓— ms");
-    const mb = $("#macroBadge");
-    mb.className = "badge " + (!m ? "" : pingTarget === "game" ? "ok" : "warn");
-    mb.textContent = !m ? "Mesure…" : pingTarget === "game" ? "Ping du jeu" : pingTarget === "web" ? "Indicatif · jeu fermé" : "Simulation";
-  }
   $$(".spark").forEach(sv => {
     if (hist.length < 2) return;
     const W = 200, H = 60, hi = Math.max(60, Math.max(...hist) * 1.35);
@@ -2816,7 +2730,7 @@ function beat() {
 }
 
 /* ════════ Panneaux "widget à l'écran" ════════ */
-const WLABEL = { timers: "les timers", map: "la carte", ping: "l'indicateur de ping", dps: "le DPS meter", cd: "les cooldowns", macro: "les macros en cours" };
+const WLABEL = { timers: "les timers", zoom: "la loupe", ping: "l'indicateur de ping", dps: "le DPS meter", cd: "les cooldowns", macro: "les macros en cours" };
 function renderWidgetPanels() {
   $$(".wpanel[data-widget]").forEach(p => {
     const k = p.dataset.widget, w = S.widgets[k] || {};
@@ -2835,8 +2749,8 @@ const MODS = {
   timers: { w: "timers", nom: "Timers", fr: "les prochains événements", en: "the next events" },
   dps: { w: "dps", nom: "DPS meter", fr: "le DPS meter", en: "the DPS meter" },
   viseur: { w: null, nom: "Viseur", fr: "le viseur", en: "the crosshair" },
-  carte: { w: "map", nom: "Carte", fr: "la carte", en: "the map" },
   ping: { w: "ping", nom: "Ping", fr: "l'indicateur de ping", en: "the ping indicator" },
+  loupe: { w: "zoom", nom: "Loupe", fr: "la loupe (zone du jeu agrandie)", en: "the magnifier (zoomed game area)" },
   macros: { w: "macro", nom: "Macros", fr: "les macros en cours et les touches envoyées", en: "running macros and the keys they send" }
 };
 const navIcon = v => { const n = NAV.find(x => x[0] === v); return n ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${n[2]}</svg>` : ""; };
@@ -2848,6 +2762,7 @@ function setMod(v, on) {
 }
 function modDetail(v, on) {
   if (!on) return L(`Masqué en jeu : active-le pour afficher ${MODS[v].fr} par-dessus le jeu`, `Hidden in game: turn it on to show ${MODS[v].en} over the game`);
+  if (v === "loupe" && !(S.widgets.zoom || {}).rel) return L("Choisis d'abord la zone du jeu à agrandir", "Pick the game area to magnify first");
   if (v === "viseur") return L(`Affiché au centre de l'écran quand l'overlay est masqué · ${S.crosshair.hotkey}`, `Shown at the centre of the screen when the overlay is hidden · ${S.crosshair.hotkey}`);
   if (v === "dps" && S.dps.view.hors === "hide") return L("Affiché par-dessus le jeu pendant les combats, masqué entre deux", "Shown over the game during fights, hidden in between");
   if (v === "dps" && S.dps.view.hors === "fade") return L("Affiché par-dessus le jeu, transparent hors combat", "Shown over the game, see-through out of combat");
@@ -3620,6 +3535,228 @@ function onView(v) {
   if (v === "params") loadDiag();
   if (v === "timers") renderSrv();
   if (v === "macros") window.MacrosUI.show();
+  if (v === "potion") { renderPotions(); potStatut(); }
+  if (v === "loupe") renderLoupe();
+}
+
+/* ════════ Auto-potions : lecture de la barre de vie, touches F1 à F4 ════════ */
+const POT = { v: null, png: "", log: [], moteur: { phase: "", driver: null }, poll: 0 };
+const potCfg = () => {
+  const p = S.potions || (S.potions = JSON.parse(JSON.stringify(DEFAULTS.potions)));
+  if (!Array.isArray(p.regles) || p.regles.length !== 4) p.regles = DEFAULTS.potions.regles.map(r => ({ ...r }));
+  return p;
+};
+function potEtat() {
+  const p = potCfg();
+  if (!DESKTOP) return L("Aperçu : les potions fonctionnent dans l'application de bureau", "Preview: potions work in the desktop app");
+  if (!p.zone || !p.couleur) return L("Choisis d'abord la barre de vie de ton personnage", "Pick your character's health bar first");
+  if (!p.regles.some(r => r.actif)) return L("Active au moins une touche (F1 à F4)", "Enable at least one key (F1 to F4)");
+  if (POT.moteur.phase && POT.moteur.phase !== "ready") return L("Moteur des macros en cours de démarrage…", "Macro engine starting…");
+  if (POT.moteur.driver && POT.moteur.driver.available === false) return L("Pilote Interception indisponible : installe-le dans l'onglet Macros", "Interception driver unavailable: install it from the Macros tab");
+  if (!p.enabled) return L("Désactivées : aucune touche n'est envoyée", "Off: no key is sent");
+  const on = p.regles.filter(r => r.actif).map(r => `${r.touche} < ${r.seuil} %`).join(" · ");
+  return L(`Actives · ${on}`, `On · ${on}`);
+}
+function potGauge() {
+  const v = POT.v, f = $("#potFill"); if (!f) return;
+  const pc = v == null || v < 0 ? null : Math.round(v * 100);
+  f.style.width = (pc ?? 0) + "%";
+  const g = $("#potGauge"); g.classList.toggle("bas", pc != null && potCfg().regles.some(r => r.actif && pc <= r.seuil));
+  g.setAttribute("aria-valuenow", String(pc ?? 0));
+  $("#potVal").textContent = pc == null ? "—" : pc + " %";
+}
+function potPaintLog() {
+  const ul = $("#potLog"); if (!ul) return;
+  ul.innerHTML = POT.log.map(x => `<li><span class="pot-key sm">${esc(x.touche)}</span><span>${L("vie à", "health at")} <b class="mono">${Math.round(x.v * 100)} %</b></span><time class="mono">${new Date(x.t).toLocaleTimeString(LOC)}</time></li>`).join("")
+    || `<li class="vide">${esc(L("Aucune potion utilisée pour l'instant", "No potion used yet"))}</li>`;
+}
+function renderPotions() {
+  if (WIDGET || !$("#view-potion")) return;
+  const p = potCfg(), m = $("#potMaster");
+  const dot = $('[data-mdot="potion"]'); if (dot) dot.classList.toggle("on", !!(p.enabled && p.zone && p.couleur));
+  m.classList.toggle("on", !!p.enabled);
+  m.innerHTML = `<label><span class="mi">${navIcon("potion")}</span><span class="tx"><b>${esc(L("Auto-potions", "Auto-potions"))}</b><span>${esc(potEtat())}</span></span>
+    <span class="switch lg"><input type="checkbox" role="switch" id="potOn" ${p.enabled ? "checked" : ""} aria-label="${esc(L("Activer les auto-potions", "Enable auto-potions"))}"><span class="track"></span><span class="knob"></span></span></label>`;
+  $("#potTol").value = p.tol; $("#potTolV").textContent = p.tol;
+  $("#potFg").checked = p.fgOnly !== false;
+  $("#potRecal").disabled = !p.zone;
+  const c = p.couleur;
+  $("#potCap").innerHTML = p.zone
+    ? `${POT.png ? `<img src="data:image/png;base64,${POT.png}" alt="${esc(L("Capture de la barre de vie", "Health bar capture"))}">` : ""}<span>${esc(L("Zone", "Area"))} <b class="mono">${p.zone.w} × ${p.zone.h}</b> px</span>${c ? `<span>${esc(L("Couleur", "Colour"))} <i class="pot-sw" style="background:rgb(${c.join(",")})"></i><b class="mono">${c.join(" · ")}</b></span>` : ""}`
+    : `<span>${esc(L("Aucune barre choisie", "No bar selected"))}</span>`;
+  $("#potMarks").innerHTML = p.regles.filter(r => r.actif).map(r => `<i style="left:${r.seuil}%"><span>${esc(r.touche)}</span></i>`).join("");
+  const box = $("#potRules");
+  if (!box.contains(document.activeElement)) box.innerHTML = p.regles.map((r, i) => `<div class="pot-rule${r.actif ? " on" : ""}" data-pr="${i}">
+    <span class="pot-key">${esc(r.touche)}</span>
+    <div class="pot-rc"><div class="slider-row"><span>${esc(L("Sous", "Below"))}</span><input type="range" min="5" max="95" step="1" data-prs value="${r.seuil}" aria-label="${esc(L("Seuil de vie", "Health threshold"))} ${r.touche}"><span class="mono">${r.seuil} %</span></div>
+      <div class="slider-row"><span>${esc(L("Délai", "Cooldown"))}</span><input class="field sm" type="number" min="0.2" max="600" step="0.5" data-prd value="${r.delai / 1000}" aria-label="${esc(L("Délai entre deux potions", "Delay between potions"))} ${r.touche}"><span>s</span></div></div>
+    <span class="switch"><input type="checkbox" role="switch" data-pra ${r.actif ? "checked" : ""} aria-label="${esc(L("Activer", "Enable"))} ${r.touche}"><span class="track"></span><span class="knob"></span></span></div>`).join("");
+  potGauge(); potPaintLog();
+}
+function potPush(msg) {
+  if (WIDGET) return;
+  if (msg.ev === "hp") { POT.v = msg.v; potGauge(); }
+  else if (msg.ev === "potion") { POT.log.unshift({ t: Date.now(), touche: msg.touche, v: msg.v }); POT.log.length = Math.min(POT.log.length, 8); POT.v = msg.v; potPaintLog(); potGauge(); }
+  else if (msg.ev === "potions_off") notify(L("Auto-potions coupées", "Auto-potions off"), L("Arrêt d'urgence (F10) : réactive-les dans l'onglet Potions.", "Emergency stop (F10): turn them back on in the Potions tab."));
+  else if (msg.ev === "phase" || msg.ev === "ready" || msg.ev === "driver" || msg.ev === "snapshot") {
+    if (msg.ev === "phase") POT.moteur.phase = msg.phase;
+    if (msg.ev === "ready") { POT.moteur.phase = "ready"; POT.moteur.driver = msg.driver; }
+    if (msg.ev === "driver") POT.moteur.driver = msg;
+    if (msg.ev === "snapshot") { POT.moteur.phase = msg.phase; POT.moteur.driver = (msg.hello || {}).driver || POT.moteur.driver; }
+    renderPotions();
+  }
+}
+async function potStatut() {
+  if (!DESKTOP) return;
+  try { const e = await api().macro_status(); if (e) { POT.moteur.phase = e.phase; POT.moteur.driver = (e.hello || {}).driver || null; renderPotions(); } } catch {}
+}
+function potLecture() {
+  clearInterval(POT.poll);
+  POT.poll = setInterval(async () => {
+    if ($("#view-potion").hidden || WINDOW_HIDDEN || !DESKTOP || !potCfg().zone) return;
+    try { const v = await api().potion_read(); if (typeof v === "number" && v >= 0) { POT.v = v; potGauge(); } } catch {}
+  }, 500);
+}
+if (!WIDGET && $("#view-potion")) {
+  const potChange = () => { save(); renderPotions(); };
+  $("#potMaster").addEventListener("change", e => {
+    if (e.target.id !== "potOn") return;
+    const p = potCfg();
+    if (e.target.checked && (!p.zone || !p.couleur)) { e.target.checked = false; notify(L("Auto-potions", "Auto-potions"), L("Choisis d'abord la barre de vie de ton personnage.", "Pick your character's health bar first.")); return; }
+    p.enabled = e.target.checked; potChange();
+  });
+  $("#potTol").addEventListener("input", e => { potCfg().tol = +e.target.value; $("#potTolV").textContent = e.target.value; save(); });
+  $("#potFg").addEventListener("change", e => { potCfg().fgOnly = e.target.checked; potChange(); });
+  $("#potRules").addEventListener("input", e => {
+    const row = e.target.closest("[data-pr]"); if (!row) return;
+    const r = potCfg().regles[+row.dataset.pr];
+    if (e.target.matches("[data-prs]")) { r.seuil = +e.target.value; e.target.nextElementSibling.textContent = r.seuil + " %"; $("#potMarks").innerHTML = potCfg().regles.filter(x => x.actif).map(x => `<i style="left:${x.seuil}%"><span>${esc(x.touche)}</span></i>`).join(""); }
+    if (e.target.matches("[data-prd]")) { const s = parseFloat(String(e.target.value).replace(",", ".")); if (s > 0) r.delai = Math.round(Math.max(.2, Math.min(600, s)) * 1000); }
+    save();
+  });
+  $("#potRules").addEventListener("change", e => {
+    const row = e.target.closest("[data-pr]"); if (!row || !e.target.matches("[data-pra]")) return;
+    potCfg().regles[+row.dataset.pr].actif = e.target.checked; row.classList.toggle("on", e.target.checked); e.target.blur(); potChange();
+  });
+  const choisir = async recal => {
+    if (!DESKTOP) { notify(L("Barre de vie", "Health bar"), L("La sélection se fait dans l'application de bureau.", "Selection works in the desktop app.")); return; }
+    try {
+      const r = recal ? await api().potion_recalibrate() : await api().potion_pick();
+      if (!r) return;
+      if (r.erreur) throw new Error(r.erreur);
+      Object.assign(potCfg(), { zone: r.zone, couleur: r.couleur });
+      POT.png = r.png || ""; POT.v = r.v;
+      await saveNow(); renderPotions();
+      notify(L("Barre de vie enregistrée", "Health bar saved"), r.v > .9 ? L(`Lue à ${Math.round(r.v * 100)} % : parfait.`, `Read at ${Math.round(r.v * 100)} %: perfect.`)
+        : L(`Lue à ${Math.round(r.v * 100)} % seulement : recommence vie pleine, au plus près de la partie colorée.`, `Only read at ${Math.round(r.v * 100)} %: retry at full health, tightly around the coloured part.`));
+    } catch (e) { notify(L("Barre de vie", "Health bar"), String(e.message || e).replace(/^Error invoking remote method '\w+': (Error: )?/, "")); }
+  };
+  $("#potPick").addEventListener("click", () => choisir(false));
+  $("#potRecal").addEventListener("click", () => choisir(true));
+  potLecture();
+}
+
+/* ════════ Loupe : zone du jeu agrandie en direct ════════ */
+function renderLoupe() {
+  if (WIDGET || !$("#view-loupe")) return;
+  const c = S.widgets.zoom || {}, rel = c.rel;
+  const r = $("#zRect"); r.hidden = !rel; $("#zVide").hidden = !!rel;
+  if (rel) Object.assign(r.style, { left: rel.x * 100 + "%", top: rel.y * 100 + "%", width: Math.max(.6, rel.w * 100) + "%", height: Math.max(.6, rel.h * 100) + "%" });
+  const [W, H] = zoomTaille(c);
+  $("#zInfo").innerHTML = rel && c.phys ? `${esc(L("Zone", "Area"))} <b class="mono">${c.phys.w} × ${c.phys.h}</b> px · ${esc(L("fenêtre", "window"))} <b class="mono">${W} × ${H}</b> · ${esc(L("agrandie", "magnified"))} <b class="mono">×${(Math.min(W / Math.max(1, c.phys.w), H / Math.max(1, c.phys.h))).toFixed(1)}</b>`
+    : esc(L("Choisis une zone : la loupe l'affiche en grand, en temps réel.", "Pick an area: the magnifier shows it large, in real time."));
+  $$("[data-zl]").forEach(seg => { const k = seg.dataset.zl, v = k === "taille" ? `${W}x${H}` : String(c[k] ?? (k === "fps" ? 30 : "contain")); seg.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === v))); });
+  $("#zOp").value = c.opacity ?? 100; $("#zOpV").textContent = (c.opacity ?? 100) + " %";
+  $("#zLisse").checked = c.lisse !== false;
+  $$(".hk-txt").forEach(e => e.textContent = S.hotkey);
+}
+if (!WIDGET && $("#view-loupe")) {
+  const z = () => (S.widgets.zoom = S.widgets.zoom || { ...DEFAULTS.widgets.zoom });
+  $("#zPick").addEventListener("click", async () => {
+    if (!DESKTOP) { notify(L("Loupe", "Magnifier"), L("La sélection se fait dans l'application de bureau.", "Selection works in the desktop app.")); return; }
+    try { await api().zoom_pick(); } catch (e) { notify(L("Loupe", "Magnifier"), e.message); }
+  });
+  $("#view-loupe").addEventListener("click", e => {
+    const b = e.target.closest("[data-zl] button"); if (!b) return;
+    const k = b.closest("[data-zl]").dataset.zl, c = z();
+    if (k === "taille") { const [w, h] = b.dataset.v.split("x").map(Number); Object.assign(c, { w, h }); }
+    else c[k] = k === "fps" ? +b.dataset.v : b.dataset.v;
+    renderLoupe(); widgetChanged("zoom");
+  });
+  $("#zOp").addEventListener("input", e => { z().opacity = +e.target.value; $("#zOpV").textContent = e.target.value + " %"; clearTimeout(e.target._t); e.target._t = setTimeout(() => widgetChanged("zoom"), 150); });
+  $("#zLisse").addEventListener("change", e => { z().lisse = e.target.checked; widgetChanged("zoom"); });
+}
+/* Fenêtre de la loupe : capture de l'écran (accordée par le processus principal) recadrée sur la zone, dans un canvas */
+function bootLoupe(wr) {
+  document.body.classList.add("wm");
+  wr.innerHTML = `<div class="wbox wzoom" id="wz"><canvas id="wzc"></canvas><video id="wzv" muted playsinline hidden></video>
+    <div class="wzh pywebview-drag-region"><span class="t">${svg("search")}Loupe <b class="mono" id="wzx"></b></span>
+      <button type="button" id="wzPick" title="Choisir la zone" aria-label="Choisir la zone">⌖</button><button type="button" id="wzOff" title="Masquer la loupe" aria-label="Masquer la loupe">✕</button></div>
+    <div class="wz-msg" id="wzMsg" hidden></div><span class="wz-grip" id="wzGrip" title="Taille"></span></div>`;
+  const box = $("#wz"), cv = $("#wzc"), vid = $("#wzv"), ctx = cv.getContext("2d", { alpha: false });
+  let flux = null, lancement = null, visible = !DESKTOP, cle = "", rvfc = 0, raf = 0, dernier = 0;
+  const cfg = () => S.widgets.zoom || {};
+  const msg = t => { const m = $("#wzMsg"); m.textContent = t || ""; m.hidden = !t; };
+  const dimensionner = () => {
+    const [W, H] = zoomTaille(cfg()), d = devicePixelRatio || 1;
+    box.style.width = W + "px"; box.style.height = H + "px";
+    if (cv.width !== Math.round(W * d) || cv.height !== Math.round(H * d)) { cv.width = Math.round(W * d); cv.height = Math.round(H * d); dessiner(); }
+  };
+  function dessiner() {
+    const c = cfg(), rel = c.rel, vw = vid.videoWidth, vh = vid.videoHeight;
+    if (!rel || !vw || !flux) return;
+    const sx = rel.x * vw, sy = rel.y * vh, sw = Math.max(1, rel.w * vw), sh = Math.max(1, rel.h * vh), W = cv.width, H = cv.height;
+    ctx.imageSmoothingEnabled = c.lisse !== false; ctx.imageSmoothingQuality = "high";
+    if (c.fit === "fill") ctx.drawImage(vid, sx, sy, sw, sh, 0, 0, W, H);
+    else {
+      const k = Math.min(W / sw, H / sh), dw = sw * k, dh = sh * k;
+      ctx.fillStyle = "#05070d"; ctx.fillRect(0, 0, W, H);
+      ctx.drawImage(vid, sx, sy, sw, sh, (W - dw) / 2, (H - dh) / 2, dw, dh);
+    }
+    const x = $("#wzx"); if (x) x.textContent = "×" + Math.min(W / sw, H / sh).toFixed(1);
+  }
+  const boucle = () => {
+    if (!flux) return;
+    if (vid.requestVideoFrameCallback) rvfc = vid.requestVideoFrameCallback(() => { dessiner(); boucle(); }); // seulement quand une nouvelle image arrive
+    else raf = requestAnimationFrame(t => { if (t - dernier >= 1000 / (+cfg().fps || 30) - 2) { dernier = t; dessiner(); } boucle(); });
+  };
+  const arreter = () => {
+    if (rvfc && vid.cancelVideoFrameCallback) vid.cancelVideoFrameCallback(rvfc);
+    cancelAnimationFrame(raf); rvfc = raf = 0;
+    if (flux) flux.getTracks().forEach(t => t.stop());
+    flux = null; vid.srcObject = null;
+  };
+  async function demarrer() {
+    if (flux || lancement || !visible) return;
+    if (!cfg().rel) { msg(L("Choisis la zone du jeu à agrandir (⌖)", "Pick the game area to magnify (⌖)")); return; }
+    if (!DESKTOP || !navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) { msg(L("Aperçu : la loupe fonctionne dans l'application de bureau", "Preview: the magnifier works in the desktop app")); return; }
+    lancement = (async () => {
+      try {
+        const fps = +cfg().fps || 30;
+        const f = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: { ideal: fps, max: fps } }, audio: false });
+        if (!visible) { f.getTracks().forEach(t => t.stop()); return; }
+        flux = f; vid.srcObject = f; await vid.play(); msg(""); dessiner(); boucle();
+        f.getVideoTracks()[0].addEventListener("ended", () => { arreter(); if (visible) setTimeout(demarrer, 1500); });
+      } catch (e) { arreter(); msg(L("Capture de l'écran impossible : ", "Screen capture failed: ") + (e.message || e)); }
+      finally { lancement = null; }
+    })();
+  }
+  window.__loupeVisible = v => { visible = v; if (v) demarrer(); else arreter(); };
+  const appliquer = () => {
+    dimensionner();
+    const c = cfg(), k = `${c.fps || 30}|${(c.rel || {}).display || ""}|${!!c.rel}`;
+    if (k !== cle) { const avant = cle; cle = k; if (avant) { arreter(); demarrer(); } }
+    dessiner();
+  };
+  appliquer(); demarrer(); onSettingsChanged.push(appliquer);
+  $("#wzPick").onclick = () => api()?.zoom_pick();
+  $("#wzOff").onclick = () => { S.widgets.zoom = { ...cfg(), pinned: false }; widgetChanged("zoom"); };
+  // poignée : redimensionne la fenêtre (la page donne sa taille, la fenêtre suit)
+  const g = $("#wzGrip"); let geste = null;
+  g.addEventListener("pointerdown", e => { if (e.button !== 0) return; const [w, h] = zoomTaille(cfg()); geste = { x: e.screenX, y: e.screenY, w, h }; g.setPointerCapture(e.pointerId); e.preventDefault(); });
+  g.addEventListener("pointermove", e => { if (!geste) return; S.widgets.zoom = { ...cfg(), w: Math.max(160, Math.round(geste.w + e.screenX - geste.x)), h: Math.max(100, Math.round(geste.h + e.screenY - geste.y)) }; dimensionner(); });
+  const fin = e => { if (!geste) return; geste = null; try { g.releasePointerCapture(e.pointerId); } catch {} widgetChanged("zoom"); };
+  g.addEventListener("pointerup", fin); g.addEventListener("pointercancel", fin);
 }
 
 /* ════════ Mode widget (fenêtre épinglée) ════════ */
@@ -3628,7 +3765,7 @@ function bootWidget(kind) {
   $("#app").hidden = true; $("#welcome").hidden = true;
   const wr = $("#widgetRoot"); wr.hidden = false;
   let corps = wr;
-  if (!["crosshair", "picker", "map"].includes(kind)) {
+  if (!["crosshair", "picker", "zoom"].includes(kind)) {
     wr.innerHTML = '<div class="wm" id="wWrap"><div class="wm-slot" id="wSlot"></div><div class="wm-body" id="wBody"></div></div>';
     corps = $("#wBody");
     if (MASC_KINDS.includes(kind)) installerMascotte(kind);
@@ -3640,13 +3777,13 @@ function bootWidget(kind) {
     const r = wr.getBoundingClientRect(), w = vide ? 0 : Math.ceil(r.width), h = vide ? 0 : Math.ceil(r.height);
     const envoyer = (x, y) => { if (x === taille[0] && y === taille[1]) return; taille = [x, y]; api()?.widget_fit(kind, x, y); };
     clearTimeout(retrecir);
-    if (vide || w >= taille[0] && h >= taille[1] || !taille[0]) { envoyer(w, h); return; }
+    if (vide || kind === "zoom" || w >= taille[0] && h >= taille[1] || !taille[0]) { envoyer(w, h); return; }
     // plus petit : on garde la taille actuelle (agrandie si besoin), puis on rétrécit quand le contenu ne bouge plus
     envoyer(Math.max(w, taille[0]), Math.max(h, taille[1]));
     retrecir = setTimeout(() => { const q = wr.getBoundingClientRect(); taille = [0, 0]; envoyer(Math.ceil(q.width), Math.ceil(q.height)); }, 1500);
   };
   if (kind !== "crosshair" && kind !== "picker") {
-    const zoom = () => { wr.style.zoom = kind === "map" ? 1 : wEchelle(kind); requestAnimationFrame(fit); };
+    const zoom = () => { wr.style.zoom = kind === "zoom" ? 1 : wEchelle(kind); requestAnimationFrame(fit); };
     zoom(); onSettingsChanged.push(zoom);
   }
   if (kind === "timers") {
@@ -3665,16 +3802,7 @@ function bootWidget(kind) {
       <svg class="spark" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true"></svg></div>`;
     tickPing(); setInterval(tickPing, 2000);
   }
-  if (kind === "map") {
-    document.body.classList.add("wm");
-    const paint = () => {
-      const [W, H] = mapSize();
-      wr.innerHTML = `<div class="wbox wmapweb" style="width:${W}px;height:${H}px"><div class="wmh pywebview-drag-region"><span class="t">Carte · ${esc(mapName())}</span>
-        <button type="button" id="wmReload" title="Recharger la carte" aria-label="Recharger la carte">↻</button></div><div></div></div>`;
-      $("#wmReload").onclick = () => api()?.map_reload();
-    };
-    paint(); onSettingsChanged.push(paint);
-  }
+  if (kind === "zoom") bootLoupe(wr);
   if (kind === "dps") {
     renderDps(); onSettingsChanged.push(renderDps);
     // Le widget laisse passer les clics au jeu, sauf sur ses boutons (remise à zéro, inspecter)
@@ -3700,8 +3828,11 @@ function bootWidget(kind) {
     paint(); onSettingsChanged.push(paint);
   }
   if (kind === "picker") {
-    const zz = (location.hash.match(/z=(\w+)/) || [])[1], z = zz === "total" || zz === "pv" ? zz : "dps";
-    wr.innerHTML = z === "pv"
+    const zz = (location.hash.match(/z=(\w+)/) || [])[1], z = ["total", "pv", "zoom"].includes(zz) ? zz : "dps";
+    wr.innerHTML = z === "zoom"
+      ? `<div class="picker" id="pk"><div class="help">${esc(L("Encadre la zone du jeu à agrandir", "Frame the game area to magnify"))}
+      <small>${esc(L("Mini-carte, buffs du boss, barre de cast… Clique-glisse autour · Échap pour annuler", "Minimap, boss buffs, cast bar… Click and drag around it · Esc to cancel"))}</small></div><div class="rect" id="pkr" hidden></div></div>`
+      : z === "pv"
       ? `<div class="picker" id="pk"><div class="help">${esc(L("Encadre la barre de vie de ton personnage, vie pleine", "Frame your character's health bar, at full health"))}
       <small>${esc(L("Clique-glisse au plus près de la partie colorée, de son bord gauche à son bord droit · Échap pour annuler", "Click and drag tightly around the coloured part, from its left edge to its right edge · Esc to cancel"))}</small></div><div class="rect" id="pkr" hidden></div></div>`
       : `<div class="picker" id="pk"><div class="help">Encadre ${z === "total" ? "le chiffre des dégâts totaux" : "le chiffre du DPS"} dans l'Analyse de combat
@@ -3848,8 +3979,8 @@ document.addEventListener("click", e => {
 
 /* ════════ Écran de placement des widgets (page transparente sur tout l'écran) ════════ */
 let LAYOUT_INFO = null;
-const L_NOMS = { timers: "Timers", ping: "Ping", dps: "DPS meter", cd: "Cooldowns", macro: "Macros", map: "Carte", toast: "Alertes" };
-const L_KINDS = ["timers", "ping", "dps", "macro", "map", "toast"];
+const L_NOMS = { timers: "Timers", ping: "Ping", dps: "DPS meter", cd: "Cooldowns", macro: "Macros", zoom: "Loupe", toast: "Alertes" };
+const L_KINDS = ["timers", "ping", "dps", "macro", "zoom", "toast"];
 function dpsApercu() {
   const membres = [[901, (activeAcct() || {}).name || "Moi", 15, 52000, true], [902, "Kaelthys", 11, 61000], [903, "Sylvaine", 14, 47000], [904, "Elowen", 17, 15000]];
   const duree = 84000, joueurs = membres.map(([id, nom, classe, base, moi]) => ({ id, nom, classe, moi: !!moi, groupe: true, total: base * 84, dps: base, crit: 31, coups: 200, dos: 18, parfait: 9, double: 7, max: 41000, dot: 0, morts: 0, comp: [] }));
@@ -3862,7 +3993,7 @@ function contenuApercu(k) {
   if (k === "dps") return dpsWidgetHTML(DPS.combat ? DPS : dpsApercu());
   if (k === "cd") return cdWidgetHTML(true);
   if (k === "macro") return window.MacrosUI.apercuWidget();
-  if (k === "map") { const [W, H] = mapSize(); return `<div class="wbox wmapweb" style="width:${W}px;height:${H}px"><div class="wmh"><span class="t">Carte · ${esc(mapName())}</span></div><div style="display:grid;place-items:center;height:calc(100% - 34px);color:#a6b9de;font-weight:700">Carte interactive</div></div>`; }
+  if (k === "zoom") { const [W, H] = zoomTaille(S.widgets.zoom); return `<div class="wbox wzoom apercu" style="width:${W}px;height:${H}px"><span class="wz-ph">${svg("search")}<b>Loupe</b><small>${(S.widgets.zoom || {}).rel ? "zone agrandie en direct" : "aucune zone choisie"}</small></span></div>`; }
   if (k === "toast") return `<div class="wbox wtoast"><span class="bell" aria-hidden="true">${svg("bell")}</span><div style="min-width:0"><b>Exemple d'alerte</b><p>Faille dans 5 minutes</p></div></div>`;
   return "";
 }
@@ -3904,16 +4035,15 @@ function bootLayout() {
       inn.dataset.url = url;
       inn.innerHTML = `<div class="wm${masc ? " has-m" : ""}${side}" style="--msz:${Math.max(60, Math.min(220, +M.size || 110))}px"><div class="wm-slot${masc ? " on idle" : ""}">${masc && url ? `<img class="msc-img" src="${esc(url)}" alt="">` : ""}</div><div class="wm-body">${contenuApercu(k)}</div></div>`;
     }
-    inn.style.zoom = k === "map" ? 1 : z;
+    inn.style.zoom = k === "zoom" ? 1 : z;
     inn.style.padding = "5px";
-    inn.style.opacity = k === "toast" || k === "map" ? 1 : Math.max(.1, (+D[k].opacity || 90) / 100);
+    inn.style.opacity = k === "toast" ? 1 : Math.max(.1, (+D[k].opacity || 90) / 100);
     el.classList.toggle("cache", !visibleEnJeu(k));
     el.classList.toggle("sel", sel === k);
     el.classList.toggle("tag-bas", !!P[k] && P[k].y < 34);
-    el.querySelector(".lw-tag").innerHTML = `${esc(L_NOMS[k])} <i>${k === "map" ? mapTaille().join(" × ") : Math.round(z * 100) + " %"}</i>${visibleEnJeu(k) ? "" : " <em>masqué en jeu</em>"}`;
+    el.querySelector(".lw-tag").innerHTML = `${esc(L_NOMS[k])} <i>${k === "zoom" ? zoomTaille(D.zoom).join(" × ") : Math.round(z * 100) + " %"}</i>${visibleEnJeu(k) ? "" : " <em>masqué en jeu</em>"}`;
     return el;
   }
-  const mapTaille = () => D.map.size === "custom" && D.map.w ? [D.map.w, D.map.h] : (MAP_SIZES[D.map.size] || MAP_SIZES.m);
   const taille = k => { const el = boite(k); return [el.offsetWidth, el.offsetHeight]; };
   function positionDepart(k, deja) {
     const c = D[k], [w, h] = taille(k), M2 = 16, wa = { x: WA.x - B.x, y: WA.y - B.y, width: WA.width, height: WA.height };
@@ -3956,14 +4086,14 @@ function bootLayout() {
     if (!el) { if (!e.target.closest(".lt-bar, .lt-insp")) { sel = ""; L_KINDS.forEach(boite); inspecteur(); } return; }
     const k = el.dataset.k; sel = k; L_KINDS.forEach(boite); inspecteur();
     const grip = e.target.closest(".lw-grip");
-    geste = { k, grip: !!grip, sx: e.clientX, sy: e.clientY, x: P[k].x, y: P[k].y, w: el.offsetWidth, h: el.offsetHeight, z: echelle(k), map: mapTaille() };
+    geste = { k, grip: !!grip, sx: e.clientX, sy: e.clientY, x: P[k].x, y: P[k].y, w: el.offsetWidth, h: el.offsetHeight, z: echelle(k), zt: zoomTaille(D.zoom) };
     el.classList.add("glisse"); root.classList.add("geste"); el.setPointerCapture(e.pointerId); e.preventDefault();
   });
   root.addEventListener("pointermove", e => {
     if (!geste) return;
     const g = geste, dx = e.clientX - g.sx, dy = e.clientY - g.sy, el = boite(g.k);
     if (g.grip) {
-      if (g.k === "map") { D.map = { ...D.map, size: "custom", w: Math.max(360, Math.round(g.map[0] + dx)), h: Math.max(260, Math.round(g.map[1] + dy)) }; el.querySelector(".lw-in").dataset.pret = ""; }
+      if (g.k === "zoom") { D.zoom = { ...D.zoom, w: Math.max(160, Math.round(g.zt[0] + dx)), h: Math.max(100, Math.round(g.zt[1] + dy)) }; const b = el.querySelector(".wzoom"); if (b) { b.style.width = D.zoom.w + "px"; b.style.height = D.zoom.h + "px"; } }
       else D[g.k].scale = Math.round(Math.max(.5, Math.min(2.5, g.z * (g.w + Math.max(dx, dy * g.w / g.h)) / g.w)) * 20) / 20;
       boite(g.k); inspecteur();
     } else {
@@ -3991,8 +4121,8 @@ function bootLayout() {
       ${k === "toast" ? '<p class="note">Les alertes d\'événements apparaissent ici.</p>' : sw("pinned", !!c.pinned, "Afficher en jeu", "Quand l'interface est masquée")}
       ${k === "toast" ? "" : sw("click", !!c.click, "Clic à travers", "Les clics passent au jeu")}
       ${masc ? sw("masc", M.on !== false && M[k] !== false, "Mascotte animée", k === "macro" ? "À l'appui d'une macro" : "Pendant les combats") : ""}
-      ${k === "map" ? `<p class="note">Taille : ${mapTaille().join(" × ")} px (tire le coin)</p>` : `<div class="form-row"><span class="label">Taille</span><div class="slider-row"><input type="range" min="50" max="250" step="5" data-i="scale" value="${Math.round(echelle(k) * 100)}"><span class="mono">${Math.round(echelle(k) * 100)} %</span></div></div>`}
-      ${k === "toast" || k === "map" ? "" : `<div class="form-row"><span class="label">Opacité</span><div class="slider-row"><input type="range" min="20" max="100" step="5" data-i="opacity" value="${c.opacity ?? 90}"><span class="mono">${c.opacity ?? 90} %</span></div></div>`}
+      ${k === "zoom" ? `<p class="note">Taille : ${zoomTaille(D.zoom).join(" × ")} px (tire le coin)</p>` : `<div class="form-row"><span class="label">Taille</span><div class="slider-row"><input type="range" min="50" max="250" step="5" data-i="scale" value="${Math.round(echelle(k) * 100)}"><span class="mono">${Math.round(echelle(k) * 100)} %</span></div></div>`}
+      ${k === "toast" ? "" : `<div class="form-row"><span class="label">Opacité</span><div class="slider-row"><input type="range" min="20" max="100" step="5" data-i="opacity" value="${c.opacity ?? 90}"><span class="mono">${c.opacity ?? 90} %</span></div></div>`}
       <div class="lt-chips"><button type="button" class="btn sm" data-i="defaut">Position par défaut</button></div>`;
     placerInspecteur();
   }
@@ -4034,7 +4164,7 @@ function bootLayout() {
   })();
   $("#ltAimant").addEventListener("click", e => { aimant = !aimant; e.currentTarget.setAttribute("aria-pressed", String(aimant)); });
   $("#ltReset").addEventListener("click", () => {
-    for (const k of L_KINDS) { const def = k === "toast" ? { pos: "br", size: "m" } : (DEFAULTS.widgets[k] || {}); D[k] = { ...D[k], pos: def.pos || "tr", x: null, y: null, scale: null, size: def.size || "m" }; if (k === "map") Object.assign(D.map, { size: "m", w: null, h: null }); }
+    for (const k of L_KINDS) { const def = k === "toast" ? { pos: "br", size: "m" } : (DEFAULTS.widgets[k] || {}); D[k] = { ...D[k], pos: def.pos || "tr", x: null, y: null, scale: null, size: def.size || "m" }; if (k === "zoom") Object.assign(D.zoom, { w: 380, h: 240 }); }
     for (const k of L_KINDS) { const el = boite(k); el.querySelector(".lw-in").dataset.pret = ""; boite(k); }
     toutPlacer(true);
   });
@@ -4044,7 +4174,7 @@ function bootLayout() {
     for (const k of L_KINDS) {
       if (k === "toast") continue;
       cfgs[k] = { ...D[k], pos: "free", x: Math.round(B.x + P[k].x), y: Math.round(B.y + P[k].y) };
-      if (k !== "map") cfgs[k].scale = echelle(k);
+      if (k !== "zoom") cfgs[k].scale = echelle(k);
     }
     const alertes = { pos: "free", x: Math.round(B.x + P.toast.x), y: Math.round(B.y + P.toast.y), scale: echelle("toast") };
     S.mascots = { ...S.mascots, ...M };
@@ -4061,7 +4191,7 @@ function bootLayout() {
     if (!sel) return;
     const pas = e.shiftKey ? 10 : 1, mv = { ArrowLeft: [-pas, 0], ArrowRight: [pas, 0], ArrowUp: [0, -pas], ArrowDown: [0, pas] }[e.key];
     if (mv) { e.preventDefault(); P[sel].x += mv[0]; P[sel].y += mv[1]; appliquer(sel); placerInspecteur(); }
-    if ((e.key === "+" || e.key === "=" || e.key === "-") && sel !== "map") { e.preventDefault(); D[sel].scale = Math.max(.5, Math.min(2.5, echelle(sel) + (e.key === "-" ? -.05 : .05))); boite(sel); inspecteur(); }
+    if ((e.key === "+" || e.key === "=" || e.key === "-") && sel !== "zoom") { e.preventDefault(); D[sel].scale = Math.max(.5, Math.min(2.5, echelle(sel) + (e.key === "-" ? -.05 : .05))); boite(sel); inspecteur(); }
   });
   /* Données en direct dans les aperçus */
   setInterval(() => { tickTimers(); if (!DPS.combat) return; const el = root.querySelector('.lw[data-k="dps"] .wm-body'); if (el && !geste) el.innerHTML = dpsWidgetHTML(DPS); }, 1000);
@@ -4152,7 +4282,8 @@ window.__onPush = msg => {
     case "cdetat": KEYS = msg.etat || KEYS; renderKeyTest(); break;
     case "sound": playTone(msg.tone, msg.volume); break;
     case "viseur": VISEUR = msg; renderXhState(); break;
-    case "macro": window.MacrosUI.push(msg); break;
+    case "macro": window.MacrosUI.push(msg); potPush(msg); break;
+    case "wvis": if (window.__loupeVisible) window.__loupeVisible(!!msg.v); break;
     case "layout": LAYOUT_INFO = msg; if (window.__layoutPret) window.__layoutPret(); break;
     case "fond": { const b = $("#backdropImg"); if (!b) break; root.style.setProperty("--ecran-w", screen.width + "px"); root.style.setProperty("--ecran-h", screen.height + "px"); if (msg.url) { b.style.backgroundImage = `url("${msg.url}")`; b.classList.add("on"); } else { b.style.backgroundImage = ""; b.classList.remove("on"); } break; }
   }
@@ -4191,10 +4322,10 @@ async function boot() {
     // l'interface apparaît quand la fenêtre est montrée ; filet de sécurité si le message n'arrive pas
     setTimeout(() => { if (!WINDOW_HIDDEN) ouvrirOverlay(); }, 2000);
   }
-  onSettingsChanged.push(renderWidgetPanels, renderParams, renderDpsControls, renderXhControls, renderCdList, renderMapTab, renderModules);
-  showFields(); renderParams(); renderMascSettings(); onSettingsChanged.push(renderMascSettings); renderAlerts(); renderTimers(); renderWidgetPanels(); renderFavs(); renderRecents(); renderAccount(); renderTasks();
+  onSettingsChanged.push(renderWidgetPanels, renderParams, renderDpsControls, renderXhControls, renderCdList, renderMapTab, renderModules, renderPotions, renderLoupe);
+  showFields(); renderParams(); renderMascSettings(); onSettingsChanged.push(renderMascSettings); renderAlerts(); renderTimers(); renderWidgetPanels(); renderFavs(); renderRecents(); renderAccount();
   renderDpsControls(); renderCdList(); renderXhControls(); renderSrv();
-  renderMapTab(); renderModules(); renderInfos();
+  renderMapTab(); renderModules(); renderInfos(); renderPotions(); renderLoupe();
   requestAnimationFrame(() => placerGlider(true));
   setInterval(tickTimers, 1000);
   setInterval(() => { if (!$("#view-cd").hidden) cdTick(); }, 100);

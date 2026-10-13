@@ -93,7 +93,20 @@ function diffuser(msg, sauf) { for (const w of BrowserWindow.getAllWindows()) if
 const diffuserReglages = sauf => diffuser({ type: "settings", json: JSON.stringify(S) }, sauf);
 
 /* ════════ Module Macros (moteur de Pichet Macro, driver Interception) ════════ */
-const macros = new MoteurMacros({ dossier: DATA, log, diffuser: msg => diffuser(msg), reglages: () => S });
+const macros = new MoteurMacros({ dossier: DATA, log, reglages: () => S, diffuser: msg => {
+  diffuser(msg);
+  if (msg.ev === "ready") { sigPotions = ""; synchroniserPotions(); }
+  if (msg.ev === "potions_off") { S.potions = { ...(S.potions || {}), enabled: false }; ecrireReglages(); diffuserReglages(); sigPotions = JSON.stringify(S.potions); }
+} });
+// Auto-potions : la configuration (onglet Potions) est transmise au moteur à chaque changement
+let sigPotions = "";
+function synchroniserPotions() {
+  if (macros.phase !== "ready") return;
+  const sig = JSON.stringify(S.potions || {});
+  if (sig === sigPotions) return;
+  sigPotions = sig;
+  macros.commande("potions_config", { config: S.potions || {} }).catch(e => log("Auto-potions :", e.message));
+}
 const macrosActives = () => !(S.macro && S.macro.enabled === false);
 const CMD_FICHIERS = new Set(["import", "export", "export_all"]);
 
@@ -190,7 +203,7 @@ async function basculer() {
 }
 
 /* ════════ Widgets épinglés ════════ */
-const KINDS = ["timers", "ping", "map", "dps", "macro"]; // onglet Cooldowns retiré (2.2)
+const KINDS = ["timers", "ping", "dps", "macro", "zoom"]; // widget Carte retiré (2.3), loupe ajoutée // onglet Cooldowns retiré (2.2)
 const widgets = {};
 function configWidget(kind) {
   if (kind === "toast") { const a = S.alerts || {}; return { size: a.size || "m", scale: a.scale, opacity: 97, click: true, pos: a.pos || "br", x: a.x, y: a.y }; }
@@ -200,10 +213,12 @@ function ouvrirWidget(kind) {
   let o = widgets[kind];
   if (o && vivante(o.win)) return o;
   const carte = kind === "map"; // la carte est un vrai site : fenêtre opaque qui peut recevoir le clavier et la souris
+  const libre = carte || kind === "zoom"; // fenêtres redimensionnables à la souris (la loupe : flux agrandi d'une zone du jeu)
   const win = new BrowserWindow({
-    show: false, frame: false, transparent: !carte, backgroundColor: carte ? "#1d2125" : "#00000000", resizable: carte, minWidth: carte ? 360 : undefined, minHeight: carte ? 260 : undefined, skipTaskbar: true,
-    focusable: carte, hasShadow: false, alwaysOnTop: true, width: 200, height: 80, title: `${APP_NAME} · ${kind}`, webPreferences: PREFS
+    show: false, frame: false, transparent: !libre, backgroundColor: libre ? "#05070d" : "#00000000", resizable: libre, minWidth: libre ? 160 : undefined, minHeight: libre ? 100 : undefined, skipTaskbar: true,
+    focusable: libre, hasShadow: false, alwaysOnTop: true, width: 200, height: 80, title: `${APP_NAME} · ${kind}`, webPreferences: PREFS
   });
+  if (kind === "zoom") { try { win.setContentProtection(true); } catch { /* Windows ancien */ } } // la loupe ne se filme pas elle-même
   win.setAlwaysOnTop(true, "screen-saver");
   securiser(win);
   o = widgets[kind] = { win, w: 0, h: 0, z: 1, pret: false, vide: true, placement: 0, apercu: 0 };
@@ -213,18 +228,19 @@ function ouvrirWidget(kind) {
     if (carte && !o.vue) { o.vue = vueCarte(); win.contentView.addChildView(o.vue); }
     appliquerWidget(kind);
     if (kind === "toast" && o.message) pousser(win, { type: "toast", ...o.message });
+    if (kind === "zoom") { o.visible = false; synchroniserWidgets(); }
     pousser(win, { type: "cd", debuts: cdDebuts });
     pousser(win, { type: "dps", etat: dpsEtat });
     pousser(win, { type: "macro", ev: "snapshot", ...macros.etat() });
   });
   win.on("moved", () => deplace(kind));
-  if (carte) {
+  if (libre) {
     // redimensionnable à la souris : la taille choisie est retenue
     win.on("resized", () => {
       if (Date.now() - o.placement < 800) return;
       const b = win.getBounds();
       S.widgets = S.widgets || {};
-      S.widgets.map = { ...W("map"), size: "custom", w: b.width, h: b.height, pos: "free", x: b.x, y: b.y };
+      S.widgets[kind] = { ...W(kind), size: "custom", w: b.width, h: b.height, pos: "free", x: b.x, y: b.y };
       ecrireReglages(); diffuserReglages();
     });
     win.on("resize", () => { if (o.vue) { const b = win.getContentBounds(); o.vue.setBounds({ x: 0, y: ENTETE_CARTE, width: b.width, height: Math.max(0, b.height - ENTETE_CARTE) }); } });
@@ -303,6 +319,7 @@ function doitAfficher(kind) {
   if (o && o.apercu > Date.now()) return true;
   if (kind === "toast") return false;
   if (kind === "dps" && dpsHorsCombat() === "hide") return false;
+  if (kind === "zoom" && !W("zoom").rel) return false; // loupe sans zone choisie
   if (filtrePremierPlan() && !jeuDevant()) return false;
   return !mainVisible && !!W(kind).pinned;
 }
@@ -311,9 +328,11 @@ function synchroniserWidgets() {
     if (doitAfficher(kind)) {
       const o = ouvrirWidget(kind);
       if (o.pret && o.w && !o.vide && !o.win.isVisible()) { placer(kind); o.win.showInactive(); o.win.setAlwaysOnTop(true, "screen-saver"); }
+      if (kind === "zoom" && o.pret && !o.visible) { o.visible = true; pousser(o.win, { type: "wvis", v: true }); } // la loupe ne capture l'écran que lorsqu'elle est affichée
     } else {
       const o = widgets[kind];
       if (o && vivante(o.win) && o.win.isVisible()) o.win.hide();
+      if (kind === "zoom" && o && vivante(o.win) && o.visible) { o.visible = false; pousser(o.win, { type: "wvis", v: false }); }
       // DPS meter masqué hors combat : fenêtre préparée en avance pour apparaître dès le premier coup
       if (kind === "dps" && !mainVisible && W(kind).pinned && !o) ouvrirWidget(kind);
     }
@@ -342,8 +361,7 @@ const CARTES = {
 const ENTETE_CARTE = 30;
 function urlCarte() {
   const m = S.map || {};
-  if (m.source === "perso" && /^https:\/\/\S+$/i.test(String(m.url || "").trim())) return String(m.url).trim();
-  return CARTES[m.source] || CARTES.aion2run;
+  return CARTES.aion2run; // AION2.run uniquement
 }
 const hote = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return ""; } };
 let sessionCarte = null;
@@ -775,9 +793,9 @@ const armurerie = {
     const m = mot.toLowerCase();
     return sortie.sort((a, b) => (a.name.toLowerCase() !== m) - (b.name.toLowerCase() !== m) || a.name.localeCompare(b.name));
   },
-  async fiche(serverId, characterId, region) {
-    const p = { ...site(region), serverId, characterId: idPerso(characterId) };
-    const [info, equipment] = await Promise.all([obtenir(`${SITE}/api/character/info`, p, 120000), obtenir(`${SITE}/api/character/equipment`, p, 120000)]);
+  async fiche(serverId, characterId, region, force) {
+    const p = { ...site(region), serverId, characterId: idPerso(characterId) }, ttl = force ? -1 : 120000; // « Actualiser » : jamais le cache
+    const [info, equipment] = await Promise.all([obtenir(`${SITE}/api/character/info`, p, ttl), obtenir(`${SITE}/api/character/equipment`, p, ttl)]);
     if (!(info.profile && info.profile.characterId)) throw new Error("personnage introuvable sur l'armurerie officielle");
     return { info: icones(info), equipment: icones(equipment) };
   },
@@ -1005,7 +1023,8 @@ function choisirZone(nomZone, avant = null) {
       const zone = { x: Math.round(phys.x), y: Math.round(phys.y), w: Math.round(phys.width), h: Math.round(phys.height) };
       if (avant) {
         let r = null;
-        try { await attendre(150); r = await avant(zone); } catch (e) { r = { erreur: e.message, zone }; }
+        const rel = { x: rect.x / d.bounds.width, y: rect.y / d.bounds.height, w: rect.w / d.bounds.width, h: rect.h / d.bounds.height, display: String(d.id) };
+        try { await attendre(150); r = await avant(zone, rel); } catch (e) { r = { erreur: e.message, zone }; }
         reafficher();
         return resolve(r);
       }
@@ -1109,6 +1128,7 @@ function creerTray() {
 
 /* ════════ Après chaque changement de réglages ════════ */
 function apresReglages() {
+  synchroniserPotions();
   majCartes(false);
   synchroniserViseur();
   synchroniserTouches();
@@ -1137,7 +1157,7 @@ const API = {
   servers: (e, region, force) => resultat(() => armurerie.serveurs(region, force)),
   classes: (e, region) => resultat(() => armurerie.classes(region)),
   search: (e, mot, serverId, region) => resultat(() => armurerie.recherche(mot, serverId, region)),
-  character: (e, serverId, characterId, region) => resultat(() => armurerie.fiche(serverId, characterId, region)),
+  character: (e, serverId, characterId, region, force) => resultat(() => armurerie.fiche(serverId, characterId, region, !!force)),
   daevanion: (e, serverId, characterId, boardId, region) => resultat(() => armurerie.daevanion(serverId, characterId, boardId, region)),
   ranking: (e, contenu, serverId, classe, nom, region) => resultat(() => armurerie.classement(contenu, serverId, classe, nom, region)),
   ping: async () => ({ ok: true, data: await mesurerPing() }),
@@ -1238,6 +1258,15 @@ const API = {
   open_logs: () => { shell.openPath(DATA); return true; },
   open_licence: () => { shell.openPath(path.join(__dirname, "COPYING.txt")); return true; },
   // ── Macros ──
+  potion_pick: () => choisirZone("pv", z => macros.commande("potions_calibrate", { zone: z }, 15000)),
+  potion_recalibrate: async () => { const z = S.potions && S.potions.zone; if (!z) throw new Error("choisis d'abord la barre de vie"); return macros.commande("potions_calibrate", { zone: z }, 15000); },
+  potion_read: () => macros.phase === "ready" ? macros.commande("potions_read", {}, 4000) : -1,
+  zoom_pick: () => choisirZone("zoom", (z, rel) => {
+    S.widgets = S.widgets || {};
+    S.widgets.zoom = { ...W("zoom"), rel, phys: z, pinned: true }; // zone choisie : la loupe s'affiche en jeu
+    ecrireReglages(); diffuserReglages(); synchroniserWidgets();
+    return rel;
+  }),
   mascots_list: () => mascottes(),
   mascots_add: async () => {
     const r = await dialog.showOpenDialog(vivante(main) ? main : undefined, { title: "Ajouter des mascottes", properties: ["openFile", "multiSelections"],
@@ -1308,8 +1337,22 @@ ipcMain.handle("api", async (e, methode, args) => {
 });
 
 /* ════════ Démarrage ════════ */
+/* Loupe : la page du widget demande la capture d'écran ; on lui donne l'écran où la zone a été choisie (et à elle seule) */
+function autoriserCaptureLoupe() {
+  session.defaultSession.setDisplayMediaRequestHandler(async (req, repondre) => {
+    try {
+      const url = (req.frame && req.frame.url) || "";
+      if (!/#w=zoom\b/.test(url)) { repondre({}); return; }
+      const rel = W("zoom").rel || {};
+      const sources = await desktopCapturer.getSources({ types: ["screen"], thumbnailSize: { width: 0, height: 0 } });
+      const src = sources.find(x => String(x.display_id) === String(rel.display)) || sources[0];
+      repondre(src ? { video: src } : {});
+    } catch (e) { log("Loupe :", e.message); repondre({}); }
+  });
+}
 function demarrer() {
   Menu.setApplicationMenu(null);
+  autoriserCaptureLoupe();
   log("Démarrage", APP_NAME, app.getVersion(), "Electron", process.versions.electron);
   splashEnCours = lancerSplash();
   creerPrincipale();

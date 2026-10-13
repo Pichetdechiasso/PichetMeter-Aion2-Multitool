@@ -184,3 +184,66 @@ body.no-anim .wq::before, body.no-anim .fill::after { animation: none !important
 .msc-grid figure:hover .msc-del, .msc-del:focus-visible { opacity: 1; }
 .msc-del { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 7px; border: 0; cursor: pointer; font: 800 11px var(--f-body); color: #fff; background: rgba(230, 57, 70, .85); opacity: 0; transition: opacity .2s; }
 #mascCard { grid-column: 1 / -1; }
+
+/* ════════ Onglet Potions (2.3) ════════ */
+.pot-hp { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: center; }
+.pot-gauge { position: relative; height: 26px; border-radius: 6px; background: #05070c; border: 1px solid rgba(150, 210, 255, .16); box-shadow: inset 0 2px 8px rgba(0, 0, 0, .7); overflow: visible; }
+.pot-fill { position: absolute; inset: 2px auto 2px 2px; width: 0; max-width: calc(100% - 4px); border-radius: 4px; background: linear-gradient(90deg, #0e8f48, var(--mx, #39ff88));
+  box-shadow: 0 0 12px rgba(57, 255, 136, .55); transition: width .35s cubic-bezier(.2, .8, .2, 1), background .3s; }
+.pot-fill::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: repeating-linear-gradient(90deg, transparent 0 10px, rgba(0, 0, 0, .25) 10px 11px); }
+.pot-gauge.bas .pot-fill { background: linear-gradient(90deg, #8a0f5e, var(--mg, #ff2bd6)); box-shadow: 0 0 14px rgba(255, 43, 214, .6); }
+.pot-marks i { position: absolute; top: -6px; bottom: -6px; width: 2px; margin-left: -1px; background: var(--jaune, #ffd23f); box-shadow: 0 0 6px rgba(255, 210, 63, .8); }
+.pot-marks span { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font: 700 10px var(--f-data); color: var(--jaune, #ffd23f); }
+.pot-val { font-size: 26px; min-width: 76px; text-align: right; color: #fff; text-shadow: 0 0 10px rgba(57, 255, 136, .5); }
+.pot-cap { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; font-size: 13px; color: var(--muted); margin-top: 6px; }
+.pot-cap img { max-width: 100%; height: 22px; image-rendering: pixelated; border: 1px solid rgba(150, 210, 255, .2); border-radius: 4px; }
+.pot-cap b { color: var(--fg); }
+.pot-sw { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: -2px; margin: 0 6px 0 4px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .3); }
+.pot-rules { display: grid; gap: 10px; }
+.pot-rule { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 10px;
+  background: #0b1019; border: 1px solid rgba(150, 210, 255, .1); opacity: .62; transition: opacity .2s, border-color .2s, box-shadow .2s; }
+.pot-rule.on { opacity: 1; border-color: rgba(0, 229, 255, .35); box-shadow: inset 3px 0 0 var(--cy, #00e5ff); }
+.pot-rc { display: grid; gap: 6px; min-width: 0; }
+.pot-rc .slider-row { gap: 8px; font-size: 12.5px; }
+.pot-rc .slider-row > span:first-child { min-width: 38px; }
+.pot-rc input[type="range"] { flex: 1; min-width: 0; }
+.pot-rc .field.sm { width: 84px; padding: 5px 8px; font-family: var(--f-data); }
+.pot-key { display: grid; place-items: center; width: 44px; height: 38px; border-radius: 8px; font: 800 15px var(--f-display); color: var(--cy, #00e5ff);
+  background: #05070c; border: 1px solid rgba(0, 229, 255, .45); box-shadow: 0 0 10px rgba(0, 229, 255, .25), inset 0 0 10px rgba(0, 229, 255, .12); }
+.pot-key.sm { width: 32px; height: 24px; font-size: 11px; border-radius: 6px; }
+.pot-log { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.pot-log li { display: flex; align-items: center; gap: 10px; font-size: 13px; padding: 6px 8px; border-radius: 8px; background: #0b1019; animation: potLigne .35s cubic-bezier(.2, .8, .2, 1); }
+.pot-log li time { margin-left: auto; color: var(--muted); font-size: 12px; }
+.pot-log li.vide { color: var(--muted); background: none; }
+@keyframes potLigne { from { opacity: 0; transform: translateX(-8px); } }
+
+/* ════════ Onglet Loupe (2.3) ════════ */
+.zl-stage { position: relative; aspect-ratio: 16 / 9; width: min(100%, 520px); justify-self: center; border-radius: 8px; background: #05070c; border: 1px solid rgba(150, 210, 255, .16); overflow: hidden;
+  background-image: linear-gradient(rgba(0, 229, 255, .06) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 229, 255, .06) 1px, transparent 1px); background-size: 6.25% 11.11%; }
+.zl-rect { position: absolute; border: 2px solid var(--mg, #ff2bd6); background: rgba(255, 43, 214, .14); box-shadow: 0 0 16px rgba(255, 43, 214, .55); border-radius: 2px; transition: all .3s cubic-bezier(.2, .8, .2, 1); }
+.zl-vide { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-weight: 600; }
+.zl-steps { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 13.5px; color: var(--muted); }
+.zl-steps li::marker { color: var(--cy, #00e5ff); font-family: var(--f-display); }
+
+/* ════════ Widget Loupe : flux agrandi, en-tête au survol, poignée de taille ════════ */
+body.widget.wm #widgetRoot { padding: 0; display: inline-block; vertical-align: top; }
+.wbox.wzoom { position: relative; display: block; padding: 0; overflow: hidden; border-radius: 0; background: #05070d; border: 1px solid rgba(0, 229, 255, .45); }
+.wzoom canvas { display: block; width: 100%; height: 100%; }
+.wzh { position: absolute; left: 0; right: 0; top: 0; height: 30px; display: flex; align-items: center; gap: 6px; padding: 0 6px 0 10px; cursor: move;
+  background: linear-gradient(180deg, rgba(5, 8, 14, .92), rgba(5, 8, 14, .6)); border-bottom: 1px solid rgba(0, 229, 255, .3); font: 700 12px var(--f-body); color: #cfe9ff;
+  opacity: 0; transform: translateY(-4px); transition: opacity .2s, transform .2s; }
+.wzoom:hover .wzh { opacity: 1; transform: none; }
+.wzh .t { flex: 1; display: flex; align-items: center; gap: 6px; min-width: 0; white-space: nowrap; }
+.wzh .t svg { width: 14px; height: 14px; color: var(--cy, #00e5ff); }
+.wzh .t b { color: var(--cy, #00e5ff); }
+.wzh button { -webkit-app-region: no-drag; width: 24px; height: 22px; border-radius: 6px; border: 1px solid rgba(150, 210, 255, .3); background: #0c111b; color: #eaf2ff; cursor: pointer; font: 700 13px var(--f-body); padding: 0; line-height: 1; }
+.wzh button:hover { border-color: var(--cy, #00e5ff); box-shadow: 0 0 10px rgba(0, 229, 255, .4); }
+.wz-msg { position: absolute; inset: 0; display: grid; place-items: center; padding: 16px; text-align: center; font: 600 13px var(--f-body); color: #95a6c4; }
+.wz-grip { position: absolute; right: 0; bottom: 0; width: 16px; height: 16px; cursor: nwse-resize; -webkit-app-region: no-drag; opacity: 0; transition: opacity .2s;
+  background: linear-gradient(135deg, transparent 50%, var(--cy, #00e5ff) 50% 58%, transparent 58% 70%, var(--cy, #00e5ff) 70% 78%, transparent 78%); }
+.wzoom:hover .wz-grip { opacity: 1; }
+.wzoom.apercu { display: grid; place-items: center; background: repeating-linear-gradient(0deg, rgba(0, 229, 255, .05) 0 1px, transparent 1px 4px), #05070d; }
+.wz-ph { display: grid; justify-items: center; gap: 4px; color: #cfe9ff; }
+.wz-ph svg { width: 34px; height: 34px; color: var(--cy, #00e5ff); filter: drop-shadow(0 0 8px rgba(0, 229, 255, .7)); }
+.wz-ph b { font: 800 14px var(--f-display, sans-serif); letter-spacing: .1em; text-transform: uppercase; }
+.wz-ph small { color: #95a6c4; }
