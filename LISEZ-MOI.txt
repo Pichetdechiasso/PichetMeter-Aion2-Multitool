@@ -1,4 +1,4 @@
-﻿PICHETMETER — version 2.8.0 (PichetMeter + Pichet Macro)
+﻿PICHETMETER — version 2.9.0 (PichetMeter + Pichet Macro)
 Compagnon pour Aion 2 : armurerie, timers, DPS meter de groupe, macros, viseur, lecteur vidéo (YouTube, Twitch), carte et ping,
 affichés par-dessus le jeu.
 Créateur : @atomedims · Discord : https://discord.gg/KrkJrjrDJt
@@ -36,6 +36,16 @@ DANS LE JEU
 - Option « Seulement quand le jeu est au premier plan » (Paramètres > Modules en jeu) :
   les widgets se cachent dès que tu passes sur Discord, ton navigateur, etc.
 - L'icône dans la zone de notification (près de l'horloge) permet aussi d'afficher l'overlay ou de quitter.
+
+NOUVEAUTÉS 2.9.0
+- Lecteur vidéo : barre du bas avec la progression (glisser pour avancer ou revenir), le temps écoulé
+  et le temps restant, -10 s / +10 s, pause ; le volume se déroule depuis son bouton (clic droit :
+  couper le son). Changer de qualité reprend la vidéo au même moment. Cadre net (plus de coins
+  arrondis ni de bord sombre), poignée de taille en bas à droite, opacité appliquée à tout le widget.
+- Widget de ping : FPS du jeu, utilisation et température du CPU et du GPU, RAM utilisée par le jeu et
+  RAM libre, à choisir dans Paramètres > Widgets. Les FPS demandent de lancer PichetMeter en
+  administrateur (PresentMon, téléchargé une fois depuis GitHub).
+- Fond : l'effet VHS est retiré ; un chevalier affronte un magicien en pixel art sous le menu.
 
 NOUVEAUTÉS 2.8.0
 - Lecteur vidéo : barre de volume dans le widget (0 à 125 %, molette de la souris acceptée), retenue

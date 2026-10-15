@@ -1045,7 +1045,7 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
   </form>
 </div>
 
-<div class="shell" id="app"><i class="balayage" aria-hidden="true"></i>
+<div class="shell" id="app"><canvas class="arene" id="arene" aria-hidden="true"></canvas>
   <!-- ═════════ Barre supérieure ═════════ -->
   <header class="topbar neu-extruded">
     <div class="brand pywebview-drag-region">
@@ -1410,7 +1410,7 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
       <div class="form-row"><span class="label">Taille du widget</span>
         <div class="seg" data-vid="taille"><button type="button" data-v="400x255">Petit</button><button type="button" data-v="520x323">Moyen</button><button type="button" data-v="720x435">Grand</button><button type="button" data-v="960x570">Très grand</button></div>
         <span class="note">Tu peux aussi tirer les bords du widget.</span></div>
-      <div class="form-row"><span class="label">Opacité de la barre</span>
+      <div class="form-row"><span class="label">Opacité du widget (image comprise)</span>
         <div class="slider-row"><input type="range" min="30" max="100" step="5" id="vidOp" aria-label="Opacité du lecteur"><span class="mono" id="vidOpV"></span></div></div>
       <button class="btn" type="button" data-layout="video" style="justify-self:start">Placer et régler les widgets</button>
       <p class="note">Le lecteur s'affiche quand l'interface est masquée (<kbd class="hk-txt">Alt + C</kbd>). Le son continue quand tu rouvres l'interface ; le bouton ✕ du widget arrête la vidéo.</p>
@@ -1480,6 +1480,9 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
       <div class="card-head"><div><h2>Ping</h2><span class="sub" id="pingSrc">Mesure en cours…</span></div><b class="mono ping-val"><span id="pingBig">—</span> ms</b></div>
       <svg class="spark" viewBox="0 0 200 60" preserveAspectRatio="none" aria-label="Historique du ping"></svg>
       <div class="modbar ping-mod" data-modbar="ping"></div>
+      <h3 class="reg-t">Infos dans le widget de ping</h3>
+      <div class="sys-opts" id="sysOpts"></div>
+      <p class="note">Les FPS sont mesurés par PresentMon (outil libre d'Intel, téléchargé une fois depuis GitHub) : Windows exige de lancer PichetMeter en administrateur. La température du processeur vient des zones thermiques de Windows (approximative, absente sur certains PC) ; celle du GPU, des pilotes NVIDIA.</p>
     </section>
     <section class="card neu-extruded" data-sec="Affichage">
       <div class="card-head"><h2>Affichage</h2></div>
@@ -1552,6 +1555,7 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
 <div class="tip" id="tip" hidden></div>
 
 <script src="mascottes.js"></script>
+<script src="arene.js"></script>
 <script src="dps-course.js"></script>
 <script src="macros-ui.js"></script>
 <script src="i18n.js"></script>
@@ -1587,6 +1591,7 @@ const DEFAULTS = {
   video: { url: "", mode: "embed", moteur: "vlc", qualite: "auto", volume: 100, recents: [] },
   macro: { enabled: true, hideOnRun: true },
   maj: { auto: true, skip: "" },
+  ping: { infos: { fps: true, cpu: true, gpu: true, temp: true, ramJeu: true, ramLibre: true } },
   mascots: { on: true, macro: true, dps: true, timers: true, size: 110, lead: 5, fx: true },
   dps: { v: 3, enabled: true, source: "reseau", demo: false, interval: 1, idle: 10, dot: true, bossOnly: false, zones: {},
     view: { layout: "bars", who: "all", rows: 8, cols: ["dps", "share", "dmg", "crit"], fmt: "short", tint: "class", graph: false, color: "#22d3ee", hors: "show", horsOp: 30 } },
@@ -2571,6 +2576,36 @@ function beat() {
   step++; setTimeout(beat, 600 + (ping ?? 40));
 }
 
+/* ════════ Infos système (widget de ping) ════════ */
+const INFOS_SYS = [["fps", "FPS du jeu"], ["cpu", "Processeur (CPU)"], ["gpu", "Carte graphique (GPU)"], ["temp", "Températures"], ["ramJeu", "RAM utilisée par le jeu"], ["ramLibre", "RAM libre"]];
+const go = o => o == null || o < 0 ? "—" : (o / 1073741824).toLocaleString(LOC, { maximumFractionDigits: 1, minimumFractionDigits: 1 }) + " Go";
+const niveau = (v, a, b) => v == null ? "" : v >= b ? " hot" : v >= a ? " warn" : "";
+function peindreSysteme(inf, opts) {
+  const el = $("#wSys"); if (!el || !inf) return;
+  const o = { ...DEFAULTS.ping.infos, ...(opts || {}) }, t = !!o.temp, c = [];
+  if (o.fps) {
+    const msg = inf.fpsEtat === "admin" ? "admin requis" : inf.fpsEtat === "jeu" ? "jeu fermé" : inf.fpsEtat === "telechargement" ? "…" : inf.fpsEtat === "erreur" ? "indispo." : null;
+    c.push(`<div class="ws-c wide${inf.fps != null ? niveau(-inf.fps, -59, -29) : ""}"><span>FPS</span><b class="mono">${inf.fps != null ? inf.fps : msg || "—"}</b></div>`);
+  }
+  if (o.cpu) c.push(`<div class="ws-c${niveau(inf.cpu, 70, 90)}"><span>CPU</span><b class="mono">${inf.cpu ?? "—"}<small>%</small>${t && inf.cpuTemp != null ? `<i class="${niveau(inf.cpuTemp, 75, 88).trim()}">${Math.round(inf.cpuTemp)}°</i>` : ""}</b></div>`);
+  if (o.gpu) c.push(`<div class="ws-c${niveau(inf.gpu, 85, 97)}" title="${esc(inf.gpuNom || "")}"><span>GPU</span><b class="mono">${inf.gpu != null ? Math.round(inf.gpu) : "—"}<small>%</small>${t && inf.gpuTemp != null ? `<i class="${niveau(inf.gpuTemp, 75, 85).trim()}">${Math.round(inf.gpuTemp)}°</i>` : ""}</b></div>`);
+  else if (t && inf.gpuTemp != null) c.push(`<div class="ws-c"><span>GPU</span><b class="mono">${Math.round(inf.gpuTemp)}°</b></div>`);
+  if (o.ramJeu) c.push(`<div class="ws-c"><span>RAM jeu</span><b class="mono">${go(inf.jeuRam)}</b></div>`);
+  if (o.ramLibre) c.push(`<div class="ws-c${inf.ramTotale && inf.ramLibre / inf.ramTotale < .1 ? " hot" : ""}"><span>RAM libre</span><b class="mono">${go(inf.ramLibre)}</b></div>`);
+  el.innerHTML = c.join("");
+  el.hidden = !c.length;
+}
+function renderSysOpts() {
+  const box = $("#sysOpts"); if (!box || WIDGET) return;
+  const o = { ...DEFAULTS.ping.infos, ...((S.ping || {}).infos || {}) };
+  box.innerHTML = INFOS_SYS.map(([k, t]) => `<label class="set-item"><span class="t">${esc(t)}</span><span class="switch sm"><input type="checkbox" role="switch" data-sysopt="${k}" ${o[k] ? "checked" : ""}><span class="track"></span><span class="knob"></span></span></label>`).join("");
+}
+document.addEventListener("change", e => {
+  const t = e.target.closest("[data-sysopt]"); if (!t) return;
+  S.ping = { ...(S.ping || {}), infos: { ...DEFAULTS.ping.infos, ...((S.ping || {}).infos || {}), [t.dataset.sysopt]: t.checked } };
+  save();
+});
+
 /* ════════ Panneaux "widget à l'écran" ════════ */
 const WLABEL = { timers: "les timers", ping: "l'indicateur de ping", dps: "le DPS meter", cd: "les cooldowns", macro: "les macros en cours" };
 function renderWidgetPanels() {
@@ -3494,17 +3529,27 @@ if (!WIDGET && $("#view-video")) {
 /* Fenêtre du lecteur : barre de 30 px ; l'image (VLC ou page web) est affichée dessous par le processus principal */
 const fmtTemps = s => { s = Math.max(0, Math.round(+s || 0)); const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, x = String(s % 60).padStart(2, "0"); return h ? `${h}:${String(m).padStart(2, "0")}:${x}` : `${m}:${x}`; };
 const QUALITES_VIDEO = [["auto", "Auto", "jusqu'en 1080p"], ["max", "Maximale", "4K si disponible"], ["1080", "1080p", "Full HD"], ["720", "720p", "HD, plus léger"], ["480", "480p", "économe"], ["360", "360p", "très léger"], ["audio", "Audio seul", "sans image"]];
+const ICONE_SON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
+const ICONE_MUET = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="m17 9 5 6M22 9l-5 6"/></svg>';
 const nomQualite = q => (QUALITES_VIDEO.find(x => x[0] === q) || QUALITES_VIDEO[0])[1];
 function bootVideo(wr) {
   document.body.classList.add("wm");
   const vlc = (S.video || {}).moteur !== "web";
   wr.innerHTML = `<div class="wbox wvid${vlc ? " vlc" : ""}" id="wv"><div class="wvh pywebview-drag-region">
-      <span class="t">${svg("play")}<b id="wvTitre">${vlc ? "Lecteur vidéo" : "YouTube"}</b><i class="mono" id="wvTemps"></i></span>
+      <span class="t">${svg("play")}<b id="wvTitre">${vlc ? "Lecteur vidéo" : "YouTube"}</b></span>
       <form id="wvForm" autocomplete="off"><input id="wvUrl" placeholder="Lien YouTube ou Twitch…" aria-label="Lien YouTube ou Twitch"></form>
-      ${vlc ? `<button type="button" data-wv="recul" title="Reculer de 10 s" aria-label="Reculer de 10 secondes">«</button><button type="button" data-wv="pause" id="wvPause" title="Pause / lecture" aria-label="Pause ou lecture">❚❚</button><button type="button" data-wv="avance" title="Avancer de 10 s" aria-label="Avancer de 10 secondes">»</button><button type="button" data-wv="son" id="wvSon" title="Couper / remettre le son" aria-label="Couper ou remettre le son">♪</button><input type="range" class="wv-vol" id="wvVol" min="0" max="125" step="1" title="Volume" aria-label="Volume"><button type="button" class="wv-q" data-wv="qualite" id="wvQ" title="Qualité de la vidéo" aria-label="Qualité de la vidéo" aria-haspopup="menu" aria-expanded="false">Auto</button>`
+      ${vlc ? `<button type="button" class="wv-q" data-wv="qualite" id="wvQ" title="Qualité de la vidéo" aria-label="Qualité de la vidéo" aria-haspopup="menu" aria-expanded="false">Auto</button>`
         : `<button type="button" data-wv="back" title="Retour" aria-label="Retour">‹</button><button type="button" data-wv="home" title="Accueil" aria-label="Accueil">⌂</button>`}
       <button type="button" data-wv="reload" title="Recharger" aria-label="Recharger">↻</button><button type="button" data-wv="off" title="Arrêter et masquer le lecteur" aria-label="Arrêter et masquer le lecteur">✕</button></div>
     <div class="wv-msg" id="wvMsg">${vlc ? "Chargement…" : ""}</div>
+    ${vlc ? `<div class="wvb" id="wvb">
+      <button type="button" data-wv="recul" title="Reculer de 10 s" aria-label="Reculer de 10 secondes">-10</button><button type="button" class="wv-pp" data-wv="pause" id="wvPause" title="Pause / lecture" aria-label="Pause ou lecture">❚❚</button><button type="button" data-wv="avance" title="Avancer de 10 s" aria-label="Avancer de 10 secondes">+10</button>
+      <span class="wv-t mono" id="wvEcoule">0:00</span>
+      <input type="range" class="wv-seek" id="wvSeek" min="0" max="1" step="1" value="0" aria-label="Position dans la vidéo">
+      <span class="wv-t mono" id="wvReste" title="Temps restant">—</span>
+      <span class="wv-volpop" id="wvVolPop"><input type="range" class="wv-vol" id="wvVol" min="0" max="125" step="1" aria-label="Volume"><i class="mono" id="wvVolV"></i></span>
+      <button type="button" class="wv-son" data-wv="volume" id="wvSon" title="Volume (clic droit : couper le son)" aria-label="Volume" aria-expanded="false">${ICONE_SON}</button>
+      <span class="wv-grip" id="wvGrip" title="Taille du lecteur"></span></div>` : ""}
     <div class="wv-menu" id="wvMenu" role="menu" hidden><span class="label">Qualité</span>${QUALITES_VIDEO.map(([q, t, d]) => `<button type="button" role="menuitemradio" data-q="${q}"><b>${t}</b><small>${d}</small></button>`).join("")}</div></div>`;
   const box = $("#wv");
   const taille = () => { const [W, H] = videoTaille(S.widgets.video); box.style.width = W + "px"; box.style.height = H + "px"; };
@@ -3514,7 +3559,7 @@ function bootVideo(wr) {
       S.video.titre = titre; (S.video.recents || []).forEach(r => { if (r.url === S.video.url) r.titre = titre; }); save();
     }
   };
-  let volumeAvant = 100, etat = null, glisseVol = false, hauteur = 0;
+  let volumeAvant = 100, etat = null, glisseVol = false, glisseSeek = false, hauteur = 0, volT = 0;
   const qualite = () => (S.video || {}).qualite || "auto";
   const peindreQualite = () => {
     const q = $("#wvQ"); if (!q) return;
@@ -3522,9 +3567,26 @@ function bootVideo(wr) {
     $$("#wvMenu [data-q]").forEach(b => b.setAttribute("aria-checked", String(b.dataset.q === qualite())));
   };
   const menu = ouvrir => {
-    const m = $("#wvMenu"); if (!m) return;
+    const m = $("#wvMenu"); if (!m || !$("#wvQ")) return;
     m.hidden = !ouvrir; $("#wvQ").setAttribute("aria-expanded", String(ouvrir));
     api()?.video_menu(ouvrir); peindreQualite();
+  };
+  const peindre = () => {
+    if (!etat || !vlc) return;
+    $("#wvPause").textContent = etat.etat === "playing" ? "❚❚" : "▶";
+    const muet = !etat.volume;
+    $("#wvSon").classList.toggle("off", muet); $("#wvSon").innerHTML = muet ? ICONE_MUET : ICONE_SON;
+    const direct = !etat.duree;
+    $("#wvb").classList.toggle("direct", direct);
+    const seek = $("#wvSeek");
+    if (!glisseSeek) {
+      seek.max = Math.max(1, Math.round(etat.duree)); seek.value = Math.round(etat.temps);
+      seek.style.setProperty("--p", (etat.duree ? Math.min(100, etat.temps / etat.duree * 100) : 100) + "%");
+      $("#wvEcoule").textContent = direct ? "● DIRECT" : fmtTemps(etat.temps);
+      $("#wvReste").textContent = direct ? "" : "-" + fmtTemps(etat.duree - etat.temps);
+    }
+    seek.disabled = direct;
+    const v = $("#wvVol"); if (v && !glisseVol) { v.value = Math.min(125, etat.volume); v.style.setProperty("--p", Math.min(125, etat.volume) / 1.25 + "%"); $("#wvVolV").textContent = etat.volume + "%"; }
   };
   window.__videoTitre = m => {
     if (typeof m === "string") m = { titre: m };
@@ -3536,28 +3598,47 @@ function bootVideo(wr) {
   $("#wvForm").addEventListener("submit", e => { e.preventDefault(); const u = $("#wvUrl").value; if (videoValide(u) && u.trim()) { lireVideo(u); $("#wvUrl").value = ""; $("#wvUrl").blur(); } else $("#wvUrl").classList.add("bad"); });
   $("#wvUrl").addEventListener("input", e => e.target.classList.remove("bad"));
   const cmd = (c, v) => api()?.video_cmd(c, v).then(r => { if (r && r.etat) { etat = r; peindre(); } }).catch(() => {});
-  const peindre = () => {
-    if (!etat) return;
-    $("#wvPause").textContent = etat.etat === "playing" ? "❚❚" : "▶";
-    $("#wvSon").textContent = etat.volume ? "♪" : "∅"; $("#wvSon").classList.toggle("off", !etat.volume);
-    $("#wvTemps").textContent = etat.duree ? `${fmtTemps(etat.temps)} / ${fmtTemps(etat.duree)}` : etat.etat === "playing" ? "● direct" : "";
-    const v = $("#wvVol"); if (v && !glisseVol) { v.value = Math.min(125, etat.volume); v.style.setProperty("--p", Math.min(125, etat.volume) / 1.25 + "%"); v.title = `Volume ${etat.volume} %`; }
-  };
-  const vol = $("#wvVol");
-  if (vol) {
-    const init = (S.video || {}).volume ?? 100; vol.value = init; vol.style.setProperty("--p", init / 1.25 + "%");
-    let t = 0;
-    vol.addEventListener("pointerdown", () => { glisseVol = true; });
-    vol.addEventListener("input", () => {
-      vol.style.setProperty("--p", vol.value / 1.25 + "%"); vol.title = `Volume ${vol.value} %`;
-      clearTimeout(t); t = setTimeout(() => api()?.video_volume(+vol.value).then(r => { if (r && r.etat) { etat = r; } }), 80);
+  if (vlc) {
+    if (DESKTOP) setInterval(() => cmd(), 1000);
+    // Barre de progression : glisser pour se placer, le temps restant suit
+    const seek = $("#wvSeek");
+    seek.addEventListener("pointerdown", () => { glisseSeek = true; });
+    seek.addEventListener("input", () => {
+      glisseSeek = true;
+      const d = +seek.max || 1, t = +seek.value;
+      seek.style.setProperty("--p", t / d * 100 + "%");
+      $("#wvEcoule").textContent = fmtTemps(t); $("#wvReste").textContent = "-" + fmtTemps(d - t);
     });
-    const fin = () => { glisseVol = false; if (S.video) S.video.volume = +vol.value; };
-    vol.addEventListener("change", fin); vol.addEventListener("pointerup", fin);
-    vol.addEventListener("wheel", e => { e.preventDefault(); vol.value = Math.max(0, Math.min(125, +vol.value + (e.deltaY < 0 ? 5 : -5))); vol.dispatchEvent(new Event("input")); fin(); }, { passive: false });
+    seek.addEventListener("change", () => { cmd("seek", String(Math.round(+seek.value))); setTimeout(() => { glisseSeek = false; }, 400); });
+    // Volume : le bouton déroule la barre ; molette sur le bouton ou la barre
+    const vol = $("#wvVol"), pop = $("#wvVolPop");
+    const init = (S.video || {}).volume ?? 100; vol.value = init; vol.style.setProperty("--p", init / 1.25 + "%"); $("#wvVolV").textContent = init + "%";
+    const ouvrirVol = ouvert => { pop.classList.toggle("on", ouvert); $("#wvSon").setAttribute("aria-expanded", String(ouvert)); clearTimeout(volT); if (ouvert) volT = setTimeout(() => { if (!glisseVol) ouvrirVol(false); }, 4000); };
+    const reglerVol = v => {
+      v = Math.max(0, Math.min(125, Math.round(v))); vol.value = v;
+      vol.style.setProperty("--p", v / 1.25 + "%"); $("#wvVolV").textContent = v + "%";
+      clearTimeout(vol._t); vol._t = setTimeout(() => api()?.video_volume(v).then(r => { if (r && r.etat) { etat = r; peindre(); } }), 70);
+      if (S.video) S.video.volume = v;
+      ouvrirVol(true);
+    };
+    vol.addEventListener("pointerdown", () => { glisseVol = true; clearTimeout(volT); });
+    vol.addEventListener("input", () => reglerVol(+vol.value));
+    const finVol = () => { glisseVol = false; ouvrirVol(true); };
+    vol.addEventListener("change", finVol); vol.addEventListener("pointerup", finVol);
+    for (const el of [vol, $("#wvSon")]) el.addEventListener("wheel", e => { e.preventDefault(); reglerVol(+vol.value + (e.deltaY < 0 ? 5 : -5)); }, { passive: false });
+    $("#wvSon").addEventListener("contextmenu", e => { e.preventDefault(); if (etat && etat.volume) { volumeAvant = etat.volume; reglerVol(0); } else reglerVol(volumeAvant || 100); });
+    // Poignée : la taille du lecteur suit la souris (la fenêtre s'ajuste au contenu)
+    const g = $("#wvGrip"); let geste = null;
+    g.addEventListener("pointerdown", e => { if (e.button !== 0) return; const [w, h] = videoTaille(S.widgets.video); geste = { x: e.screenX, y: e.screenY, w, h }; g.setPointerCapture(e.pointerId); e.preventDefault(); });
+    g.addEventListener("pointermove", e => { if (!geste) return; S.widgets.video = { ...S.widgets.video, w: Math.max(320, Math.round(geste.w + e.screenX - geste.x)), h: Math.max(200, Math.round(geste.h + e.screenY - geste.y)) }; taille(); });
+    const finG = e => { if (!geste) return; geste = null; try { g.releasePointerCapture(e.pointerId); } catch {} widgetChanged("video"); };
+    g.addEventListener("pointerup", finG); g.addEventListener("pointercancel", finG);
   }
   peindreQualite();
-  document.addEventListener("click", e => { if (!e.target.closest("#wvMenu, #wvQ") && !$("#wvMenu")?.hidden) menu(false); });
+  document.addEventListener("click", e => {
+    if (!e.target.closest("#wvMenu, #wvQ") && !$("#wvMenu")?.hidden) menu(false);
+    if (vlc && !e.target.closest("#wvVolPop, #wvSon") && $("#wvVolPop").classList.contains("on") && !glisseVol) { $("#wvVolPop").classList.remove("on"); $("#wvSon").setAttribute("aria-expanded", "false"); }
+  });
   document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#wvMenu")?.hidden) menu(false); });
   $("#wvMenu")?.addEventListener("click", e => {
     const b = e.target.closest("[data-q]"); if (!b) return;
@@ -3565,7 +3646,6 @@ function bootVideo(wr) {
     const el = $("#wvMsg"); el.textContent = `Qualité ${nomQualite(b.dataset.q)}…`; el.classList.remove("err"); el.hidden = false;
     api()?.video_qualite(b.dataset.q);
   });
-  if (vlc && DESKTOP) setInterval(() => { if (document.visibilityState !== "hidden") cmd(); }, 1500);
   wr.addEventListener("click", e => {
     const b = e.target.closest("[data-wv]"); if (!b) return;
     const a = b.dataset.wv;
@@ -3575,7 +3655,7 @@ function bootVideo(wr) {
     if (a === "pause") cmd("pl_pause");
     if (a === "recul") cmd("seek", "-10s");
     if (a === "avance") cmd("seek", "+10s");
-    if (a === "son") { if (etat && etat.volume) { volumeAvant = etat.volume; api()?.video_volume(0).then(r => { if (r) { etat = r; peindre(); } }); } else api()?.video_volume(volumeAvant || 100).then(r => { if (r) { etat = r; peindre(); } }); }
+    if (a === "volume") { const p = $("#wvVolPop"); const o = !p.classList.contains("on"); p.classList.toggle("on", o); b.setAttribute("aria-expanded", String(o)); clearTimeout(volT); if (o) volT = setTimeout(() => { if (!glisseVol) { p.classList.remove("on"); b.setAttribute("aria-expanded", "false"); } }, 4000); }
     if (a === "qualite") menu($("#wvMenu").hidden);
     if (a === "off") { S.widgets.video = { ...S.widgets.video, pinned: false }; widgetChanged("video"); }
   });
@@ -3621,8 +3701,9 @@ function bootWidget(kind) {
   if (kind === "ping") {
     corps.innerHTML = `<div class="wbox wp pywebview-drag-region">
       <div class="wping"><b data-ping>—</b><span class="u">ms</span><i class="q" data-ping-q></i></div>
-      <svg class="spark" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true"></svg></div>`;
+      <svg class="spark" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true"></svg><div class="wsys" id="wSys"></div></div>`;
     tickPing(); setInterval(tickPing, 2000);
+    window.__systeme = peindreSysteme;
   }
   if (kind === "video") bootVideo(wr);
   if (kind === "dps") {
@@ -3808,7 +3889,7 @@ function dpsApercu() {
 }
 function contenuApercu(k) {
   if (k === "timers") return `<div class="wbox wt">${allTimers().filter(t => t.enabled).slice(0, 5).map(wTimerRow).join("") || '<span class="note">Aucun timer actif</span>'}</div>`;
-  if (k === "ping") return `<div class="wbox wp"><div class="wping"><b data-ping>${ping ?? "—"}</b><span class="u">ms</span><i class="q" data-ping-q></i></div><svg class="spark" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true"></svg></div>`;
+  if (k === "ping") return `<div class="wbox wp"><div class="wping"><b data-ping>${ping ?? "—"}</b><span class="u">ms</span><i class="q" data-ping-q></i></div><svg class="spark" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true"></svg><div class="wsys" id="wSys"></div></div>`;
   if (k === "dps") return dpsWidgetHTML(DPS.combat ? DPS : dpsApercu());
   if (k === "cd") return cdWidgetHTML(true);
   if (k === "macro") return window.MacrosUI.apercuWidget();
@@ -4015,6 +4096,8 @@ function bootLayout() {
   /* Données en direct dans les aperçus */
   setInterval(() => { tickTimers(); if (!DPS.combat) return; const el = root.querySelector('.lw[data-k="dps"] .wm-body'); if (el && !geste) el.innerHTML = dpsWidgetHTML(DPS); }, 1000);
   setInterval(cdTick, 200); tickPing(); setInterval(tickPing, 2000);
+  const sysDemo = () => peindreSysteme({ fps: 144, cpu: 23, cpuTemp: 61, gpu: 78, gpuTemp: 70, jeuRam: 5.4e9, ramLibre: 9.8e9, ramTotale: 32e9 }, (S.ping || {}).infos);
+  setInterval(sysDemo, 1000); setTimeout(sysDemo, 100);
   const demarrer = () => {
     if (LAYOUT_INFO) { B = LAYOUT_INFO.bounds; WA = LAYOUT_INFO.wa; }
     placerWa(); toutPlacer(true);
@@ -4102,6 +4185,7 @@ window.__onPush = msg => {
     case "sound": playTone(msg.tone, msg.volume); break;
     case "viseur": VISEUR = msg; renderXhState(); break;
     case "macro": window.MacrosUI.push(msg); break;
+    case "systeme": if (window.__systeme) window.__systeme(msg.infos, msg.opts); break;
     case "video": if (window.__videoTitre) window.__videoTitre(msg); break;
     case "maj": majPush(msg); break;
     case "layout": LAYOUT_INFO = msg; if (window.__layoutPret) window.__layoutPret(); break;
@@ -4142,10 +4226,11 @@ async function boot() {
     // l'interface apparaît quand la fenêtre est montrée ; filet de sécurité si le message n'arrive pas
     setTimeout(() => { if (!WINDOW_HIDDEN) ouvrirOverlay(); }, 2000);
   }
-  onSettingsChanged.push(renderWidgetPanels, renderParams, renderDpsControls, renderXhControls, renderCdList, renderMapTab, renderModules, renderVideo);
+  onSettingsChanged.push(renderWidgetPanels, renderParams, renderDpsControls, renderXhControls, renderCdList, renderMapTab, renderModules, renderVideo, renderSysOpts);
   showFields(); renderParams(); renderMascSettings(); onSettingsChanged.push(renderMascSettings); renderAlerts(); renderTimers(); renderWidgetPanels(); renderFavs(); renderRecents(); renderAccount();
   renderDpsControls(); renderCdList(); renderXhControls(); renderSrv();
-  renderMapTab(); renderModules(); renderInfos(); majRender(); renderVideo();
+  if (window.Arene) window.Arene.demarrer($("#arene"), () => !WINDOW_HIDDEN && !document.hidden && animOn()); // chevalier contre magicien, seulement interface ouverte
+  renderMapTab(); renderModules(); renderInfos(); majRender(); renderVideo(); renderSysOpts();
   if (DESKTOP) api().maj_state().then(st => { if (st && st.info && st.info.nouvelle && (S.maj.skip !== st.info.version)) { MAJ = { etat: "dispo", info: st.info, pct: 0, message: "" }; majRender(); } }).catch(() => {});
   requestAnimationFrame(() => placerGlider(true));
   setInterval(tickTimers, 1000);

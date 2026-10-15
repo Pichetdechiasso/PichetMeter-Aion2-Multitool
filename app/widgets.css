@@ -247,3 +247,54 @@ body.widget.wm #widgetRoot { padding: 0; display: inline-block; vertical-align: 
 .wvh input.wv-vol::-webkit-slider-thumb { width: 11px !important; height: 11px !important; margin-top: -3.5px; border: 0 !important; background: #fff !important; box-shadow: 0 0 0 2px var(--cy, #00e5ff), 0 0 8px rgba(0, 229, 255, .8) !important; }
 .wvid.vlc .wvh .t { flex: 1 1 auto; min-width: 70px; }
 .wvid.vlc .wvh form { flex: 0 1 120px; min-width: 50px; }
+/* ════════ Lecteur vidéo 2.9 : cadre, barre du bas (progression, temps restant, volume déroulant) ════════ */
+.wbox.wvid, :root[data-theme] .wbox.wvid { border-radius: 0 !important; box-shadow: none !important; border: 1px solid rgba(0, 229, 255, .45) !important; background: #000 !important; }
+.wvid.vlc .wv-msg { bottom: 34px; }
+.wvid.vlc .wvh .t { flex: 1 1 auto; min-width: 80px; }
+.wvid.vlc .wvh form { flex: 0 1 150px; min-width: 60px; }
+.wvb { position: absolute; left: 0; right: 0; bottom: 0; height: 34px; box-sizing: border-box; display: flex; align-items: center; gap: 5px; padding: 0 4px 0 6px;
+  background: linear-gradient(0deg, #121826, #0a0e17); border-top: 1px solid rgba(0, 229, 255, .3); font: 700 11px var(--f-body); color: #cfe9ff; }
+.wvb button { flex: none; height: 22px; min-width: 26px; padding: 0 5px; border-radius: 5px; border: 1px solid rgba(150, 210, 255, .25); background: #0c111b; color: #eaf2ff; cursor: pointer; font: 700 10.5px var(--f-data, monospace); line-height: 1; }
+.wvb button:hover { border-color: var(--cy, #00e5ff); box-shadow: 0 0 8px rgba(0, 229, 255, .4); }
+.wvb .wv-pp { min-width: 30px; font-size: 11px; color: var(--cy, #00e5ff); }
+.wvb .wv-t { flex: none; min-width: 34px; font-size: 11px; color: #cfe9ff; text-align: center; white-space: nowrap; }
+.wvb #wvReste { color: #95a6c4; }
+.wvb.direct #wvEcoule { color: #ff3b5c; min-width: 60px; text-shadow: 0 0 6px rgba(255, 59, 92, .6); }
+.wvb.direct #wvReste { display: none; }
+.wv-seek, .wv-vol { appearance: none; -webkit-appearance: none; height: 22px; margin: 0; padding: 0; border: 0; background: transparent !important; box-shadow: none !important; cursor: pointer; }
+.wv-seek { flex: 1 1 auto; min-width: 40px; }
+.wv-seek::-webkit-slider-runnable-track, .wv-vol::-webkit-slider-runnable-track { height: 4px; border-radius: 4px; background: linear-gradient(90deg, var(--cy, #00e5ff) var(--p, 0%), rgba(150, 210, 255, .2) var(--p, 0%)); box-shadow: 0 0 6px rgba(0, 229, 255, .3); }
+.wv-seek::-webkit-slider-thumb, .wv-vol::-webkit-slider-thumb { -webkit-appearance: none; width: 11px !important; height: 11px !important; margin-top: -3.5px; border-radius: 50%; border: 0 !important; background: #fff !important; box-shadow: 0 0 0 2px var(--cy, #00e5ff), 0 0 8px rgba(0, 229, 255, .8) !important; }
+.wv-seek:hover::-webkit-slider-runnable-track { height: 6px; }
+.wv-seek:hover::-webkit-slider-thumb { margin-top: -2.5px; }
+.wv-seek:disabled { cursor: default; opacity: .5; }
+.wv-seek:disabled::-webkit-slider-thumb { display: none; }
+.wv-volpop { flex: none; display: flex; align-items: center; gap: 4px; width: 0; overflow: hidden; opacity: 0; transition: width .22s cubic-bezier(.2, .8, .2, 1), opacity .18s; }
+.wv-volpop.on { width: 118px; opacity: 1; }
+.wv-volpop .wv-vol { flex: 1 1 auto; width: 80px; }
+.wv-volpop i { flex: none; width: 32px; font-style: normal; font-size: 10.5px; color: #8fe9ff; text-align: right; }
+.wvb .wv-son { display: grid; place-items: center; width: 28px; padding: 0; }
+.wvb .wv-son svg { width: 15px; height: 15px; }
+.wvb .wv-son[aria-expanded="true"] { border-color: var(--cy, #00e5ff); background: rgba(0, 229, 255, .12); color: var(--cy, #00e5ff); }
+.wvb .wv-son.off { color: #ff2bd6; }
+.wv-grip { flex: none; align-self: flex-end; width: 14px; height: 14px; margin-bottom: 2px; cursor: nwse-resize; opacity: .7;
+  background: linear-gradient(135deg, transparent 50%, var(--cy, #00e5ff) 50% 58%, transparent 58% 70%, var(--cy, #00e5ff) 70% 78%, transparent 78%); }
+.wv-grip:hover { opacity: 1; }
+
+/* ════════ Widget de ping : FPS et infos système (2.9) ════════ */
+.wbox.wp { width: 210px; }
+.wsys { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 2px; }
+.wsys[hidden], .wsys:empty { display: none; }
+.ws-c { display: grid; gap: 0; padding: 4px 7px; border-radius: 6px; background: rgba(0, 229, 255, .06); border: 1px solid rgba(0, 229, 255, .14); min-width: 0; }
+.ws-c.wide { grid-column: 1 / -1; display: flex; align-items: baseline; justify-content: space-between; }
+.ws-c span { font: 700 9.5px var(--f-body); letter-spacing: .08em; text-transform: uppercase; color: #8fb3c9; }
+.ws-c b { font-size: 14px; color: #fff; white-space: nowrap; display: flex; align-items: baseline; gap: 3px; }
+.ws-c.wide b { font-size: 17px; color: var(--mx, #39ff88); text-shadow: 0 0 8px rgba(57, 255, 136, .45); }
+.ws-c b small { font-size: 10px; color: #95a6c4; }
+.ws-c b i { font-style: normal; font-size: 11px; color: #ffd23f; margin-left: auto; }
+.ws-c b i.hot { color: #ff3b6b; } .ws-c b i.warn { color: #ffb020; }
+.ws-c.warn { border-color: rgba(255, 176, 32, .45); } .ws-c.warn b { color: #ffd23f; }
+.ws-c.hot { border-color: rgba(255, 59, 107, .55); } .ws-c.hot b { color: #ff6b8b; }
+.ws-c.wide.warn b { color: #ffd23f; text-shadow: none; } .ws-c.wide.hot b { color: #ff3b6b; text-shadow: none; }
+.sys-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.sys-opts .set-item { padding: 8px 10px; }

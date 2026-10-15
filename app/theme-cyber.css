@@ -41,19 +41,17 @@ h1, h2, h3, h4 { font-family: var(--f-display); letter-spacing: .04em; }
 .reg-t { font-family: var(--f-display); text-transform: uppercase; letter-spacing: .1em; font-size: 12px; color: #8fe9ff; }
 kbd { font-family: var(--f-data); background: #05070c; color: var(--cy); border: 1px solid rgba(0, 229, 255, .35); border-radius: 5px; box-shadow: 0 0 8px rgba(0, 229, 255, .18); }
 
-/* ── Coque : noir mat, liseré chromé, lignes de balayage ── */
+/* ── Coque : noir mat, liseré chromé ── */
 .shell, body.desktop:not(.winmode):not(.widget) .shell { background: var(--panel); }
 body.desktop:not(.winmode):not(.widget) .shell { border: 1px solid rgba(150, 210, 255, .2); box-shadow: 0 30px 90px rgba(0, 0, 0, .7), inset 0 1px 0 rgba(255, 255, 255, .08), 0 0 0 1px rgba(0, 0, 0, .9); }
 .shell::before { width: 100%; left: 0; transform: none; height: 2px; border-radius: 0; opacity: 1;
   background: linear-gradient(90deg, transparent, var(--cy) 18%, #fff 50%, var(--mg) 82%, transparent); box-shadow: 0 0 12px rgba(0, 229, 255, .6); }
-.shell::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 30; border-radius: inherit;
-  background: repeating-linear-gradient(0deg, rgba(255, 255, 255, .022) 0 1px, transparent 1px 3px); mix-blend-mode: screen; }
 .shell { position: relative; }
-.balayage { position: absolute; left: 0; right: 0; top: 0; height: 120px; pointer-events: none; z-index: 31;
-  background: linear-gradient(180deg, transparent, rgba(0, 229, 255, .045) 60%, rgba(0, 229, 255, .09) 98%, transparent); animation: balayage 7s linear infinite; will-change: transform; }
-@keyframes balayage { from { transform: translateY(-140px); } to { transform: translateY(calc(100vh + 20px)); } }
-body.no-anim .balayage { display: none; }
-@media (prefers-reduced-motion: reduce) { .balayage { display: none; } }
+/* Fond animé en pixel art (arene.js) : sous le contenu, visible dans les espaces libres */
+.arene { position: absolute; left: 0; bottom: 0; width: 228px; height: 110px; pointer-events: none; z-index: 0; opacity: .9; image-rendering: pixelated;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+.shell > .side { z-index: 1; }
+body.no-anim .arene { opacity: .45; }
 .welcome .box { background: #0a0e17; border: 1px solid rgba(150, 210, 255, .2); border-radius: 14px; }
 .menu { background: #0a0e17; border: 1px solid rgba(150, 210, 255, .2); }
 

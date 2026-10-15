@@ -17,6 +17,8 @@ const { Analyseur, DemoGroupe } = require("./reseau");
 const { MoteurMacros } = require("./macros");
 const maj = require("./maj");
 const { LecteurVlc } = require("./lecteur");
+const { creerCpu, Fps } = require("./systeme");
+const os = require("os");
 
 const APP_ID = "PichetMeter";
 const APP_NAME = "PichetMeter";
@@ -204,9 +206,11 @@ function ouvrirWidget(kind) {
   let o = widgets[kind];
   if (o && vivante(o.win)) return o;
   const carte = kind === "map", video = kind === "video"; // un vrai site (carte, YouTube) : fenêtre opaque qui reçoit le clavier et la souris
-  const libre = carte || video; // fenêtre redimensionnable à la souris
+  const libre = carte || video; // fenêtre opaque, qui reçoit le clavier et la souris
+  const bords = carte || (video && moteurVideo() === "web"); // redimensionnable par ses bords (VLC : poignée dans la barre du bas)
   const win = new BrowserWindow({
-    show: false, frame: false, transparent: !libre, backgroundColor: libre ? "#05070d" : "#00000000", resizable: libre, minWidth: libre ? 160 : undefined, minHeight: libre ? 100 : undefined, skipTaskbar: true,
+    show: false, frame: false, transparent: !libre, backgroundColor: libre ? "#05070d" : "#00000000", resizable: bords, thickFrame: bords, roundedCorners: false,
+    minWidth: bords ? 160 : undefined, minHeight: bords ? 100 : undefined, skipTaskbar: true,
     focusable: libre, hasShadow: false, alwaysOnTop: true, width: 200, height: 80, title: `${APP_NAME} · ${kind}`, webPreferences: PREFS
   });
   win.setAlwaysOnTop(true, "screen-saver");
@@ -257,6 +261,7 @@ function appliquerWidget(kind) {
   let op = cfg.opacity != null ? +cfg.opacity : 90;
   if (kind === "dps" && dpsHorsCombat() === "fade" && !(o.apercu > Date.now())) op = Math.min(op, Math.max(10, +((S.dps.view || {}).horsOp) || 30));
   o.win.setOpacity(Math.max(0.1, Math.min(1, op / 100)));
+  if (o.ecran && vivante(o.ecran)) o.ecran.setOpacity(Math.max(0.1, Math.min(1, op / 100))); // lecteur vidéo : l'image suit l'opacité du widget
   o.win.setIgnoreMouseEvents(!!cfg.click, cfg.click ? { forward: true } : undefined); // forward : le survol reste visible (bouton de remise à zéro)
   if (o.mesure) ajuster(kind, o.mesure[0], o.mesure[1]);
 }
@@ -352,6 +357,7 @@ const CARTES = {
   wikily: "https://wikily.gg/aion-2/interactive-map"
 };
 const ENTETE_CARTE = 30;
+const PIED_VIDEO = 34; // barre du bas du lecteur VLC (progression, temps, volume)
 function urlCarte() {
   const m = S.map || {};
   return CARTES.aion2run; // AION2.run uniquement
@@ -474,18 +480,19 @@ const pousserVideo = m => { const o = widgets.video; if (o && vivante(o.win)) po
 
 /* VLC : l'image est dessinée dans une fenêtre noire posée sous la barre du widget, qui le suit */
 function creerEcranVideo(o) {
-  const e = new BrowserWindow({ parent: o.win, show: false, frame: false, transparent: false, backgroundColor: "#000000", resizable: false, movable: false, focusable: false,
+  const e = new BrowserWindow({ parent: o.win, show: false, frame: false, transparent: false, backgroundColor: "#000000", resizable: false, movable: false, focusable: false, thickFrame: false, roundedCorners: false,
     skipTaskbar: true, hasShadow: false, alwaysOnTop: true, width: 320, height: 180, title: `${APP_NAME} · vidéo`, webPreferences: { sandbox: true, contextIsolation: true } });
   e.setAlwaysOnTop(true, "screen-saver");
   e.setIgnoreMouseEvents(true); // les clics traversent l'image (VLC est piloté depuis la barre)
   e.loadURL("data:text/html,<body style='margin:0;background:#000'></body>").catch(() => {});
   o.ecran = e;
+  const op = W("video").opacity; if (op != null && +op < 100) e.setOpacity(Math.max(0.1, +op / 100));
   return e;
 }
 function placerEcranVideo() {
   const o = widgets.video; if (!o || !o.ecran || !vivante(o.ecran) || !vivante(o.win)) return;
   const b = o.win.getContentBounds();
-  const cible = { x: b.x + 1, y: b.y + ENTETE_CARTE, width: Math.max(1, b.width - 2), height: Math.max(1, b.height - ENTETE_CARTE - 1) };
+  const cible = { x: b.x + 1, y: b.y + ENTETE_CARTE, width: Math.max(1, b.width - 2), height: Math.max(1, b.height - ENTETE_CARTE - PIED_VIDEO) }; // entre la barre du haut et celle du bas
   const a = o.ecran.getBounds();
   if (a.x !== cible.x || a.y !== cible.y || a.width !== cible.width || a.height !== cible.height) o.ecran.setBounds(cible);
   const voir = o.win.isVisible() && o.lecture && !o.menu; // menu de qualité ouvert : l'image s'efface pour le laisser voir
@@ -511,7 +518,19 @@ async function lancerVlc(debut = 0) {
     o.lecture = !audioSeul; placerEcranVideo();
     pousserVideo({ titre: titre || url, message: audioSeul ? "♪ Audio seul" : "", lecture: true, qualite, hauteur });
     const vol = (S.video || {}).volume;
-    lecteur.volume(vol == null ? 100 : +vol).then(r => { if (r) pousserVideo({ etat: r }); });
+    lecteur.volume(vol == null ? 100 : +vol).then(async r => {
+      if (r) pousserVideo({ etat: r });
+      if (!r || debut <= 1) return;
+      // changement de qualité : on revient au même moment (si VLC n'a pas déjà démarré au bon endroit)
+      for (let i = 0; i < 24 && seq === lectureSeq; i++) {
+        const st = await lecteur.requete();
+        if (st && st.duree > 0 && (st.etat === "playing" || st.temps > 0)) {
+          if (Math.abs(st.temps - debut) > 3) { await lecteur.requete({ command: "seek", val: String(Math.floor(debut)) }); log("Vidéo : reprise à", Math.floor(debut), "s"); }
+          return;
+        }
+        await new Promise(ok => setTimeout(ok, 500));
+      }
+    });
   } catch (e) {
     if (seq !== lectureSeq) return;
     log("Vidéo : lecture impossible,", e.message);
@@ -787,6 +806,39 @@ class Assistant {
 const assistant = new Assistant("module Windows", "helper.ps1");
 const touches = new Assistant("détection des touches", "keys.ps1", m => surTouches(m));
 const viseurNatif = new Assistant("viseur (compatibilité)", "viseur.ps1");
+const mesuresPs = new Assistant("mesures système", "systeme.ps1");
+
+/* ════════ Infos système du widget de ping (FPS, CPU, GPU, températures, mémoire) ════════ */
+const cpuPct = creerCpu();
+const fps = new Fps({ dossier: DATA, log });
+const INFOS_DEFAUT = { fps: true, cpu: true, gpu: true, temp: true, ramJeu: true, ramLibre: true };
+let sysOccupe = false;
+async function tickSysteme() {
+  const opts = { ...INFOS_DEFAUT, ...(((S.ping || {}).infos) || {}) };
+  const o = widgets.ping;
+  const actif = !!(o && vivante(o.win) && o.win.isVisible()) && Object.values(opts).some(Boolean);
+  if (!actif) { if (fps.proc) fps.arreter(); return; }
+  if (sysOccupe) return;
+  sysOccupe = true;
+  try {
+    const inf = { cpu: opts.cpu ? cpuPct() : null, ramLibre: os.freemem(), ramTotale: os.totalmem() };
+    if (IS_WIN && (opts.gpu || opts.temp || opts.ramJeu)) {
+      if (!mesuresPs.proc) mesuresPs.demarrer();
+      if (mesuresPs.pret) {
+        try {
+          const m = await mesuresPs.demande({ cmd: "sys", pid: opts.ramJeu && statut.game ? statut.pid : 0, temp: !!opts.temp }, 6000);
+          Object.assign(inf, { gpu: m.gpu, gpuTemp: m.gpuTemp, gpuNom: m.gpuNom, cpuTemp: m.cpuTemp, jeuRam: m.jeuRam });
+        } catch { /* mesure suivante */ }
+      }
+    }
+    if (opts.fps && IS_WIN) {
+      if (statut.game && statut.name) fps.demarrer(/\.exe$/i.test(statut.name) ? statut.name : statut.name + ".exe");
+      else fps.arreter();
+      Object.assign(inf, { fps: fps.valeur(), fpsEtat: statut.game ? fps.etat : "jeu", fpsMsg: fps.message });
+    } else if (fps.proc) fps.arreter();
+    if (vivante(o.win)) pousser(o.win, { type: "systeme", infos: inf, opts });
+  } finally { sysOccupe = false; }
+}
 
 /* ════════ État du jeu ════════ */
 // Nom de processus du jeu (AION2.exe), sans confondre avec PichetMeter.exe (ancien nom Aion2CompanionHUD.exe) ou un autre outil
@@ -1372,7 +1424,8 @@ const API = {
     const st = await lecteur.requete();
     S.video = { ...(S.video || {}), qualite: q }; ecrireReglages(); diffuserReglages();
     const o = widgets.video; if (o) o.menu = false;
-    if (o && o.moteur === "vlc") lancerVlc(st && st.duree > 0 ? st.temps : 0); // une vidéo reprend au même moment ; un direct repart au direct
+    const url = String((S.video || {}).url || ""), direct = /twitch\.tv\/(?!videos\/)/i.test(url) && !(st && st.duree > 0);
+    if (o && o.moteur === "vlc") lancerVlc(st && st.temps > 1 && !direct ? st.temps : 0); // une vidéo reprend au même moment ; un direct repart au direct
     return true;
   },
   video_menu: (e, ouvert) => { const o = widgets.video; if (o) { o.menu = !!ouvert; placerEcranVideo(); } return true; },
@@ -1556,6 +1609,7 @@ function demarrer() {
   enregistrerRaccourcis();
   assistant.demarrer();
   setInterval(sonder, 1500);
+  setInterval(tickSysteme, 1500);
   majSuiviPremierPlan();
   synchroniserTouches();
   boucleDps();
@@ -1569,6 +1623,6 @@ if (!PREMIERE_INSTANCE) { log("PichetMeter est déjà lancé : l'instance ouvert
 else {
   app.on("second-instance", () => { if (!mainVisible) basculer(); else if (vivante(main)) main.focus(); });
   app.whenReady().then(demarrer);
-  app.on("will-quit", () => { lecteur.arreter(); globalShortcut.unregisterAll(); macros.arreter(); assistant.arreter(); touches.arreter(); viseurNatif.arreter(); capture.arreter(); });
+  app.on("will-quit", () => { lecteur.arreter(); fps.arreter(); mesuresPs.arreter(); globalShortcut.unregisterAll(); macros.arreter(); assistant.arreter(); touches.arreter(); viseurNatif.arreter(); capture.arreter(); });
   app.on("window-all-closed", () => app.quit());
 }

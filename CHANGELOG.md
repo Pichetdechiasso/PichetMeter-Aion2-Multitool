@@ -1,5 +1,12 @@
 # Journal des versions
 
+## 2.9.0
+
+- **Lecteur vidéo** : barre du bas (34 px) avec progression déplaçable, temps écoulé / restant, ±10 s, pause, volume déroulant (molette, clic droit pour couper) et poignée de taille ; réglages de qualité repris au même moment (seek HTTP après relance si `:start-time` n'a pas suffi, position conservée même si VLC ne connaît pas encore la durée). Fenêtres sans coins arrondis Windows 11 (`roundedCorners: false`, sans cadre épais en mode VLC) ; l'image de VLC suit l'opacité du widget.
+- **Widget de ping** : FPS (`app/systeme.js`, PresentMon téléchargé depuis les releases GitHub avec vérification de l'empreinte, droits administrateur requis par Windows), CPU (Node), GPU et températures (`app/systeme.ps1` : compteurs « GPU Engine », nvidia-smi, zones thermiques), RAM du jeu et RAM libre ; options dans Paramètres > Widgets (`ping.infos`).
+- **Fond** : lignes de balayage et effet VHS retirés ; animation en pixel art (`app/arene.js`, personnages originaux) d'un chevalier contre un magicien, en boucle, seulement quand l'interface est ouverte.
+- Tests : `test/systeme.test.js`.
+
 ## 2.8.0
 
 - **Lecteur vidéo** : barre de volume dans le widget (0 à 125 %, molette), appliquée par l'interface HTTP de VLC et retenue dans les réglages (`video.volume`, réappliquée à chaque lecture).
