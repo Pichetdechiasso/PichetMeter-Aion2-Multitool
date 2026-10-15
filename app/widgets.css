@@ -219,3 +219,12 @@ body.widget.wm #widgetRoot { padding: 0; display: inline-block; vertical-align: 
 .vid-rec img { width: 48px; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 4px; flex: none; }
 .vid-rec span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vid-rec:hover { border-color: rgba(0, 229, 255, .5); box-shadow: 0 0 12px rgba(0, 229, 255, .18); }
+/* Lecteur vidéo : messages sous la barre, commandes VLC, Twitch */
+.wv-msg { position: absolute; left: 0; right: 0; top: 30px; bottom: 0; display: grid; place-items: center; padding: 18px; text-align: center; font: 600 13px var(--f-body); color: #95a6c4; background: radial-gradient(circle at 50% 45%, #121a2a, #000 75%); }
+.wv-msg:empty, .wv-msg[hidden] { display: none; }
+.wv-msg.err { color: #ffb3e8; }
+.wvh .t i { font-style: normal; font-size: 10.5px; color: #8fe9ff; margin-left: 4px; white-space: nowrap; flex: none; }
+.wvh button.off { color: #ff2bd6; }
+.wvid.vlc .wvh form { flex-basis: 34%; }
+.vid-ic.tw svg { color: #a970ff; }
+.vid-ic.tw { background: #160d24; }

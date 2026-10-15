@@ -1,5 +1,12 @@
 # Journal des versions
 
+## 2.7.0
+
+- **Lecteur vidéo par VLC** (`app/lecteur.js`) : yt-dlp (téléchargé depuis les releases GitHub, empreinte SHA-256 vérifiée, `-U` une fois par jour) trouve les flux (vidéo H.264 ≤ 1080p + audio AAC, ou HLS pour Twitch) ; PichetMeter sert de moteur JavaScript à yt-dlp pour YouTube (`--js-runtimes node:…`, `ELECTRON_RUN_AS_NODE`). VLC installé (registre ou Program Files) les lit sans interface (`-I dummy`) dans une fenêtre noire posée sous la barre du widget (`--drawable-hwnd`), qui suit le widget ; pilotage par l'interface HTTP locale de VLC (pause, ±10 s, son, temps).
+- **Twitch** : chaînes en direct, rediffusions et clips (VLC, ou lecteur Twitch / site complet dans le navigateur intégré).
+- **Navigateur intégré** : cookie de choix YouTube (`SOCS`) posé d'avance dans la session, la page de consentement européenne renvoyait vers l'accueil ; navigation de la vue journalisée.
+- Tests : `test/lecteur.test.js`.
+
 ## 2.6.0
 
 - **Lecteur YouTube en widget** (onglet Vidéo, widget `video`) : fenêtre redimensionnable avec une barre de 30 px (lien, retour, accueil, recharger, masquer) et la page YouTube dessous (`WebContentsView`, session `persist:youtube` pour garder la connexion). Liens acceptés : vidéo, youtu.be, shorts, live, playlist, identifiant seul, avec le temps de départ (`t=`). Deux affichages : lecteur seul (`/embed`, avec référent YouTube) ou page YouTube complète. Masquer le lecteur ferme la page (la vidéo s'arrête) ; ouvrir l'interface ne la coupe pas. Récents avec miniatures et titres, taille, opacité, page de placement.

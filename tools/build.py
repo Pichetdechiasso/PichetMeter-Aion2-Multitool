@@ -32,7 +32,7 @@ need = ["Installer.cmd", "Desinstaller.cmd", "LISEZ-MOI.txt", "fichiers/installe
         "fichiers/PichetMeter.ico", "fichiers/app/main.js", "fichiers/app/ui.html", "fichiers/app/preload.js", "fichiers/app/package.json",
         "fichiers/app/i18n.js", "fichiers/app/reseau.js", "fichiers/app/dpslogic.js", "fichiers/app/mobs.json", "fichiers/app/icon.png",
         "fichiers/app/COPYING.txt", "fichiers/app/LICENCES.txt", "fichiers/app/img/logo.png",
-        "fichiers/app/macros.js", "fichiers/app/splash.html", "fichiers/app/mascottes.js", "fichiers/app/widgets.css", "fichiers/app/dps-course.js", "fichiers/app/macros-ui.js", "fichiers/app/macros.css", "fichiers/app/macro/serveur.py", "fichiers/app/macro/engine.py", "fichiers/app/macro/driver.py", "fichiers/app/macro/signaux.py", "fichiers/app/theme-cyber.css", "fichiers/app/maj.js"] + \
+        "fichiers/app/macros.js", "fichiers/app/splash.html", "fichiers/app/mascottes.js", "fichiers/app/widgets.css", "fichiers/app/dps-course.js", "fichiers/app/macros-ui.js", "fichiers/app/macros.css", "fichiers/app/macro/serveur.py", "fichiers/app/macro/engine.py", "fichiers/app/macro/driver.py", "fichiers/app/macro/signaux.py", "fichiers/app/theme-cyber.css", "fichiers/app/maj.js", "fichiers/app/lecteur.js"] + \
        [f"fichiers/app/{n}.ps1" for n in ("helper", "keys", "viseur", "capture")] + \
        [f"fichiers/app/img/cls-{k}.png" for k in ("gladiateur", "templier", "assassin", "rodeur", "sorcier", "spiritualiste", "clerc", "aede")]
 missing = [n for n in need if not os.path.isfile(os.path.join(PK, n))]

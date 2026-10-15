@@ -16,6 +16,7 @@ const { lireNombre, SuiviCombat } = require("./dpslogic");
 const { Analyseur, DemoGroupe } = require("./reseau");
 const { MoteurMacros } = require("./macros");
 const maj = require("./maj");
+const { LecteurVlc } = require("./lecteur");
 
 const APP_ID = "PichetMeter";
 const APP_NAME = "PichetMeter";
@@ -215,7 +216,11 @@ function ouvrirWidget(kind) {
   win.webContents.on("did-finish-load", () => {
     o.pret = true;
     if (carte && !o.vue) { o.vue = vueCarte(); win.contentView.addChildView(o.vue); }
-    if (video && !o.vue) { o.vue = vueVideo(); win.contentView.addChildView(o.vue); placer(kind); }
+    if (video && !o.moteur) {
+      o.moteur = moteurVideo();
+      if (o.moteur === "web") { o.vue = vueVideo(); win.contentView.addChildView(o.vue); placer(kind); }
+      else { pousserVideo({ moteur: "vlc" }); lancerVlc(); }
+    }
     appliquerWidget(kind);
     if (kind === "toast" && o.message) pousser(win, { type: "toast", ...o.message });
     pousser(win, { type: "cd", debuts: cdDebuts });
@@ -232,6 +237,7 @@ function ouvrirWidget(kind) {
       S.widgets[kind] = { ...W(kind), size: "custom", w: b.width, h: b.height, pos: "free", x: b.x, y: b.y };
       ecrireReglages(); diffuserReglages();
     });
+    if (video) { win.on("move", placerEcranVideo); win.on("resize", placerEcranVideo); win.on("show", placerEcranVideo); win.on("hide", placerEcranVideo); }
     win.on("resize", () => { if (o.vue) { const b = win.getContentBounds(); o.vue.setBounds({ x: 0, y: ENTETE_CARTE, width: b.width, height: Math.max(0, b.height - ENTETE_CARTE) }); } });
     if (carte) win.on("focus", () => { if (o.vue) o.vue.webContents.focus(); });
   }
@@ -382,8 +388,10 @@ function vueCarte() {
   wc.loadURL(v.url).catch(() => {});
   return v;
 }
-/* ════════ Lecteur YouTube (widget) ════════ */
-// Lien accepté : vidéo (watch, youtu.be, shorts, live, embed), playlist, ou rien (accueil de YouTube)
+/* ════════ Lecteur vidéo (widget) : VLC + yt-dlp, ou navigateur intégré (YouTube, Twitch) ════════ */
+const lecteur = new LecteurVlc({ dossier: DATA, log });
+const moteurVideo = () => ((S.video || {}).moteur === "web" ? "web" : "vlc");
+// Lien YouTube : vidéo (watch, youtu.be, shorts, live, embed), playlist, temps de départ
 function lienYoutube(texte) {
   const t = String(texte || "").trim();
   if (!t) return { id: null, liste: null, t: 0 };
@@ -398,58 +406,131 @@ function lienYoutube(texte) {
   const liste = u.searchParams.get("list");
   return (id && /^[\w-]{11}$/.test(id)) || liste ? { id: id && /^[\w-]{11}$/.test(id) ? id : null, liste, t: t0 } : null;
 }
+// Lien Twitch : chaîne en direct, rediffusion (videos/123) ou clip
+function lienTwitch(texte) {
+  let u; try { u = new URL(/^https?:\/\//i.test(texte) ? texte : "https://" + texte); } catch { return null; }
+  const h = u.hostname.replace(/^(www|m|go)\./, "");
+  if (h === "clips.twitch.tv") return { clip: u.pathname.slice(1).split("/")[0] };
+  if (h !== "twitch.tv") return null;
+  const p = u.pathname.split("/").filter(Boolean);
+  if (p[0] === "videos" && /^\d+$/.test(p[1] || "")) return { video: p[1] };
+  if (p[1] === "clip" && p[2]) return { clip: p[2] };
+  return p[0] && /^\w{2,25}$/.test(p[0]) ? { chaine: p[0].toLowerCase() } : null;
+}
 function urlVideo() {
-  const v = S.video || {}, l = lienYoutube(v.url) || { id: null, liste: null, t: 0 };
+  const v = S.video || {}, brut = String(v.url || "").trim();
+  const tw = brut && lienTwitch(brut);
+  if (tw) {
+    if (v.mode === "page") return tw.chaine ? `https://www.twitch.tv/${tw.chaine}` : tw.video ? `https://www.twitch.tv/videos/${tw.video}` : `https://clips.twitch.tv/${tw.clip}`;
+    const q = new URLSearchParams({ parent: "www.twitch.tv", autoplay: "true", muted: "false" });
+    if (tw.chaine) q.set("channel", tw.chaine); else if (tw.video) q.set("video", "v" + tw.video);
+    return tw.clip ? `https://clips.twitch.tv/embed?clip=${encodeURIComponent(tw.clip)}&parent=www.twitch.tv&autoplay=true` : `https://player.twitch.tv/?${q}`;
+  }
+  const l = lienYoutube(brut) || { id: null, liste: null, t: 0 };
   if (v.mode === "page" || (!l.id && !l.liste)) {
     if (l.id) return `https://www.youtube.com/watch?v=${l.id}${l.liste ? "&list=" + encodeURIComponent(l.liste) : ""}${l.t ? "&t=" + l.t + "s" : ""}`;
     if (l.liste) return `https://www.youtube.com/playlist?list=${encodeURIComponent(l.liste)}`;
     return "https://www.youtube.com/";
   }
-  const q = new URLSearchParams({ autoplay: "1", rel: "0", playsinline: "1", modestbranding: "1" });
+  const q = new URLSearchParams({ autoplay: "1", rel: "0", playsinline: "1" });
   if (l.t) q.set("start", String(l.t));
   if (l.liste) q.set("list", l.liste);
   if (!l.id && l.liste) q.set("listType", "playlist");
   return `https://www.youtube.com/embed/${l.id || "videoseries"}?${q}`;
 }
-const hoteYoutube = u => /(^|\.)(youtube\.com|youtu\.be|youtube-nocookie\.com|google\.com|gstatic\.com|googlevideo\.com|ytimg\.com)$/.test(hote(u));
+const hoteVideo = u => /(^|\.)(youtube\.com|youtu\.be|youtube-nocookie\.com|google\.com|gstatic\.com|googlevideo\.com|ytimg\.com|twitch\.tv|ttvnw\.net|jtvnw\.net|twitchcdn\.net|twitchsvc\.net)$/.test(hote(u));
 let sessionVideo = null;
 function sessVideo() {
   if (sessionVideo) return sessionVideo;
-  sessionVideo = session.fromPartition("persist:youtube"); // connexion YouTube conservée (abonnements, Premium)
+  sessionVideo = session.fromPartition("persist:youtube"); // connexions YouTube / Twitch conservées (abonnements, Premium, Turbo)
   sessionVideo.setUserAgent(UA);
   sessionVideo.setPermissionRequestHandler((wc, permission, rep) => rep(permission === "fullscreen" || permission === "clipboard-sanitized-write"));
+  // Europe : le choix des cookies de YouTube est déjà fait (refus), sinon la page de consentement renvoie vers l'accueil
+  sessionVideo.cookies.set({ url: "https://www.youtube.com", domain: ".youtube.com", name: "SOCS", value: "CAI", secure: true, sameSite: "lax", expirationDate: Date.now() / 1000 + 3.15e7 }).catch(() => {});
   return sessionVideo;
 }
 function chargerVideo(v) {
   if (!v || v.webContents.isDestroyed()) return;
   v.url = urlVideo(); sigVideo = signatureVideo();
-  v.webContents.loadURL(v.url, { httpReferrer: "https://www.youtube.com/" }).catch(() => {}); // le lecteur intégré exige un référent
+  const ref = /twitch/.test(v.url) ? "https://www.twitch.tv/" : "https://www.youtube.com/";
+  v.webContents.loadURL(v.url, { httpReferrer: ref }).catch(() => {}); // le lecteur intégré exige un référent
 }
 function vueVideo() {
   const v = new WebContentsView({ webPreferences: { session: sessVideo(), sandbox: true, contextIsolation: true, nodeIntegration: false, spellcheck: false, backgroundThrottling: false } });
   v.setBackgroundColor("#000000");
   const wc = v.webContents;
   wc.setWindowOpenHandler(({ url }) => {
-    if (/^https:\/\//i.test(url)) { if (hoteYoutube(url)) wc.loadURL(url).catch(() => {}); else shell.openExternal(url); }
+    if (/^https:\/\//i.test(url)) { if (hoteVideo(url)) wc.loadURL(url).catch(() => {}); else shell.openExternal(url); }
     return { action: "deny" };
   });
-  wc.on("will-navigate", (e, url) => { if (hoteYoutube(url)) return; e.preventDefault(); if (/^https:\/\//i.test(url)) shell.openExternal(url); });
+  wc.on("will-navigate", (e, url) => { if (hoteVideo(url)) return; e.preventDefault(); if (/^https:\/\//i.test(url)) shell.openExternal(url); });
+  wc.on("did-navigate", (e, url) => log("Vidéo (navigateur) :", url.slice(0, 140)));
   wc.on("did-fail-load", (e, code, desc, url, principal) => { if (principal && code !== -3) log("Vidéo non chargée :", desc, url); });
-  wc.on("page-title-updated", (e, titre) => { const o = widgets.video; if (o && vivante(o.win)) pousser(o.win, { type: "video", titre }); });
+  wc.on("page-title-updated", (e, titre) => pousserVideo({ titre }));
   chargerVideo(v);
   return v;
+}
+const pousserVideo = m => { const o = widgets.video; if (o && vivante(o.win)) pousser(o.win, { type: "video", ...m }); };
+
+/* VLC : l'image est dessinée dans une fenêtre noire posée sous la barre du widget, qui le suit */
+function creerEcranVideo(o) {
+  const e = new BrowserWindow({ parent: o.win, show: false, frame: false, transparent: false, backgroundColor: "#000000", resizable: false, movable: false, focusable: false,
+    skipTaskbar: true, hasShadow: false, alwaysOnTop: true, width: 320, height: 180, title: `${APP_NAME} · vidéo`, webPreferences: { sandbox: true, contextIsolation: true } });
+  e.setAlwaysOnTop(true, "screen-saver");
+  e.setIgnoreMouseEvents(true); // les clics traversent l'image (VLC est piloté depuis la barre)
+  e.loadURL("data:text/html,<body style='margin:0;background:#000'></body>").catch(() => {});
+  o.ecran = e;
+  return e;
+}
+function placerEcranVideo() {
+  const o = widgets.video; if (!o || !o.ecran || !vivante(o.ecran) || !vivante(o.win)) return;
+  const b = o.win.getContentBounds();
+  const cible = { x: b.x + 1, y: b.y + ENTETE_CARTE, width: Math.max(1, b.width - 2), height: Math.max(1, b.height - ENTETE_CARTE - 1) };
+  const a = o.ecran.getBounds();
+  if (a.x !== cible.x || a.y !== cible.y || a.width !== cible.width || a.height !== cible.height) o.ecran.setBounds(cible);
+  const voir = o.win.isVisible() && o.lecture;
+  if (voir && !o.ecran.isVisible()) { o.ecran.showInactive(); o.ecran.setAlwaysOnTop(true, "screen-saver"); }
+  if (!voir && o.ecran.isVisible()) o.ecran.hide();
+}
+const hwnd = w => { const b = w.getNativeWindowHandle(); return (b.length >= 8 ? b.readBigUInt64LE(0) : BigInt(b.readUInt32LE(0))).toString(); };
+let lectureSeq = 0;
+async function lancerVlc() {
+  const o = widgets.video; if (!o || !vivante(o.win)) return;
+  const seq = ++lectureSeq, url = String((S.video || {}).url || "").trim();
+  sigVideo = signatureVideo();
+  o.lecture = false; placerEcranVideo(); lecteur.arreter();
+  if (!url) { pousserVideo({ titre: "Lecteur vidéo", message: "Colle un lien YouTube ou Twitch dans la barre ci-dessus." }); return; }
+  try {
+    const vlc = await lecteur.trouverVlc((S.video || {}).vlc);
+    if (!vlc) { pousserVideo({ titre: "VLC introuvable", message: "Installe VLC (videolan.org), puis clique sur ↻. Ou choisis « Navigateur intégré » dans l'onglet Vidéo.", erreur: true, vlcManquant: true }); return; }
+    if (!o.ecran || !vivante(o.ecran)) creerEcranVideo(o);
+    const { titre } = await lecteur.lire(vlc, url, hwnd(o.ecran), message => { if (seq === lectureSeq) pousserVideo({ message }); });
+    if (seq !== lectureSeq) return;
+    log("Vidéo : lecture dans VLC de", url.slice(0, 120), titre ? "(" + titre + ")" : "");
+    o.lecture = true; placerEcranVideo();
+    pousserVideo({ titre: titre || url, message: "", lecture: true });
+  } catch (e) {
+    if (seq !== lectureSeq) return;
+    log("Vidéo : lecture impossible,", e.message);
+    pousserVideo({ titre: "Lecture impossible", message: e.message, erreur: true });
+  }
 }
 function fermerVideo() {
   const o = widgets.video; if (!o) return;
   delete widgets.video;
+  lectureSeq++; lecteur.arreter();
   try { if (o.vue && !o.vue.webContents.isDestroyed()) o.vue.webContents.close(); } catch { /* déjà fermée */ }
+  if (o.ecran && vivante(o.ecran)) o.ecran.destroy();
   if (vivante(o.win)) o.win.destroy();
 }
 let sigVideo = "";
-const signatureVideo = () => JSON.stringify([(S.video || {}).url || "", (S.video || {}).mode || ""]);
+const signatureVideo = () => JSON.stringify([(S.video || {}).url || "", (S.video || {}).mode || "", moteurVideo()]);
 function synchroniserVideo() {
   const o = widgets.video;
-  if (o && o.vue && signatureVideo() !== sigVideo) chargerVideo(o.vue);
+  if (!o || signatureVideo() === sigVideo) return;
+  const moteurAvant = o.moteur;
+  if (moteurAvant && moteurAvant !== moteurVideo()) { fermerVideo(); synchroniserWidgets(); return; } // changement de moteur : nouvelle fenêtre
+  if (o.moteur === "vlc") lancerVlc(); else if (o.vue) chargerVideo(o.vue);
 }
 function pageErreurCarte(url, detail) {
   const e = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -1274,9 +1355,10 @@ const API = {
   crosshair_preview: () => { viseurApercuJusque = Date.now() + 5000; synchroniserViseur(); setTimeout(synchroniserViseur, 5100); return true; },
   map_view: (e, r) => { placerCarteOnglet(r); return true; },
   map_reload: () => { majCartes(true); return true; },
-  video_check: (e, texte) => !!lienYoutube(texte),
-  video_reload: () => { const o = widgets.video; if (o && o.vue) chargerVideo(o.vue); return true; },
-  video_home: () => { const o = widgets.video; if (o && o.vue) o.vue.webContents.loadURL("https://www.youtube.com/").catch(() => {}); return true; },
+  video_reload: () => { const o = widgets.video; if (o && o.moteur === "vlc") lancerVlc(); else if (o && o.vue) chargerVideo(o.vue); return true; },
+  video_home: () => { const o = widgets.video; if (o && o.vue) o.vue.webContents.loadURL(/twitch/.test(o.vue.url || "") ? "https://www.twitch.tv/" : "https://www.youtube.com/").catch(() => {}); return true; },
+  video_cmd: (e, commande, val) => lecteur.requete(commande ? { command: String(commande), ...(val != null ? { val: String(val) } : {}) } : {}),
+  video_info: async () => ({ moteur: moteurVideo(), vlc: await lecteur.trouverVlc((S.video || {}).vlc), lecture: !!(widgets.video && widgets.video.lecture) }),
   video_back: () => { const o = widgets.video; if (o && o.vue && o.vue.webContents.navigationHistory.canGoBack()) o.vue.webContents.navigationHistory.goBack(); return true; },
   map_open: () => { shell.openExternal(urlCarte()); return true; },
   crosshair_state: () => ({ raison: raisonViseur(S.crosshair || {}), jeu: statut.name, fg: statut.fg }),
@@ -1469,6 +1551,6 @@ if (!PREMIERE_INSTANCE) { log("PichetMeter est déjà lancé : l'instance ouvert
 else {
   app.on("second-instance", () => { if (!mainVisible) basculer(); else if (vivante(main)) main.focus(); });
   app.whenReady().then(demarrer);
-  app.on("will-quit", () => { globalShortcut.unregisterAll(); macros.arreter(); assistant.arreter(); touches.arreter(); viseurNatif.arreter(); capture.arreter(); });
+  app.on("will-quit", () => { lecteur.arreter(); globalShortcut.unregisterAll(); macros.arreter(); assistant.arreter(); touches.arreter(); viseurNatif.arreter(); capture.arreter(); });
   app.on("window-all-closed", () => app.quit());
 }

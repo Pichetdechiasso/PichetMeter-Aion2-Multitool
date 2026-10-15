@@ -33,7 +33,7 @@
 | **Armurerie** | Recherche d'un joueur par pseudo : équipement, compétences, Daevanion, puissance de combat, classements du personnage, bouton « Actualiser ». Favoris, plusieurs comptes. |
 | **Timers** | Événements des serveurs Europe en heure locale, alertes avant le début, timers personnalisés. |
 | **Macros** | Le moteur de Pichet Macro intégré : éditeur de nœuds (séquence, parallèle, boucle, recharge, aléatoire…), enregistrement, raccourcis, widget des macros en cours (pilote Interception). |
-| **Lecteur YouTube** | Une vidéo, une playlist ou YouTube en entier dans un widget redimensionnable par-dessus le jeu. |
+| **Lecteur vidéo** | YouTube ou Twitch (direct, rediffusion, clip) dans un widget redimensionnable par-dessus le jeu, lu par VLC (flux trouvé par yt-dlp) ou par le navigateur intégré. |
 | **Viseur** | Viseur personnalisable dessiné au centre de l'écran, avec aperçu sur une scène du jeu. |
 | **Carte** | Carte interactive AION2.run en grand dans l'interface. |
 | **Ping** | Latence réelle vers le serveur de jeu, en widget (réglage dans Paramètres > Widgets). |

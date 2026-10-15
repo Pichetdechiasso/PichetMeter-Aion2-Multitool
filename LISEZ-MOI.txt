@@ -1,5 +1,5 @@
-﻿PICHETMETER — version 2.6.0 (PichetMeter + Pichet Macro)
-Compagnon pour Aion 2 : armurerie, timers, DPS meter de groupe, macros, viseur, lecteur YouTube, carte et ping,
+﻿PICHETMETER — version 2.7.0 (PichetMeter + Pichet Macro)
+Compagnon pour Aion 2 : armurerie, timers, DPS meter de groupe, macros, viseur, lecteur vidéo (YouTube, Twitch), carte et ping,
 affichés par-dessus le jeu.
 Créateur : @atomedims · Discord : https://discord.gg/KrkJrjrDJt
 Code source et nouvelles versions : https://github.com/Pichetdechiasso/PichetMeter-Aion2-Multitool
@@ -36,6 +36,14 @@ DANS LE JEU
 - Option « Seulement quand le jeu est au premier plan » (Paramètres > Modules en jeu) :
   les widgets se cachent dès que tu passes sur Discord, ton navigateur, etc.
 - L'icône dans la zone de notification (près de l'horloge) permet aussi d'afficher l'overlay ou de quitter.
+
+NOUVEAUTÉS 2.7.0
+- Lecteur vidéo : les vidéos sont maintenant lues par VLC (à installer depuis videolan.org si besoin),
+  directement dans le widget. yt-dlp trouve le flux (téléchargé une fois depuis GitHub, empreinte
+  vérifiée, mis à jour tout seul). Barre du widget : reculer / avancer de 10 s, pause, son, recharger.
+- Liens Twitch acceptés : chaîne en direct, rediffusion, clip.
+- Le navigateur intégré reste disponible (onglet Vidéo > Lecture par), avec le choix des cookies de
+  YouTube déjà fait (il renvoyait vers l'accueil).
 
 NOUVEAUTÉS 2.6.0
 - Onglet Vidéo : un lecteur YouTube en widget par-dessus le jeu. Colle un lien (vidéo, playlist, live,
