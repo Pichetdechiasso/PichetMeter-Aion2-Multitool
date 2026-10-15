@@ -1,5 +1,14 @@
 # Journal des versions
 
+## 2.4.0
+
+Première version publiée depuis la 1.8 : elle regroupe les versions 2.0 à 2.3 décrites plus bas.
+
+- **Mises à jour automatiques** (`app/maj.js`) : au lancement (réglable) et sur demande, lecture de la dernière release GitHub ; bandeau « Mettre à jour / Plus tard / Ignorer cette version » ; téléchargement du zip avec contrôle de taille et d'empreinte SHA-256 (fournie par GitHub), décompression puis lancement de `installer.ps1`, qui ferme, met à jour et relance l'application.
+- **Installeur** : les mascottes de l'installation actuelle absentes du nouveau paquet sont recopiées dans `%APPDATA%\PichetMeter\mascottes`.
+- **Depuis la 1.8** : Pichet Macro intégré (onglet Macros, éditeur de nœuds, widget), interface en tiroir à gauche, écran de placement des widgets, mascottes animées, DPS meter façon course et world boss, onglet Potions (lecture de la barre de vie, F1 à F4), Loupe en jeu, thème Y2K × Cyberpunk, bouton « Actualiser » de la fiche, carte AION2.run en grand. Retirés : Classement, Cooldowns, Tâches.
+- `tools/build.py --public` : paquet sans les GIF de mascottes.
+
 ## 2.3.1 (version personnelle)
 
 - **Potions** : prototypes ctypes complets pour la capture GDI (`potions.py`) ; les handles 64 bits provoquaient « OverflowError: int too long to convert » au calibrage et à chaque lecture. Le bitmap est désélectionné avant `GetDIBits`. Erreurs de `potions_read` (aperçu) non journalisées ; résultats `{ ok: false }` du pont gérés dans l'onglet.

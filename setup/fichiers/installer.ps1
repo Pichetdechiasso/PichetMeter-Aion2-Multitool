@@ -15,7 +15,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $ElectronVersion = 'v44.5.1'
-$AppVersion = '2.3.1'
+$AppVersion = '2.4.0'
 $AppName = 'PichetMeter'
 $ExeName = 'PichetMeter.exe'
 $Icone = 'PichetMeter.ico'
@@ -144,6 +144,21 @@ try {
 
     Etape "Copie de l'application..."
     $appDest = Join-Path (Join-Path $Destination 'resources') 'app'
+    # Mascottes de la version installée absentes du nouveau paquet : gardées dans le dossier personnel
+    $mascAncien = Join-Path $appDest 'mascottes'
+    if ($env:APPDATA -and (Test-Path -LiteralPath $mascAncien)) {
+        try {
+            $mascPerso = Join-Path $env:APPDATA 'PichetMeter\mascottes'
+            New-Item -ItemType Directory -Path $mascPerso -Force | Out-Null
+            Get-ChildItem -LiteralPath $mascAncien -File | Where-Object { $_.Extension -match '^\.(gif|png|webp|apng)$' } | ForEach-Object {
+                $cible = Join-Path $mascPerso $_.Name
+                if (-not (Test-Path -LiteralPath $cible) -and -not (Test-Path -LiteralPath (Join-Path (Join-Path $source 'mascottes') $_.Name))) {
+                    Copy-Item -LiteralPath $_.FullName -Destination $cible -Force
+                }
+            }
+        }
+        catch { Write-Host '  Mascottes non recopiées (sans conséquence).' -ForegroundColor DarkYellow }
+    }
     if (Test-Path -LiteralPath $appDest) { Remove-Item -LiteralPath $appDest -Recurse -Force }
     Copy-Item -LiteralPath $source -Destination $appDest -Recurse -Force
     Copy-Item -LiteralPath $iconeSource -Destination (Join-Path $Destination $Icone) -Force

@@ -1080,6 +1080,7 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
   <nav class="side" role="tablist" aria-label="Sections" aria-orientation="vertical" id="sideNav"></nav>
 
   <main class="main" id="main">
+  <div class="maj-ban" id="majBan" role="status" aria-live="polite" hidden></div>
 
   <!-- ═════════ Vue : Personnage ═════════ -->
   <div class="grid view" id="view-perso">
@@ -1553,6 +1554,12 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
       <div class="set-item"><span><span class="t">Comptes enregistrés</span><span class="d" id="acctCount">—</span></span>
         <button class="btn sm" id="manageAccts">Gérer</button></div>
     </section>
+    <section class="card neu-extruded" data-sec="Général">
+      <div class="card-head"><div><h2>Mises à jour</h2><span class="sub" id="majVer"></span></div><button class="btn sm" type="button" id="majCheck">Rechercher</button></div>
+      <label class="set-item" for="optMajAuto"><span><span class="t">Vérifier au lancement</span><span class="d">Propose d'installer la dernière version publiée sur GitHub</span></span>
+        <span class="switch"><input type="checkbox" id="optMajAuto" role="switch"><span class="track"></span><span class="knob"></span></span></label>
+      <p class="note" id="majStatut"></p>
+    </section>
     <section class="card neu-extruded" data-sec="Diagnostic">
       <div class="card-head"><div><h2>Diagnostic</h2><span class="sub" id="diagVer"></span></div><button class="btn sm" id="diagRefresh">Actualiser</button></div>
       <div class="tasks" id="diagList"></div>
@@ -1614,6 +1621,7 @@ const DEFAULTS = {
     macro: { pinned: true, opacity: 92, pos: "tc", size: "m", click: true }
   },
   macro: { enabled: true, hideOnRun: true },
+  maj: { auto: true, skip: "" },
   potions: { enabled: false, zone: null, couleur: null, tol: 70, fgOnly: true, regles: [
     { touche: "F1", actif: true, seuil: 60, delai: 3000 }, { touche: "F2", actif: true, seuil: 35, delai: 6000 },
     { touche: "F3", actif: false, seuil: 20, delai: 10000 }, { touche: "F4", actif: false, seuil: 10, delai: 30000 }] },
@@ -3325,6 +3333,7 @@ hotkeyField($("#xhKey"), () => S.crosshair.hotkey, async combo => {
 /* ════════ Paramètres ════════ */
 function renderParams() {
   if (WIDGET) return;
+  $("#optMajAuto").checked = S.maj.auto !== false;
   $("#optSync").checked = S.autosync; $("#optNotif").checked = S.notif; $("#optStreamer").checked = S.streamer;
   $("#hotkeyInput").value = S.hotkey; $("#hotkeyBadge").textContent = S.hotkey; $("#hkFoot").textContent = S.hotkey;
   $$("#fpsSeg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === S.fps)));
@@ -3340,6 +3349,59 @@ function renderParams() {
 $("#optSync").addEventListener("change", e => { S.autosync = e.target.checked; save(); });
 $("#optNotif").addEventListener("change", e => { S.notif = e.target.checked; save(); });
 $("#optStreamer").addEventListener("change", e => { S.streamer = e.target.checked; save(); renderParams(); });
+$("#optMajAuto").addEventListener("change", e => { S.maj = { ...S.maj, auto: e.target.checked }; save(); });
+
+/* ════════ Mises à jour ════════ */
+const VERSION_APP = (window.__bridge && window.__bridge.version) || "—";
+let MAJ = { etat: "", info: null, pct: 0, message: "" };
+const majTexteErreur = m => String(m || "erreur").replace(/^Error invoking remote method '\w+': (Error: )?/, "");
+function majRender() {
+  const b = $("#majBan"); if (!b || WIDGET) return;
+  const i = MAJ.info || {}, v = esc(i.version || "");
+  const notes = i.notes ? `<details class="maj-notes"><summary>Nouveautés de la ${v}</summary><div>${esc(i.notes)}</div></details>` : "";
+  let html = "";
+  if (MAJ.etat === "dispo") html = `<div class="maj-tx"><b>PichetMeter ${v} est disponible</b><small>Tu as la ${esc(i.actuelle || VERSION_APP)}. L'installation ferme l'appli, la met à jour (réglages, macros et mascottes conservés) puis la relance.</small>${notes}</div>
+    <div class="chips"><button class="btn sm primary" type="button" data-maj="install">Mettre à jour</button><button class="btn sm" type="button" data-maj="later">Plus tard</button><button class="btn sm" type="button" data-maj="skip">Ignorer cette version</button></div>`;
+  else if (MAJ.etat === "dl") html = `<div class="maj-tx"><b>Téléchargement de la ${v}… ${Math.round(MAJ.pct * 100)} %</b><div class="gauge cyan thin"><span style="width:${Math.round(MAJ.pct * 100)}%"></span></div></div>`;
+  else if (MAJ.etat === "extract") html = `<div class="maj-tx"><b>Préparation de l'installation…</b><small>Empreinte du fichier vérifiée.</small></div>`;
+  else if (MAJ.etat === "install") html = `<div class="maj-tx"><b>Installation de la ${v}</b><small>PichetMeter va se fermer quelques secondes puis se relancer tout seul.</small></div>`;
+  else if (MAJ.etat === "erreur") html = `<div class="maj-tx"><b>Mise à jour impossible</b><small>${esc(majTexteErreur(MAJ.message))}</small></div>
+    <div class="chips"><button class="btn sm primary" type="button" data-maj="install">Réessayer</button><button class="btn sm" type="button" data-maj="page">Télécharger depuis GitHub</button><button class="btn sm" type="button" data-maj="later">Fermer</button></div>`;
+  b.innerHTML = html; b.hidden = !html; b.dataset.etat = MAJ.etat;
+  const st = $("#majStatut");
+  if (st) st.textContent = MAJ.etat === "dispo" ? `Version ${i.version} disponible : voir le bandeau en haut.` : MAJ.etat === "erreur" ? majTexteErreur(MAJ.message) : MAJ.etat === "ok" ? `À jour : ${VERSION_APP} est la dernière version publiée.` : (st.textContent || "");
+  const mv = $("#majVer"); if (mv) mv.textContent = "Version installée : " + VERSION_APP;
+}
+function majPush(msg) {
+  MAJ = { ...MAJ, etat: msg.etat, info: msg.info || MAJ.info, pct: msg.pct ?? MAJ.pct, message: msg.message || "" };
+  majRender();
+}
+$("#majBan").addEventListener("click", async e => {
+  const b = e.target.closest("[data-maj]"); if (!b) return;
+  const a = b.dataset.maj;
+  if (a === "later") { MAJ.etat = ""; majRender(); return; }
+  if (a === "skip") { const v = (MAJ.info || {}).version; MAJ.etat = ""; majRender(); if (DESKTOP && v) api().maj_skip(v); return; }
+  if (a === "page") { if (DESKTOP) api().maj_page(); return; }
+  if (a === "install") {
+    if (!DESKTOP) return;
+    $$("#majBan button").forEach(x => x.disabled = true);
+    const r = await api().maj_install().catch(err => ({ ok: false, error: err.message }));
+    if (r && r.ok === false) { MAJ = { ...MAJ, etat: "erreur", message: r.error }; majRender(); }
+  }
+});
+$("#majCheck").addEventListener("click", async () => {
+  if (!DESKTOP) { $("#majStatut").textContent = "La recherche fonctionne dans l'application de bureau."; return; }
+  const btn = $("#majCheck"); btn.disabled = true; $("#majStatut").textContent = "Recherche sur GitHub…";
+  try {
+    const r = await api().maj_check();
+    if (r && r.ok === false) throw new Error(r.error);
+    if (r && r.nouvelle) { MAJ = { etat: "dispo", info: r, pct: 0, message: "" }; $("#main").scrollTo({ top: 0, behavior: "smooth" }); }
+    else MAJ = { ...MAJ, etat: "ok", info: r };
+    majRender();
+    if (MAJ.etat === "ok") MAJ.etat = "";
+  } catch (err) { $("#majStatut").textContent = "Recherche impossible : " + majTexteErreur(err.message); }
+  finally { btn.disabled = false; }
+});
 $("#optAnim").addEventListener("change", e => { S.display.anim = e.target.checked; save(); renderParams(); });
 $("#optWfg").addEventListener("change", e => { S.display.widgetsFg = e.target.checked; save(); if (DESKTOP) refreshStatus(); });
 $$("#fpsSeg button").forEach(b => b.addEventListener("click", () => { S.fps = b.dataset.v; save(); renderParams(); }));
@@ -4171,6 +4233,7 @@ window.__onPush = msg => {
     case "sound": playTone(msg.tone, msg.volume); break;
     case "viseur": VISEUR = msg; renderXhState(); break;
     case "macro": window.MacrosUI.push(msg); potPush(msg); break;
+    case "maj": majPush(msg); break;
     case "wvis": if (window.__loupeVisible) window.__loupeVisible(!!msg.v); break;
     case "layout": LAYOUT_INFO = msg; if (window.__layoutPret) window.__layoutPret(); break;
     case "fond": { const b = $("#backdropImg"); if (!b) break; root.style.setProperty("--ecran-w", screen.width + "px"); root.style.setProperty("--ecran-h", screen.height + "px"); if (msg.url) { b.style.backgroundImage = `url("${msg.url}")`; b.classList.add("on"); } else { b.style.backgroundImage = ""; b.classList.remove("on"); } break; }
@@ -4213,7 +4276,8 @@ async function boot() {
   onSettingsChanged.push(renderWidgetPanels, renderParams, renderDpsControls, renderXhControls, renderCdList, renderMapTab, renderModules, renderPotions, renderLoupe);
   showFields(); renderParams(); renderMascSettings(); onSettingsChanged.push(renderMascSettings); renderAlerts(); renderTimers(); renderWidgetPanels(); renderFavs(); renderRecents(); renderAccount();
   renderDpsControls(); renderCdList(); renderXhControls(); renderSrv();
-  renderMapTab(); renderModules(); renderInfos(); renderPotions(); renderLoupe();
+  renderMapTab(); renderModules(); renderInfos(); renderPotions(); renderLoupe(); majRender();
+  if (DESKTOP) api().maj_state().then(st => { if (st && st.info && st.info.nouvelle && (S.maj.skip !== st.info.version)) { MAJ = { etat: "dispo", info: st.info, pct: 0, message: "" }; majRender(); } }).catch(() => {});
   requestAnimationFrame(() => placerGlider(true));
   setInterval(tickTimers, 1000);
   setInterval(() => { if (!$("#view-cd").hidden) cdTick(); }, 100);

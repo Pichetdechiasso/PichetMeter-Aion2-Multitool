@@ -1,4 +1,4 @@
-﻿PICHETMETER — version 2.3.1 (version personnelle : PichetMeter + Pichet Macro)
+﻿PICHETMETER — version 2.4.0 (PichetMeter + Pichet Macro)
 Compagnon pour Aion 2 : armurerie, classement, tâches, timers, DPS meter de groupe, cooldowns,
 viseur et carte, affichés par-dessus le jeu.
 Créateur : @atomedims · Discord : https://discord.gg/KrkJrjrDJt
@@ -35,7 +35,14 @@ DANS LE JEU
   les widgets se cachent dès que tu passes sur Discord, ton navigateur, etc.
 - L'icône dans la zone de notification (près de l'horloge) permet aussi d'afficher l'overlay ou de quitter.
 
-NOUVEAUTÉS 2.3.1 (version personnelle)
+NOUVEAUTÉS 2.4.0
+- Mises à jour automatiques : au lancement, PichetMeter vérifie la dernière version publiée sur GitHub et
+  propose de l'installer (bandeau en haut de l'interface). Le fichier est vérifié (empreinte SHA-256), puis
+  l'installation se fait toute seule : l'appli se ferme et se relance. Réglage et bouton « Rechercher » dans
+  Paramètres > Général > Mises à jour.
+- Les mascottes de ton installation sont conservées à chaque mise à jour (dossier %APPDATA%\PichetMeter\mascottes).
+
+NOUVEAUTÉS 2.3.1
 - Potions : le calibrage de la barre de vie fonctionne (lecture de l'écran corrigée sous Windows 64 bits).
 - Loupe : nouvelle méthode de capture de l'écran, sans autorisation à donner ; si elle échoue, un clic
   sur la loupe relance la capture.

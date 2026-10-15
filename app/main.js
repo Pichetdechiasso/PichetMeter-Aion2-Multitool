@@ -15,6 +15,7 @@ const { spawn } = require("child_process");
 const { lireNombre, SuiviCombat } = require("./dpslogic");
 const { Analyseur, DemoGroupe } = require("./reseau");
 const { MoteurMacros } = require("./macros");
+const maj = require("./maj");
 
 const APP_ID = "PichetMeter";
 const APP_NAME = "PichetMeter";
@@ -1184,6 +1185,12 @@ const API = {
   toggle_on_top: () => { const v = !main.isAlwaysOnTop(); main.setAlwaysOnTop(v, "screen-saver"); return v; },
   quit: () => { setImmediate(() => app.quit()); return true; },
   notify: (e, titre, message) => { alerte(titre, message); return true; },
+  // ── Mises à jour (releases GitHub) ──
+  maj_check: () => verifierMaj(true),
+  maj_state: () => ({ info: majInfo, enCours: majEnCours, version: app.getVersion() }),
+  maj_install: () => installerMaj(),
+  maj_skip: (e, version) => { S.maj = { ...(S.maj || {}), skip: String(version || "") }; ecrireReglages(); diffuserReglages(); return true; },
+  maj_page: () => { shell.openExternal((majInfo && majInfo.page) || maj.PAGE); return true; },
   notify_test: (e, titre, message) => { alerte(titre, message); return true; },
   widget_update: (e, kind) => { appliquerWidget(kind); synchroniserWidgets(); return true; },
   widget_preview: (e, kind) => { apercu(kind); return true; },
@@ -1346,6 +1353,48 @@ ipcMain.handle("api", async (e, methode, args) => {
 });
 
 /* ════════ Démarrage ════════ */
+/* ════════ Mises à jour : dernière release GitHub, téléchargement vérifié, installeur habituel ════════ */
+let majInfo = null, majEnCours = false;
+const uaMaj = () => `${APP_NAME}/${app.getVersion()}`;
+async function verifierMaj(manuel) {
+  try {
+    const info = await maj.chercher(app.getVersion(), { ua: uaMaj() });
+    majInfo = info;
+    log("Mise à jour :", info.nouvelle ? `version ${info.version} disponible (installée : ${info.actuelle})` : `à jour (${info.actuelle}, dernière publiée ${info.version})`);
+    if (info.nouvelle && (manuel || (S.maj || {}).skip !== info.version)) {
+      pousser(main, { type: "maj", etat: "dispo", info });
+      if (!manuel && !mainVisible) alerte("Mise à jour disponible", `${APP_NAME} ${info.version} : ouvre l'interface (${S.hotkey || "Alt + C"}) pour l'installer.`);
+    }
+    return info;
+  } catch (e) {
+    log("Mise à jour : vérification impossible,", e.message);
+    if (manuel) throw e;
+    return null;
+  }
+}
+async function installerMaj() {
+  if (!IS_WIN) throw new Error("la mise à jour automatique fonctionne sous Windows");
+  if (majEnCours) return false;
+  majEnCours = true;
+  try {
+    const info = majInfo && majInfo.nouvelle ? majInfo : await maj.chercher(app.getVersion(), { ua: uaMaj() });
+    if (!info.nouvelle) throw new Error(`${APP_NAME} est déjà à jour (${info.actuelle})`);
+    const dossier = maj.dossierTemp();
+    pousser(main, { type: "maj", etat: "dl", pct: 0, info });
+    const { fichier } = await maj.telecharger(info, dossier, pct => pousser(main, { type: "maj", etat: "dl", pct, info }), { ua: uaMaj() });
+    pousser(main, { type: "maj", etat: "extract", info });
+    const ps1 = await maj.extraire(fichier, path.join(dossier, "paquet"));
+    pousser(main, { type: "maj", etat: "install", info });
+    log("Mise à jour : installation de la version", info.version);
+    maj.lancerInstalleur(ps1);
+    setTimeout(() => app.quit(), 1200); // l'installeur ferme de toute façon l'application avant de la remplacer
+    return true;
+  } catch (e) {
+    log("Mise à jour : échec,", e.message);
+    pousser(main, { type: "maj", etat: "erreur", message: e.message, info: majInfo });
+    throw e;
+  } finally { majEnCours = false; }
+}
 /* Loupe : la page du widget demande la capture d'écran ; on lui donne l'écran où la zone a été choisie (et à elle seule) */
 function autoriserCaptureLoupe() {
   session.defaultSession.setDisplayMediaRequestHandler(async (req, repondre) => {
@@ -1362,6 +1411,7 @@ function autoriserCaptureLoupe() {
 function demarrer() {
   Menu.setApplicationMenu(null);
   autoriserCaptureLoupe();
+  setTimeout(() => { if ((S.maj || {}).auto !== false) verifierMaj(false); }, 15000); // vérification au lancement
   log("Démarrage", APP_NAME, app.getVersion(), "Electron", process.versions.electron);
   splashEnCours = lancerSplash();
   creerPrincipale();
