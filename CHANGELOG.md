@@ -1,5 +1,11 @@
 # Journal des versions
 
+## 2.5.1
+
+- **Mise à jour automatique corrigée** : l'installeur était lancé par PowerShell détaché, sans console ; il s'arrêtait dès le premier affichage et l'application se fermait sans être mise à jour. Il est maintenant lancé par un script `mise-a-jour.cmd` dans sa propre fenêtre (`cmd start`), qui attend la fermeture de PichetMeter, exécute `installer.ps1 -Journal` et reste ouvert avec le message en cas d'échec.
+- `installer.ps1 -Journal <fichier>` : transcription complète de l'installation ; le journal est recopié dans `journal.txt` au lancement suivant.
+- Depuis la 2.4.0 ou la 2.5.0, cette version s'installe une fois à la main (`Installer.cmd`) ; les suivantes passeront par la mise à jour automatique.
+
 ## 2.5.0
 
 - **Macros : nœud « Parallèle »** (une entrée, trois sorties) : les branches reliées tournent en même temps, chacune dans son propre fil ; le nœud se termine quand toutes sont finies. Envois au pilote sérialisés. Testé dans `test/macro_serveur_test.py`.

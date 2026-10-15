@@ -1320,6 +1320,16 @@ ipcMain.handle("api", async (e, methode, args) => {
 /* ════════ Démarrage ════════ */
 /* ════════ Mises à jour : dernière release GitHub, téléchargement vérifié, installeur habituel ════════ */
 let majInfo = null, majEnCours = false;
+const JOURNAL_MAJ = path.join(DATA, "maj-installation.log");
+// Journal de la dernière mise à jour (écrit par installer.ps1) : recopié dans journal.txt au lancement suivant
+function relireJournalMaj() {
+  try {
+    const t = fs.readFileSync(JOURNAL_MAJ, "utf8").replace(/^\uFEFF/, "");
+    const lignes = t.split(/\r?\n/).filter(l => l.trim() && !/^\*{6,}/.test(l)).slice(-25);
+    log("Mise à jour : journal de la dernière installation\n  " + lignes.join("\n  "));
+    fs.renameSync(JOURNAL_MAJ, JOURNAL_MAJ.replace(/\.log$/, "-precedent.log"));
+  } catch { /* pas de mise à jour récente */ }
+}
 const uaMaj = () => `${APP_NAME}/${app.getVersion()}`;
 async function verifierMaj(manuel) {
   try {
@@ -1351,8 +1361,8 @@ async function installerMaj() {
     const ps1 = await maj.extraire(fichier, path.join(dossier, "paquet"));
     pousser(main, { type: "maj", etat: "install", info });
     log("Mise à jour : installation de la version", info.version);
-    maj.lancerInstalleur(ps1);
-    setTimeout(() => app.quit(), 1200); // l'installeur ferme de toute façon l'application avant de la remplacer
+    await maj.lancerInstalleur(ps1, JOURNAL_MAJ);
+    setTimeout(() => app.quit(), 800); // la fenêtre de l'installeur attend la fermeture de l'application
     return true;
   } catch (e) {
     log("Mise à jour : échec,", e.message);
@@ -1362,6 +1372,7 @@ async function installerMaj() {
 }
 function demarrer() {
   Menu.setApplicationMenu(null);
+  relireJournalMaj();
   setTimeout(() => { if ((S.maj || {}).auto !== false) verifierMaj(false); }, 15000); // vérification au lancement
   log("Démarrage", APP_NAME, app.getVersion(), "Electron", process.versions.electron);
   splashEnCours = lancerSplash();

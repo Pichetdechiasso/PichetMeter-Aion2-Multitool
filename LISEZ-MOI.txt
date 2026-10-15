@@ -1,4 +1,4 @@
-﻿PICHETMETER — version 2.5.0 (PichetMeter + Pichet Macro)
+﻿PICHETMETER — version 2.5.1 (PichetMeter + Pichet Macro)
 Compagnon pour Aion 2 : armurerie, timers, DPS meter de groupe, macros, viseur, carte et ping,
 affichés par-dessus le jeu.
 Créateur : @atomedims · Discord : https://discord.gg/KrkJrjrDJt
@@ -36,6 +36,12 @@ DANS LE JEU
 - Option « Seulement quand le jeu est au premier plan » (Paramètres > Modules en jeu) :
   les widgets se cachent dès que tu passes sur Discord, ton navigateur, etc.
 - L'icône dans la zone de notification (près de l'horloge) permet aussi d'afficher l'overlay ou de quitter.
+
+NOUVEAUTÉS 2.5.1
+- Mise à jour automatique corrigée : l'installation s'ouvre dans sa propre fenêtre, attend la
+  fermeture de PichetMeter, puis le relance. En cas d'échec, la fenêtre reste ouverte avec le
+  message d'erreur (journal : %APPDATA%\PichetMeter\maj-installation.log).
+  Depuis la 2.4.0 ou la 2.5.0, installe cette version une fois à la main (Installer.cmd).
 
 NOUVEAUTÉS 2.5.0
 - Macros : nouveau nœud « Parallèle » (une entrée, trois sorties) qui lance ses trois branches en

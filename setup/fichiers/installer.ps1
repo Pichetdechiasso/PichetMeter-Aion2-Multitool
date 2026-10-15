@@ -9,13 +9,14 @@ param(
     [string]$Destination = '',
     [string]$RuntimeZip = '',
     [switch]$NoShortcuts,
-    [switch]$NoLaunch
+    [switch]$NoLaunch,
+    [string]$Journal = ''
 )
 
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $ElectronVersion = 'v44.5.1'
-$AppVersion = '2.5.0'
+$AppVersion = '2.5.1'
 $AppName = 'PichetMeter'
 $ExeName = 'PichetMeter.exe'
 $Icone = 'PichetMeter.ico'
@@ -27,12 +28,18 @@ $zipName = "electron-$ElectronVersion-win32-x64.zip"
 $base = "https://github.com/electron/electron/releases/download/$ElectronVersion"
 $surWindows = ($IsWindows -ne $false)
 
+# Mise à jour lancée depuis l'application : tout ce qui s'affiche est aussi écrit dans un journal
+function Fin([int]$code) {
+    if ($Journal) { try { Stop-Transcript | Out-Null } catch { } }
+    exit $code
+}
 function Etape([string]$texte) { Write-Host ''; Write-Host "> $texte" -ForegroundColor Cyan }
 function DossiersRaccourcis {
     if (-not $surWindows) { return @() }
     return @([Environment]::GetFolderPath('Desktop'), [Environment]::GetFolderPath('Programs')) | Where-Object { $_ }
 }
 
+if ($Journal) { try { Start-Transcript -LiteralPath $Journal -Force | Out-Null } catch { } }
 try {
     try { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 } catch { }
     if (-not $Destination) {
@@ -201,10 +208,10 @@ try {
     Write-Host 'Installation terminée.' -ForegroundColor Green
     Write-Host "Lance « $AppName » depuis le raccourci du Bureau. Alt + C affiche ou masque l'overlay."
     if (-not $NoLaunch) { Start-Process -FilePath (Join-Path $Destination $ExeName) -WorkingDirectory $Destination }
-    exit 0
+    Fin 0
 }
 catch {
     Write-Host ''
     Write-Host ('Erreur : ' + $_.Exception.Message) -ForegroundColor Red
-    exit 1
+    Fin 1
 }

@@ -84,13 +84,33 @@ function extraire(zip, dossier) {
   });
 }
 
-/** Lance l'installeur dans sa propre fenêtre, détaché : il ferme PichetMeter, installe et relance. */
-function lancerInstalleur(ps1) {
-  const p = spawn("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", ps1], { detached: true, stdio: "ignore", windowsHide: false, cwd: path.dirname(ps1) });
-  p.unref();
-  return true;
+/**
+ * Lance l'installeur dans une vraie fenêtre de console (cmd « start »), indépendante de PichetMeter :
+ * un script .cmd attend que l'application se ferme, exécute installer.ps1 avec un journal, et reste
+ * ouvert avec le message d'erreur si l'installation échoue.
+ */
+function scriptLanceur(ps1, journal, page = PAGE) {
+  return ["@echo off", "chcp 65001 >nul", "title PichetMeter - mise a jour",
+    "echo Mise a jour de PichetMeter : ne ferme pas cette fenetre.",
+    "timeout /t 3 /nobreak >nul",
+    `powershell.exe -NoProfile -ExecutionPolicy Bypass -File "${ps1}" -Journal "${journal}"`,
+    "if errorlevel 1 (",
+    "  echo.",
+    `  echo La mise a jour n'a pas abouti. Detail : ${journal}`,
+    `  echo Tu peux installer la nouvelle version a la main : ${page}`,
+    "  pause",
+    ")", ""].join("\r\n");
+}
+function lancerInstalleur(ps1, journal) {
+  const lanceur = path.join(dossierTemp(), "mise-a-jour.cmd");
+  fs.writeFileSync(lanceur, scriptLanceur(ps1, journal), "utf8");
+  return new Promise((ok, ko) => {
+    const p = spawn("cmd.exe", [`/d /c start "PichetMeter" "${lanceur}"`], { detached: true, stdio: "ignore", windowsHide: false, windowsVerbatimArguments: true, cwd: path.dirname(lanceur) });
+    p.once("error", e => ko(new Error("lancement de l'installeur impossible : " + e.message)));
+    p.once("spawn", () => { p.unref(); ok(lanceur); });
+  });
 }
 
 const dossierTemp = () => path.join(os.tmpdir(), "PichetMeter-maj");
 
-module.exports = { DEPOT, PAGE, comparer, choisirAsset, chercher, telecharger, extraire, lancerInstalleur, dossierTemp };
+module.exports = { DEPOT, PAGE, comparer, choisirAsset, chercher, telecharger, extraire, lancerInstalleur, scriptLanceur, dossierTemp };
