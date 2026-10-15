@@ -61,6 +61,9 @@ _ACTIVE: dict[int, bool] = {}                  # lecture en cours → est-ce une
 _ACTIVE_LOCK = threading.Lock()
 
 
+_ENVOI = threading.Lock()  # nœud « Parallèle » : un seul envoi au driver à la fois
+
+
 class _StopMacro(Exception):
     """Levée par le nœud « Arrêter la macro »."""
 
@@ -660,6 +663,9 @@ class GraphRunner:
             for pin in ("then0", "then1", "then2"):
                 self._chain(g.next_of(node.id, pin), depth + 1)
             return None
+        if t == "parallel":
+            self._parallel([g.next_of(node.id, pin) for pin in ("then0", "then1", "then2")], depth + 1)
+            return None
         if t == "recorded":
             self._play_events(p["events"])
             return nxt
@@ -698,14 +704,38 @@ class GraphRunner:
             raise _StopMacro()
         return nxt
 
+    def _parallel(self, branches: list, depth: int) -> None:
+        """Nœud « Parallèle » : les branches reliées tournent en même temps ; on attend qu'elles soient toutes finies."""
+        branches = [b for b in branches if b]
+        if not branches:
+            return
+        erreurs: list[BaseException] = []
+
+        def branche(node_id: str) -> None:
+            try:
+                self._chain(node_id, depth)
+            except BaseException as exc:  # noqa: BLE001 — « Arrêter la macro » ou erreur : remontée après l'attente
+                erreurs.append(exc)
+
+        fils = [threading.Thread(target=branche, args=(b,), daemon=True, name="parallele") for b in branches[1:]]
+        for th in fils:
+            th.start()
+        branche(branches[0])  # la première branche tourne dans le fil courant
+        for th in fils:
+            th.join()
+        if erreurs:
+            raise erreurs[0]
+
     # --- primitives ------------------------------------------------------
     def _key(self, sc: int, ext: bool, down: bool) -> None:
-        self.driver.send_key(sc, ext, down)
-        (self._held_keys.add if down else self._held_keys.discard)((sc, ext))
+        with _ENVOI:
+            self.driver.send_key(sc, ext, down)
+            (self._held_keys.add if down else self._held_keys.discard)((sc, ext))
 
     def _button(self, button: str, down: bool) -> None:
-        self.driver.send_button(button, down)
-        (self._held_buttons.add if down else self._held_buttons.discard)(button)
+        with _ENVOI:
+            self.driver.send_button(button, down)
+            (self._held_buttons.add if down else self._held_buttons.discard)(button)
 
     def _move_abs(self, x: int, y: int) -> None:
         if self._pos != (x, y):

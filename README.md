@@ -5,7 +5,7 @@
 <h1 align="center">PichetMeter</h1>
 
 <p align="center">
-  Compagnon gratuit pour <b>Aion 2</b> : DPS meter de groupe, armurerie, timers, macros, potions, loupe, viseur et carte,<br>
+  Compagnon gratuit pour <b>Aion 2</b> : DPS meter de groupe, armurerie, timers, macros, viseur et carte,<br>
   affichés directement par-dessus le jeu. Un raccourci (<kbd>Alt</kbd> + <kbd>C</kbd>), pas d'<kbd>Alt</kbd> + <kbd>Tab</kbd>.
 </p>
 
@@ -21,7 +21,9 @@
   &nbsp;·&nbsp; <a href="#english">English</a>
 </p>
 
-![DPS meter de groupe](docs/captures/dps.jpg)
+![Widgets PichetMeter par-dessus Aion 2 : timers, ping, macros en cours, DPS meter et viseur](docs/captures/widgets-en-jeu.jpg)
+
+<p align="center"><i>Interface masquée : les widgets restent par-dessus le jeu (timers, ping, macros en cours, DPS meter, viseur).</i></p>
 
 ## Fonctionnalités
 
@@ -30,22 +32,34 @@
 | **DPS meter de groupe** | DPS, dégâts, part, critiques, coups parfaits, attaques de dos, morts et détail des compétences de chaque joueur, y compris sur les world boss. Dépassements animés façon course, cible et PV du boss, historique, « Boss uniquement », widget transparent ou masqué hors combat. |
 | **Armurerie** | Recherche d'un joueur par pseudo : équipement, compétences, Daevanion, puissance de combat, classements du personnage, bouton « Actualiser ». Favoris, plusieurs comptes. |
 | **Timers** | Événements des serveurs Europe en heure locale, alertes avant le début, timers personnalisés. |
-| **Macros** | Le moteur de Pichet Macro intégré : éditeur de nœuds, enregistrement, raccourcis, widget des macros en cours (pilote Interception). |
-| **Potions** | Lit ta barre de vie à l'écran et appuie sur F1 à F4 sous les seuils choisis (désactivé par défaut). |
-| **Loupe** | Agrandit en direct une zone de l'écran du jeu dans une fenêtre déplaçable et redimensionnable. |
-| **Viseur** | Viseur personnalisable dessiné au centre de l'écran. |
+| **Macros** | Le moteur de Pichet Macro intégré : éditeur de nœuds (séquence, parallèle, boucle, recharge, aléatoire…), enregistrement, raccourcis, widget des macros en cours (pilote Interception). |
+| **Viseur** | Viseur personnalisable dessiné au centre de l'écran, avec aperçu sur une scène du jeu. |
 | **Carte** | Carte interactive AION2.run en grand dans l'interface. |
-| **Ping** | Latence réelle vers le serveur de jeu et rythme des auto-attaques. |
+| **Ping** | Latence réelle vers le serveur de jeu, en widget (réglage dans Paramètres > Widgets). |
 | **Mises à jour** | Au lancement, PichetMeter vérifie la dernière version publiée ici et propose de l'installer en un clic. |
 
 Chaque module a un interrupteur **Afficher en jeu** et peut ne s'afficher que lorsque le jeu est au premier plan. Une page de placement montre tous les widgets par-dessus le jeu pour les déplacer et les redimensionner. Interface en français ou en anglais, style Y2K × Cyberpunk, mascottes animées (tes propres GIF ou PNG), animations désactivables.
 
+### Aperçu
+
 <table>
   <tr>
-    <td><img src="docs/captures/timers.jpg" alt="Timers"></td>
-    <td><img src="docs/captures/params.jpg" alt="Modules en jeu et paramètres"></td>
+    <td><img src="docs/captures/dps.jpg" alt="Onglet DPS meter : combat de groupe sur un world boss"></td>
+    <td><img src="docs/captures/perso.jpg" alt="Fiche d'un personnage avec le bouton Actualiser"></td>
+  </tr>
+  <tr>
+    <td><img src="docs/captures/macros.jpg" alt="Éditeur de macros par nœuds"></td>
+    <td><img src="docs/captures/viseur.jpg" alt="Réglages du viseur avec aperçu en jeu"></td>
+  </tr>
+  <tr>
+    <td><img src="docs/captures/timers.jpg" alt="Timers des événements"></td>
+    <td><img src="docs/captures/params.jpg" alt="Paramètres : modules en jeu et ping"></td>
   </tr>
 </table>
+
+**Placement des widgets :** une page transparente par-dessus le jeu pour déplacer, redimensionner et régler chaque widget.
+
+![Écran de placement des widgets par-dessus le jeu](docs/captures/placement.jpg)
 
 ## Installation
 
@@ -75,12 +89,11 @@ Le fichier [LISEZ-MOI.txt](LISEZ-MOI.txt), inclus dans le zip, détaille chaque 
 
 - PichetMeter **ne modifie pas le jeu** et n'injecte rien dans son processus : il affiche ses propres fenêtres par-dessus.
 - Le DPS meter **lit passivement** le trafic réseau du jeu avec Npcap, sans rien envoyer. Le décodage des paquets s'appuie sur le travail du projet open source [RATmeter](https://github.com/Kuroukihime/AIon2-Dps-Meter).
-- **Seuls les Macros et les Potions envoient des touches**, et uniquement quand tu les actives : elles passent par le pilote [Interception](https://github.com/oblitum/Interception), comme Pichet Macro. Tous les autres modules ne font qu'afficher. <kbd>F10</kbd> arrête tout.
-- La loupe et les potions lisent seulement l'image de l'écran, jamais la mémoire du jeu.
+- **Seules les macros envoient des touches**, et uniquement quand tu les lances : elles passent par le pilote [Interception](https://github.com/oblitum/Interception), comme Pichet Macro. Tous les autres modules ne font qu'afficher. <kbd>F10</kbd> arrête tout.
 - **Aucune donnée n'est collectée.** Tout reste sur ton PC. Connexions : services officiels de NCSOFT (fiches), AION2.run (carte), Google Fonts, et GitHub (installation et recherche de mises à jour).
 
 > [!WARNING]
-> PichetMeter est un outil communautaire **non officiel**, ni développé ni approuvé par NCSOFT. Les règles de l'éditeur sur les outils tiers peuvent évoluer, et l'automatisation des actions (macros, auto-potions) peut être interdite et entraîner une sanction du compte : chacun l'utilise sous sa propre responsabilité. Le logiciel est fourni « tel quel », sans garantie.
+> PichetMeter est un outil communautaire **non officiel**, ni développé ni approuvé par NCSOFT. Les règles de l'éditeur sur les outils tiers peuvent évoluer, et l'automatisation des actions (macros) peut être interdite et entraîner une sanction du compte : chacun l'utilise sous sa propre responsabilité. Le logiciel est fourni « tel quel », sans garantie.
 
 ## Développement
 
@@ -91,7 +104,7 @@ app/          application Electron
   main.js       processus principal : fenêtres, widgets, raccourcis, armurerie, DPS
   ui.html       interface (une seule page, aussi utilisée par chaque widget via #w=<module>)
   maj.js        mises à jour (release GitHub, zip vérifié en SHA-256, installeur)
-  macro/        moteur de Pichet Macro (Python) et auto-potions
+  macro/        moteur de Pichet Macro (Python)
   reseau.js     décodage du trafic du jeu (DPS de groupe)
   *.ps1         modules Windows : état du jeu, touches, viseur natif, capture Npcap
   i18n.js       traduction anglaise
@@ -124,8 +137,8 @@ PichetMeter est un logiciel libre distribué sous licence **GNU GPL version 3** 
 
 ## English
 
-**PichetMeter** is a free overlay companion for **Aion 2** on Windows: party DPS meter (passive network reading through Npcap, per-player skill breakdown, world bosses), armory and player lookup, EU event timers, node-based macros, health-bar auto-potions, a live screen magnifier, crosshair, interactive map and ping. It checks GitHub for new versions at launch and offers a one-click update. Everything sits on top of the game, toggled with <kbd>Alt</kbd> + <kbd>C</kbd>. The interface is available in English (Settings > Display > Language).
+**PichetMeter** is a free overlay companion for **Aion 2** on Windows: party DPS meter (passive network reading through Npcap, per-player skill breakdown, world bosses), armory and player lookup, EU event timers, node-based macros, crosshair, interactive map and ping. It checks GitHub for new versions at launch and offers a one-click update. Everything sits on top of the game, toggled with <kbd>Alt</kbd> + <kbd>C</kbd>. The interface is available in English (Settings > Display > Language).
 
 **Install:** download [PichetMeter-Installation.zip](https://github.com/Pichetdechiasso/PichetMeter-Aion2-Multitool/releases/latest/download/PichetMeter-Installation.zip), extract it, run `Installer.cmd`. The first install downloads the official Electron runtime (~150 MB) and verifies its SHA-256. No admin rights needed. For the DPS meter, install [Npcap](https://npcap.com). Run the game in windowed or borderless mode.
 
-PichetMeter does not modify, read the memory of, or inject into the game, and collects no data. Only Macros and Potions send keys (through the Interception driver), and only when you enable them; automating actions may be against the publisher's rules. It is an unofficial community tool, not affiliated with or endorsed by NCSOFT. Use it at your own risk. Licensed under GPL-3.0.
+PichetMeter does not modify, read the memory of, or inject into the game, and collects no data. Only macros send keys (through the Interception driver), and only when you run them; automating actions may be against the publisher's rules. It is an unofficial community tool, not affiliated with or endorsed by NCSOFT. Use it at your own risk. Licensed under GPL-3.0.

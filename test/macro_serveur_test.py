@@ -106,37 +106,33 @@ assert len(r["added"]) == 1 and r["added"][0]["id"] != m["id"] and r["added"][0]
 assert os.path.isfile(os.path.join(TMP, ".pichet_macro", "macros", m["id"] + ".json"))
 print("macro_serveur : OK")
 
-# ── Auto-potions : lecture d'une barre rouge remplie à 40 %, potion F1 sous 60 %, F2 sous 35 % ──
-import potions  # noqa: E402
-
-W, H = 200, 10
-def barre(part):
-    px = bytearray()
-    for y in range(H):
-        for x in range(W):
-            px += bytes((30, 30, 200, 255)) if x < W * part else bytes((20, 20, 20, 255))  # BGRA : rouge
-    return bytes(px)
-assert abs(potions.ratio(barre(0.4), W, H, [200, 30, 30], 70) - 0.4) < 0.02
-assert potions.couleur_mediane(barre(1), W, H) == [200, 30, 30]
-assert potions.png(barre(0.5), W, H).startswith("iVBOR")
-envois = []
-class Pilote:
-    available = True
-    def send_key(self, sc, ext, down): envois.append((sc, down))
-ap = potions.AutoPotions(Pilote(), lambda *a, **k: None)
-part = [1.0]
-ap.capture = lambda x, y, w, h: barre(part[0])
-ap.devant = lambda: True
-ap.configurer({"enabled": True, "zone": {"x": 0, "y": 0, "w": W, "h": H}, "couleur": [200, 30, 30],
-               "regles": [{"touche": "F1", "actif": True, "seuil": 60, "delai": 3000}, {"touche": "F2", "actif": True, "seuil": 35, "delai": 6000}]})
-ap.pas(100.0)
-assert envois == [], "vie pleine : aucune potion"
-part[0] = 0.4
-ap.pas(101.0)
-assert envois == [(0x3B, True), (0x3B, False)], envois
-ap.pas(102.0)
-assert len(envois) == 2, "délai de F1 respecté"
-part[0] = 0.3
-ap.pas(103.0)
-assert envois[-2:] == [(0x3C, True), (0x3C, False)], "F2, plus urgente, sous 35 %"
-print("auto-potions : OK")
+# ── Nœud « Parallèle » : trois branches (attente 300 ms + touche) jouées en même temps ──
+s.driver.sent.clear()
+SORTIES.clear()
+m = ok("create", name="Parallele")["data"]
+start = m["graph"]["nodes"][0]["id"]
+nodes, links = m["graph"]["nodes"], m["graph"]["links"]
+nodes.append({"id": "par", "type": "parallel", "x": 280, "y": 0, "props": {}})
+links.append({"src": start, "pin": "out", "dst": "par"})
+for i, (pin, sc) in enumerate((("then0", 16), ("then1", 17), ("then2", 18))):
+    nodes.append({"id": f"w{i}", "type": "wait", "x": 560, "y": i * 120, "props": {"ms": 300, "random": 0}})
+    nodes.append({"id": f"k{i}", "type": "key", "x": 840, "y": i * 120, "props": {"sc": sc, "label": "AZE"[i], "hold": 5, "action": "press"}})
+    links += [{"src": "par", "pin": pin, "dst": f"w{i}"}, {"src": f"w{i}", "pin": "out", "dst": f"k{i}"}]
+assert ok("save", macro=m)["ok"]
+t0 = time.time()
+ok("play", mid=m["id"], now=True)
+for _ in range(200):
+    if any(e.get("ev") == "finished" for e in SORTIES):
+        break
+    while not s.file.empty():
+        el = s.file.get()
+        if el[0] == "appel":
+            el[1](*el[2])
+    time.sleep(0.01)
+duree = time.time() - t0
+fin = [e for e in SORTIES if e.get("ev") == "finished"]
+assert fin and fin[0]["reason"] == "done", fin
+for sc in (16, 17, 18):
+    assert ("key", sc, False, True) in s.driver.sent and ("key", sc, False, False) in s.driver.sent, s.driver.sent
+assert duree < 0.75, f"branches jouées l'une après l'autre ({duree:.2f} s)"
+print("noeud parallèle : OK")

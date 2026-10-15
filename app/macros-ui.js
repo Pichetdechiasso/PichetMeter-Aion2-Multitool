@@ -70,6 +70,7 @@ function nodeRows(n) {
     case "wait": r.push(["Durée", ms(p.ms)], ["Aléa", p.random ? `± ${Math.round(p.random)} ms` : "aucun"]); break;
     case "loop": r.push(["Répétitions", +p.count === 0 ? "∞ (infini)" : `${p.count} fois`]); break;
     case "sequence": r.push(["Ordre", "Then 0 → 1 → 2"]); break;
+    case "parallel": r.push(["Branches", "1 + 2 + 3 en même temps"]); break;
     case "run_macro": {
       if (!p.macro) r.push(["Macro", "⚠ aucune choisie"]);
       else { const nm = p.name || "?"; r.push(["Macro", (p.missing ? "⚠ " : "") + (nm.length > 21 ? nm.slice(0, 20) + "…" : nm) + (p.missing ? " (supprimée)" : "")]); }
@@ -142,7 +143,7 @@ function appendNode(m, node) {
     const pin = last.type === "loop" ? "done" : "out";
     nid = outsOf(last.type).includes(pin) ? nextOf(m, last.id, pin) : null;
   }
-  const pin = last.type === "loop" ? "done" : last.type === "sequence" ? "then2" : "out";
+  const pin = last.type === "loop" ? "done" : (last.type === "sequence" || last.type === "parallel") ? "then2" : "out";
   node.x = last.x + 280; node.y = last.y;
   connect(m, last.id, pin, node.id);
 }

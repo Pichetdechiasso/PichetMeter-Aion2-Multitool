@@ -171,3 +171,7 @@ input[type="range"]::-webkit-slider-thumb { background: var(--chrome); border: 0
 .maj-notes summary { cursor: pointer; color: var(--cy); font-size: 13px; font-weight: 600; margin-top: 2px; }
 .maj-notes div { white-space: pre-wrap; font-size: 12.5px; color: var(--fg); max-height: 180px; overflow: auto; margin-top: 6px; padding: 8px 10px; border-radius: 8px; background: #05070c; border: 1px solid var(--line); }
 @keyframes majIn { from { opacity: 0; transform: translateY(-8px); } }
+/* ── Ping (Paramètres > Widgets) ── */
+#pingCard .ping-val { font-size: 22px; color: #fff; text-shadow: 0 0 10px rgba(0, 229, 255, .45); }
+#pingCard .spark { height: 54px; }
+.modbar.ping-mod { border: 1px solid rgba(150, 210, 255, .1); border-left-width: 3px; border-radius: var(--r-md); background: #0b1019; }

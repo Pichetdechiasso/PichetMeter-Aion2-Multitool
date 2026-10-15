@@ -36,6 +36,13 @@ NODE_TYPES: dict[str, dict] = {
         "help": "Exécute trois branches l'une après l'autre : Then 0 jusqu'au bout, puis Then 1, puis Then 2. "
                 "Pratique pour organiser une longue macro en étapes.",
     },
+    "parallel": {
+        "title": "Parallèle", "category": "Flux", "icon": "⫸", "color": "#5eead4", "has_in": True,
+        "outs": [("then0", "Branche 1"), ("then1", "Branche 2"), ("then2", "Branche 3")], "defaults": {},
+        "help": "Exécute les trois branches en même temps (chacune à son rythme). Le nœud se termine quand "
+                "toutes les branches reliées sont finies. Pratique pour maintenir une touche pendant qu'une "
+                "autre branche enchaîne des sorts.",
+    },
     "run_macro": {
         "title": "Lancer une macro", "category": "Flux", "icon": "↪", "color": "#bef264", "has_in": True,
         "outs": [("out", "")],
@@ -233,6 +240,8 @@ def node_rows(node: Node) -> list[tuple[str, str]]:
         rows.append(("Répétitions", "∞ (infini)" if p["count"] == 0 else f"{p['count']} fois"))
     elif t == "sequence":
         rows.append(("Ordre", "Then 0 → 1 → 2"))
+    elif t == "parallel":
+        rows.append(("Branches", "1 + 2 + 3 en même temps"))
     elif t == "run_macro":
         if not p["macro"]:
             rows.append(("Macro", "⚠ aucune choisie"))
@@ -370,7 +379,7 @@ class Graph:
             last = self.nodes[nid]
             pin = "done" if last.type == "loop" else "out"
             nid = self.next_of(last.id, pin) if pin in {n for n, _ in NODE_TYPES[last.type]["outs"]} else None
-        pin = "done" if last.type == "loop" else ("out" if last.type != "sequence" else "then2")
+        pin = "done" if last.type == "loop" else ("then2" if last.type in ("sequence", "parallel") else "out")
         node.x, node.y = last.x + 280, last.y
         self.connect(last.id, pin, node.id)
 

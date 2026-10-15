@@ -78,6 +78,8 @@ const ecrireReglages = () => { try { ecrireJson(FICHIER, S); } catch (e) { log("
 // 1.8 : macros, auto-potions et « Toujours lancer en administrateur » retirés. Les anciens réglages sont effacés
 // (l'option admin pouvait faire relancer PichetMeter en boucle sans jamais ouvrir de fenêtre).
 if (S && typeof S === "object" && ("adminAuto" in S || "macros" in S)) { delete S.adminAuto; delete S.macros; if (PREMIERE_INSTANCE) ecrireReglages(); }
+// 2.5 : auto-potions et loupe retirées
+if (S && typeof S === "object" && ("potions" in S || (S.widgets && "zoom" in S.widgets))) { delete S.potions; if (S.widgets) delete S.widgets.zoom; if (PREMIERE_INSTANCE) ecrireReglages(); }
 const W = k => (S.widgets && S.widgets[k]) || {};
 
 /* ════════ Fenêtres : outils ════════ */
@@ -94,20 +96,7 @@ function diffuser(msg, sauf) { for (const w of BrowserWindow.getAllWindows()) if
 const diffuserReglages = sauf => diffuser({ type: "settings", json: JSON.stringify(S) }, sauf);
 
 /* ════════ Module Macros (moteur de Pichet Macro, driver Interception) ════════ */
-const macros = new MoteurMacros({ dossier: DATA, log, reglages: () => S, diffuser: msg => {
-  diffuser(msg);
-  if (msg.ev === "ready") { sigPotions = ""; synchroniserPotions(); }
-  if (msg.ev === "potions_off") { S.potions = { ...(S.potions || {}), enabled: false }; ecrireReglages(); diffuserReglages(); sigPotions = JSON.stringify(S.potions); }
-} });
-// Auto-potions : la configuration (onglet Potions) est transmise au moteur à chaque changement
-let sigPotions = "";
-function synchroniserPotions() {
-  if (macros.phase !== "ready") return;
-  const sig = JSON.stringify(S.potions || {});
-  if (sig === sigPotions) return;
-  sigPotions = sig;
-  macros.commande("potions_config", { config: S.potions || {} }).catch(e => log("Auto-potions :", e.message));
-}
+const macros = new MoteurMacros({ dossier: DATA, log, reglages: () => S, diffuser });
 const macrosActives = () => !(S.macro && S.macro.enabled === false);
 const CMD_FICHIERS = new Set(["import", "export", "export_all"]);
 
@@ -204,7 +193,7 @@ async function basculer() {
 }
 
 /* ════════ Widgets épinglés ════════ */
-const KINDS = ["timers", "ping", "dps", "macro", "zoom"]; // widget Carte retiré (2.3), loupe ajoutée // onglet Cooldowns retiré (2.2)
+const KINDS = ["timers", "ping", "dps", "macro"]; // Carte (2.3), Cooldowns (2.2) et Loupe (2.5) retirés
 const widgets = {};
 function configWidget(kind) {
   if (kind === "toast") { const a = S.alerts || {}; return { size: a.size || "m", scale: a.scale, opacity: 97, click: true, pos: a.pos || "br", x: a.x, y: a.y }; }
@@ -214,12 +203,11 @@ function ouvrirWidget(kind) {
   let o = widgets[kind];
   if (o && vivante(o.win)) return o;
   const carte = kind === "map"; // la carte est un vrai site : fenêtre opaque qui peut recevoir le clavier et la souris
-  const libre = carte || kind === "zoom"; // fenêtres redimensionnables à la souris (la loupe : flux agrandi d'une zone du jeu)
+  const libre = carte; // fenêtre redimensionnable à la souris
   const win = new BrowserWindow({
     show: false, frame: false, transparent: !libre, backgroundColor: libre ? "#05070d" : "#00000000", resizable: libre, minWidth: libre ? 160 : undefined, minHeight: libre ? 100 : undefined, skipTaskbar: true,
     focusable: libre, hasShadow: false, alwaysOnTop: true, width: 200, height: 80, title: `${APP_NAME} · ${kind}`, webPreferences: PREFS
   });
-  if (kind === "zoom") { try { win.setContentProtection(true); } catch { /* Windows ancien */ } } // la loupe ne se filme pas elle-même
   win.setAlwaysOnTop(true, "screen-saver");
   securiser(win);
   o = widgets[kind] = { win, w: 0, h: 0, z: 1, pret: false, vide: true, placement: 0, apercu: 0 };
@@ -229,7 +217,6 @@ function ouvrirWidget(kind) {
     if (carte && !o.vue) { o.vue = vueCarte(); win.contentView.addChildView(o.vue); }
     appliquerWidget(kind);
     if (kind === "toast" && o.message) pousser(win, { type: "toast", ...o.message });
-    if (kind === "zoom") { o.visible = false; synchroniserWidgets(); }
     pousser(win, { type: "cd", debuts: cdDebuts });
     pousser(win, { type: "dps", etat: dpsEtat });
     pousser(win, { type: "macro", ev: "snapshot", ...macros.etat() });
@@ -320,7 +307,6 @@ function doitAfficher(kind) {
   if (o && o.apercu > Date.now()) return true;
   if (kind === "toast") return false;
   if (kind === "dps" && dpsHorsCombat() === "hide") return false;
-  if (kind === "zoom" && !W("zoom").rel) return false; // loupe sans zone choisie
   if (filtrePremierPlan() && !jeuDevant()) return false;
   return !mainVisible && !!W(kind).pinned;
 }
@@ -329,11 +315,9 @@ function synchroniserWidgets() {
     if (doitAfficher(kind)) {
       const o = ouvrirWidget(kind);
       if (o.pret && o.w && !o.vide && !o.win.isVisible()) { placer(kind); o.win.showInactive(); o.win.setAlwaysOnTop(true, "screen-saver"); }
-      if (kind === "zoom" && o.pret && !o.visible) { o.visible = true; pousser(o.win, { type: "wvis", v: true }); } // la loupe ne capture l'écran que lorsqu'elle est affichée
     } else {
       const o = widgets[kind];
       if (o && vivante(o.win) && o.win.isVisible()) o.win.hide();
-      if (kind === "zoom" && o && vivante(o.win) && o.visible) { o.visible = false; pousser(o.win, { type: "wvis", v: false }); }
       // DPS meter masqué hors combat : fenêtre préparée en avance pour apparaître dès le premier coup
       if (kind === "dps" && !mainVisible && W(kind).pinned && !o) ouvrirWidget(kind);
     }
@@ -1129,7 +1113,6 @@ function creerTray() {
 
 /* ════════ Après chaque changement de réglages ════════ */
 function apresReglages() {
-  synchroniserPotions();
   majCartes(false);
   synchroniserViseur();
   synchroniserTouches();
@@ -1265,24 +1248,6 @@ const API = {
   open_logs: () => { shell.openPath(DATA); return true; },
   open_licence: () => { shell.openPath(path.join(__dirname, "COPYING.txt")); return true; },
   // ── Macros ──
-  potion_pick: () => choisirZone("pv", z => macros.commande("potions_calibrate", { zone: z }, 15000)),
-  potion_recalibrate: async () => { const z = S.potions && S.potions.zone; if (!z) throw new Error("choisis d'abord la barre de vie"); return macros.commande("potions_calibrate", { zone: z }, 15000); },
-  potion_read: () => macros.phase === "ready" ? macros.commande("potions_read", {}, 4000).catch(() => -1) : -1, // lecture d'aperçu : pas d'erreur au journal toutes les 0,5 s
-  zoom_source: async () => {
-    // écran où la zone de la loupe a été choisie : identifiant de capture + taille en pixels réels
-    const rel = W("zoom").rel || {};
-    const sources = await desktopCapturer.getSources({ types: ["screen"], thumbnailSize: { width: 0, height: 0 } });
-    const src = sources.find(x => String(x.display_id) === String(rel.display)) || sources[0];
-    const d = screen.getAllDisplays().find(x => String(x.id) === String(rel.display)) || screen.getPrimaryDisplay();
-    return src ? { id: src.id, w: Math.round(d.bounds.width * d.scaleFactor), h: Math.round(d.bounds.height * d.scaleFactor) } : null;
-  },
-  zoom_error: (e, texte) => { log("Loupe : capture impossible :", String(texte).slice(0, 400)); return true; },
-  zoom_pick: () => choisirZone("zoom", (z, rel) => {
-    S.widgets = S.widgets || {};
-    S.widgets.zoom = { ...W("zoom"), rel, phys: z, pinned: true }; // zone choisie : la loupe s'affiche en jeu
-    ecrireReglages(); diffuserReglages(); synchroniserWidgets();
-    return rel;
-  }),
   mascots_list: () => mascottes(),
   mascots_add: async () => {
     const r = await dialog.showOpenDialog(vivante(main) ? main : undefined, { title: "Ajouter des mascottes", properties: ["openFile", "multiSelections"],
@@ -1395,22 +1360,8 @@ async function installerMaj() {
     throw e;
   } finally { majEnCours = false; }
 }
-/* Loupe : la page du widget demande la capture d'écran ; on lui donne l'écran où la zone a été choisie (et à elle seule) */
-function autoriserCaptureLoupe() {
-  session.defaultSession.setDisplayMediaRequestHandler(async (req, repondre) => {
-    try {
-      const url = (req.frame && req.frame.url) || "";
-      if (!/#w=zoom\b/.test(url)) { repondre({}); return; }
-      const rel = W("zoom").rel || {};
-      const sources = await desktopCapturer.getSources({ types: ["screen"], thumbnailSize: { width: 0, height: 0 } });
-      const src = sources.find(x => String(x.display_id) === String(rel.display)) || sources[0];
-      repondre(src ? { video: src } : {});
-    } catch (e) { log("Loupe :", e.message); repondre({}); }
-  });
-}
 function demarrer() {
   Menu.setApplicationMenu(null);
-  autoriserCaptureLoupe();
   setTimeout(() => { if ((S.maj || {}).auto !== false) verifierMaj(false); }, 15000); // vérification au lancement
   log("Démarrage", APP_NAME, app.getVersion(), "Electron", process.versions.electron);
   splashEnCours = lancerSplash();

@@ -1,6 +1,6 @@
-﻿PICHETMETER — version 2.4.0 (PichetMeter + Pichet Macro)
-Compagnon pour Aion 2 : armurerie, classement, tâches, timers, DPS meter de groupe, cooldowns,
-viseur et carte, affichés par-dessus le jeu.
+﻿PICHETMETER — version 2.5.0 (PichetMeter + Pichet Macro)
+Compagnon pour Aion 2 : armurerie, timers, DPS meter de groupe, macros, viseur, carte et ping,
+affichés par-dessus le jeu.
 Créateur : @atomedims · Discord : https://discord.gg/KrkJrjrDJt
 Code source et nouvelles versions : https://github.com/Pichetdechiasso/PichetMeter-Aion2-Multitool
 ===========================================================================================
@@ -16,8 +16,9 @@ INSTALLER
    (environ 150 Mo) et vérifie son empreinte SHA-256 publiée par Electron.
    Elle installe ensuite PichetMeter.exe dans %LOCALAPPDATA%\Programs\PichetMeter,
    crée un raccourci « PichetMeter » sur le Bureau et dans le menu Démarrer, puis lance l'application.
-4. Mise à jour : relance Installer.cmd de la nouvelle version. Le moteur déjà installé est
-   conservé, seule l'application est remplacée. Tes comptes et réglages restent.
+4. Mise à jour : PichetMeter propose lui-même les nouvelles versions (Paramètres > Général >
+   Mises à jour). Tu peux aussi relancer Installer.cmd de la nouvelle version. Le moteur déjà
+   installé est conservé, seule l'application est remplacée. Comptes, réglages et macros restent.
 
 Tu avais « Aion 2 Companion HUD » ? L'installation le remplace automatiquement par PichetMeter :
 moteur, comptes, réglages et historique sont repris, l'ancien raccourci est retiré.
@@ -29,11 +30,20 @@ DANS LE JEU
 - Alt + C : afficher / masquer l'overlay (modifiable dans Paramètres). Échap le masque aussi.
 - Ctrl + Maj + V : afficher / masquer le viseur (modifiable dans l'onglet Viseur).
 - Quand l'overlay est masqué, les modules réglés sur « Afficher en jeu » (timers, ping, DPS,
-  cooldowns, carte, viseur) restent à l'écran. Taille, opacité, position et clic à travers
-  se règlent dans l'onglet de chaque module ; Paramètres > Modules en jeu les regroupe tous.
+  macros en cours, viseur) restent à l'écran. « Placer et régler les widgets » ouvre une page
+  par-dessus le jeu pour les déplacer et les redimensionner ; Paramètres > Widgets les regroupe
+  tous, avec le ping.
 - Option « Seulement quand le jeu est au premier plan » (Paramètres > Modules en jeu) :
   les widgets se cachent dès que tu passes sur Discord, ton navigateur, etc.
 - L'icône dans la zone de notification (près de l'horloge) permet aussi d'afficher l'overlay ou de quitter.
+
+NOUVEAUTÉS 2.5.0
+- Macros : nouveau nœud « Parallèle » (une entrée, trois sorties) qui lance ses trois branches en
+  même temps, par exemple maintenir une touche pendant qu'une autre branche enchaîne des sorts.
+- Viseur : l'aperçu s'affiche sur une vraie scène du jeu.
+- Ping : plus d'onglet à part ; la mesure et l'option « Afficher en jeu » sont dans
+  Paramètres > Widgets.
+- Retirés : les auto-potions et la loupe.
 
 NOUVEAUTÉS 2.4.0
 - Mises à jour automatiques : au lancement, PichetMeter vérifie la dernière version publiée sur GitHub et

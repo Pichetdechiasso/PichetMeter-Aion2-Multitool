@@ -1,5 +1,14 @@
 # Journal des versions
 
+## 2.5.0
+
+- **Macros : nœud « Parallèle »** (une entrée, trois sorties) : les branches reliées tournent en même temps, chacune dans son propre fil ; le nœud se termine quand toutes sont finies. Envois au pilote sérialisés. Testé dans `test/macro_serveur_test.py`.
+- **Viseur** : l'aperçu utilise une capture du jeu en fond (`app/img/viseur-fond.jpg`).
+- **Ping** : onglet retiré ; mesure, historique et « Afficher en jeu » dans Paramètres > Widgets. Le widget de ping reste disponible.
+- **Retirés** : auto-potions (onglet, `macro/potions.py`, commandes du moteur) et loupe (onglet, widget, capture d'écran). Les anciens réglages correspondants sont effacés.
+- Widget DPS : largeur adaptée au nombre de colonnes (les pseudos ne sont plus coupés).
+- README : nouvelles captures (widgets en jeu, placement, onglets).
+
 ## 2.4.0
 
 Première version publiée depuis la 1.8 : elle regroupe les versions 2.0 à 2.3 décrites plus bas.

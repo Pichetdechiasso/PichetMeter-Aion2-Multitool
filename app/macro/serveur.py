@@ -27,7 +27,6 @@ for flux in (sys.stdin, sys.stdout):
         pass
 
 import installer  # noqa: E402
-import potions  # noqa: E402
 import version  # noqa: E402
 import winutil  # noqa: E402
 from driver import InterceptionDriver, cursor_pos  # noqa: E402
@@ -98,7 +97,6 @@ class Serveur:
         self.pause = False
         self.macros: list[Macro] = []
         self._signature_raccourcis = None
-        self.potions = potions.AutoPotions(self.driver, evenement, lambda: self.recorder is not None or self.installing)
 
         b = self.bridge
         # signaux qui modifient l'état : traités dans le fil principal, dans l'ordre (comme la file d'évènements Qt)
@@ -132,7 +130,6 @@ class Serveur:
         self._trier()
         self.driver.open(int(self.settings.get("kbd_device", 0)), int(self.settings.get("mouse_device", 0)))
         self.appliquer_raccourcis(force=True)
-        self.potions.start()
         evenement("ready", **self.bonjour())
 
     def bonjour(self) -> dict:
@@ -354,9 +351,6 @@ class Serveur:
         self.publier_etat()
 
     def arreter_tout(self) -> None:
-        if self.potions.cfg.get("enabled"):  # l'arrêt d'urgence coupe aussi les auto-potions
-            self.potions.cfg = {**self.potions.cfg, "enabled": False}
-            evenement("potions_off")
         if self.recorder is not None:
             self.terminer_enregistrement()
         for player in list(self.players.values()):
@@ -578,20 +572,6 @@ class Serveur:
     def c_reboot(self, _msg) -> bool:
         installer.reboot_now()
         return True
-
-    def c_potions_config(self, msg) -> dict:
-        cfg = self.potions.configurer(msg.get("config") or {})
-        return {**cfg, "actif": self.potions.actif()}
-
-    def c_potions_calibrate(self, msg) -> dict:
-        resultat = self.potions.calibrer(msg.get("zone") or {})
-        cfg = dict(self.potions.cfg)
-        cfg.update(zone=resultat["zone"], couleur=resultat["couleur"])
-        self.potions.configurer(cfg)
-        return resultat
-
-    def c_potions_read(self, _msg) -> float:
-        return round(self.potions.lire(), 3) if self.potions.cfg.get("zone") and self.potions.cfg.get("couleur") else -1
 
     def c_foreground(self, _msg) -> dict:
         titre, pid, eleve = winutil.foreground_window()
