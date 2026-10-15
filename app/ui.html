@@ -1382,6 +1382,35 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
   </div>
 
   <!-- ═════════ Vue : Viseur ═════════ -->
+  <!-- ═════════ Vue : Lecteur YouTube ═════════ -->
+  <div class="grid view" id="view-video" hidden>
+    <section class="card neu-extruded span-12 modbar" data-modbar="video"></section>
+    <section class="card neu-extruded span-7">
+      <div class="card-head"><div><h2>Lecteur YouTube</h2><span class="sub">Une vidéo, une playlist ou YouTube en entier dans un widget par-dessus le jeu</span></div></div>
+      <form class="vid-form" id="vidForm" autocomplete="off">
+        <input class="field" id="vidUrl" placeholder="Colle un lien YouTube (vidéo, playlist, live…)" aria-label="Lien YouTube">
+        <button class="btn primary" type="submit">Lire</button>
+      </form>
+      <p class="err" id="vidErr" hidden>Ce lien n'est pas une vidéo ou une playlist YouTube.</p>
+      <div class="vid-now" id="vidNow"></div>
+      <h3 class="reg-t">Récemment</h3>
+      <div class="vid-recents" id="vidRecents"></div>
+    </section>
+    <section class="card neu-extruded span-5">
+      <div class="card-head"><h2>Réglages</h2></div>
+      <div class="form-row"><span class="label">Affichage</span>
+        <div class="seg" data-vid="mode"><button type="button" data-v="embed">Lecteur seul</button><button type="button" data-v="page">Page YouTube complète</button></div>
+        <span class="note">« Page YouTube complète » permet de chercher, de se connecter (abonnements, Premium) et de lire les vidéos qui refusent le lecteur seul.</span></div>
+      <div class="form-row"><span class="label">Taille du widget</span>
+        <div class="seg" data-vid="taille"><button type="button" data-v="400x255">Petit</button><button type="button" data-v="520x323">Moyen</button><button type="button" data-v="720x435">Grand</button><button type="button" data-v="960x570">Très grand</button></div>
+        <span class="note">Tu peux aussi tirer les bords du widget.</span></div>
+      <div class="form-row"><span class="label">Opacité</span>
+        <div class="slider-row"><input type="range" min="30" max="100" step="5" id="vidOp" aria-label="Opacité du lecteur"><span class="mono" id="vidOpV"></span></div></div>
+      <button class="btn" type="button" data-layout="video" style="justify-self:start">Placer et régler les widgets</button>
+      <p class="note">Le lecteur s'affiche quand l'interface est masquée (<kbd class="hk-txt">Alt + C</kbd>). Le son continue quand tu rouvres l'interface ; le bouton ✕ du widget le coupe.</p>
+    </section>
+  </div>
+
   <div class="grid view" id="view-viseur" hidden>
     <section class="card neu-extruded span-12 modbar" data-modbar="viseur"></section>
     <section class="card neu-extruded span-7">
@@ -1546,8 +1575,10 @@ const DEFAULTS = {
     ping: { pinned: true, opacity: 80, pos: "tl", size: "s", click: true },
     dps: { pinned: true, opacity: 90, pos: "ml", size: "m", click: true },
     cd: { pinned: true, opacity: 95, pos: "bc", size: "m", click: true },
-    macro: { pinned: true, opacity: 92, pos: "tc", size: "m", click: true }
+    macro: { pinned: true, opacity: 92, pos: "tc", size: "m", click: true },
+    video: { pinned: false, opacity: 100, pos: "mr", size: "m", click: false, w: 520, h: 323 }
   },
+  video: { url: "", mode: "embed", recents: [] },
   macro: { enabled: true, hideOnRun: true },
   maj: { auto: true, skip: "" },
   mascots: { on: true, macro: true, dps: true, timers: true, size: 110, lead: 5, fx: true },
@@ -1685,11 +1716,12 @@ const NAV = [
   ["dps", "DPS meter", '<path d="M4 20V11M10 20V5M16 20v-6M22 20H2"/>'],
   ["macros", "Macros", '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>'],
   ["viseur", "Viseur", '<circle cx="12" cy="12" r="8"/><path d="M12 2v6M12 16v6M2 12h6M16 12h6"/>'],
+  ["video", "Vidéo", '<rect x="2.5" y="5" width="19" height="14" rx="4"/><path d="m10 9 5 3-5 3z"/>'],
   ["carte", "Carte", '<path d="m9 4-6 2v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>'],
   ["params", "Paramètres", '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>'],
   ["infos", "Infos", '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.6v.2"/>']
 ];
-const MOD_VIEWS = ["timers", "dps", "macros", "viseur"];
+const MOD_VIEWS = ["timers", "dps", "macros", "viseur", "video"];
 $("#sideNav").innerHTML = '<i class="glider" aria-hidden="true"></i>' + NAV.map(([v, t, ic], i) => `<button role="tab" data-view="${v}" aria-selected="${i === 0}">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ic}</svg>${esc(t)}${MOD_VIEWS.includes(v) ? `<i class="mdot" data-mdot="${v}" aria-hidden="true"></i>` : v === "macros" ? '<i class="mdot" data-mcdot aria-hidden="true"></i>' : ""}</button>`).join("") +
   `<div class="side-foot"><span>Masquer l'overlay</span><span><kbd>Échap</kbd> ou <kbd id="hkFoot">Alt + C</kbd></span>
@@ -2553,6 +2585,7 @@ const MODS = {
   timers: { w: "timers", nom: "Timers", fr: "les prochains événements", en: "the next events" },
   dps: { w: "dps", nom: "DPS meter", fr: "le DPS meter", en: "the DPS meter" },
   viseur: { w: null, nom: "Viseur", fr: "le viseur", en: "the crosshair" },
+  video: { w: "video", nom: "Lecteur YouTube", fr: "le lecteur YouTube", en: "the YouTube player" },
   ping: { w: "ping", nom: "Ping", fr: "l'indicateur de ping", en: "the ping indicator" },
   macros: { w: "macro", nom: "Macros", fr: "les macros en cours et les touches envoyées", en: "running macros and the keys they send" }
 };
@@ -3392,10 +3425,82 @@ function onView(v) {
   syncMapView();
   if (v === "dps") { renderDpsControls(); refreshZonePreviews(); }
   if (v === "cd") { renderCdList(); renderMySkills(); renderKeyTest(); if (DESKTOP) { loadDiag().then(renderKeyTest); api().cd_keys().then(k => { if (k) { KEYS = k; renderKeyTest(); } }); } }
+  if (v === "video") renderVideo();
   if (v === "viseur") { renderXhControls(); if (DESKTOP) api().crosshair_state().then(st => { if (st) { VISEUR = { ...VISEUR, ...st }; renderXhState(); } }); }
   if (v === "params") loadDiag();
   if (v === "timers") renderSrv();
   if (v === "macros") window.MacrosUI.show();
+}
+
+/* ════════ Lecteur YouTube : onglet et widget ════════ */
+const videoTaille = c => [Math.max(260, Math.round(+(c && c.w) || 520)), Math.max(180, Math.round(+(c && c.h) || 323))];
+const ytId = t => { const m = String(t || "").match(/(?:v=|youtu\.be\/|shorts\/|live\/|embed\/)([\w-]{11})/) || String(t || "").trim().match(/^([\w-]{11})$/); return m ? m[1] : null; };
+const ytListe = t => { const m = String(t || "").match(/[?&]list=([\w-]+)/); return m ? m[1] : null; };
+const ytValide = t => !String(t || "").trim() || ((/youtu\.?be/i.test(t) || /^[\w-]{11}$/.test(String(t).trim())) && !!(ytId(t) || ytListe(t)));
+function lireVideo(url) {
+  url = String(url || "").trim();
+  if (!ytValide(url)) { const e = $("#vidErr"); if (e) e.hidden = false; return false; }
+  const v = S.video = { ...DEFAULTS.video, ...(S.video || {}) };
+  v.url = url; v.titre = "";
+  if (url) v.recents = [{ url, titre: "" }, ...(v.recents || []).filter(r => r.url !== url)].slice(0, 8);
+  S.widgets.video = { ...DEFAULTS.widgets.video, ...(S.widgets.video || {}), pinned: true }; // lire = afficher le lecteur en jeu
+  widgetChanged("video");
+  return true;
+}
+function renderVideo() {
+  if (WIDGET || !$("#view-video")) return;
+  const v = { ...DEFAULTS.video, ...(S.video || {}) }, w = S.widgets.video || {};
+  const inp = $("#vidUrl"); if (document.activeElement !== inp) inp.value = v.url || "";
+  $("#vidErr").hidden = true;
+  const id = ytId(v.url);
+  $("#vidNow").innerHTML = v.url ? `${id ? `<img src="https://i.ytimg.com/vi/${esc(id)}/mqdefault.jpg" alt="" referrerpolicy="no-referrer">` : `<span class="vid-ic">${svg("play")}</span>`}<div><span class="label">En cours</span><b>${esc(v.titre || (ytListe(v.url) && !id ? "Playlist YouTube" : "Vidéo YouTube"))}</b><small class="mono">${esc(v.url)}</small></div>`
+    : `<span class="vid-ic">${svg("play")}</span><div><span class="label">Rien en cours</span><b>Accueil de YouTube</b><small>Sans lien, le widget ouvre YouTube pour chercher une vidéo.</small></div>`;
+  $("#vidRecents").innerHTML = (v.recents || []).map((r, i) => { const rid = ytId(r.url); return `<button type="button" class="vid-rec" data-vrec="${i}" title="${esc(r.url)}">${rid ? `<img src="https://i.ytimg.com/vi/${esc(rid)}/default.jpg" alt="" referrerpolicy="no-referrer">` : `<span class="vid-ic sm">${svg("play")}</span>`}<span>${esc(r.titre || r.url.replace(/^https?:\/\/(www\.)?/, ""))}</span></button>`; }).join("") || '<p class="note">Les vidéos lues apparaîtront ici.</p>';
+  $$("[data-vid]").forEach(seg => { const k = seg.dataset.vid, cur = k === "taille" ? videoTaille(w).join("x") : (v[k] || "embed"); seg.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === cur))); });
+  $("#vidOp").value = w.opacity ?? 100; $("#vidOpV").textContent = (w.opacity ?? 100) + " %";
+  $$(".hk-txt").forEach(e => e.textContent = S.hotkey);
+}
+if (!WIDGET && $("#view-video")) {
+  $("#vidForm").addEventListener("submit", e => { e.preventDefault(); if (lireVideo($("#vidUrl").value)) { $("#vidUrl").blur(); renderVideo(); notify("Lecteur YouTube", `Le lecteur s'affiche par-dessus le jeu quand tu masques l'interface (${S.hotkey}).`); } });
+  $("#vidUrl").addEventListener("input", () => { $("#vidErr").hidden = true; });
+  $("#vidRecents").addEventListener("click", e => { const b = e.target.closest("[data-vrec]"); if (b) { lireVideo((S.video.recents || [])[+b.dataset.vrec].url); renderVideo(); } });
+  $("#view-video").addEventListener("click", e => {
+    const b = e.target.closest("[data-vid] button"); if (!b) return;
+    const k = b.closest("[data-vid]").dataset.vid;
+    if (k === "taille") { const [w, h] = b.dataset.v.split("x").map(Number); S.widgets.video = { ...S.widgets.video, w, h }; widgetChanged("video"); }
+    else { S.video = { ...DEFAULTS.video, ...S.video, [k]: b.dataset.v }; save(); }
+    renderVideo();
+  });
+  $("#vidOp").addEventListener("input", e => { S.widgets.video.opacity = +e.target.value; $("#vidOpV").textContent = e.target.value + " %"; clearTimeout(e.target._t); e.target._t = setTimeout(() => widgetChanged("video"), 150); });
+}
+/* Fenêtre du lecteur : barre de 30 px (lien, retour, accueil, recharger, masquer) ; la page YouTube est affichée dessous par le processus principal */
+function bootVideo(wr) {
+  document.body.classList.add("wm");
+  wr.innerHTML = `<div class="wbox wvid" id="wv"><div class="wvh pywebview-drag-region">
+      <span class="t">${svg("play")}<b id="wvTitre">YouTube</b></span>
+      <form id="wvForm" autocomplete="off"><input id="wvUrl" placeholder="Coller un lien YouTube…" aria-label="Lien YouTube"></form>
+      <button type="button" data-wv="back" title="Retour" aria-label="Retour">‹</button><button type="button" data-wv="home" title="Accueil YouTube" aria-label="Accueil YouTube">⌂</button>
+      <button type="button" data-wv="reload" title="Recharger" aria-label="Recharger">↻</button><button type="button" data-wv="off" title="Masquer le lecteur (coupe le son)" aria-label="Masquer le lecteur">✕</button></div></div>`;
+  const box = $("#wv");
+  const taille = () => { const [W, H] = videoTaille(S.widgets.video); box.style.width = W + "px"; box.style.height = H + "px"; };
+  taille(); onSettingsChanged.push(taille);
+  window.__videoTitre = t => {
+    const titre = String(t || "").replace(/\s*-\s*YouTube\s*$/, "").trim();
+    $("#wvTitre").textContent = titre || "YouTube";
+    if (titre && S.video && S.video.url && S.video.titre !== titre && !/^YouTube$/i.test(titre)) { // titre retenu pour l'onglet et les récents
+      S.video.titre = titre; (S.video.recents || []).forEach(r => { if (r.url === S.video.url) r.titre = titre; }); save();
+    }
+  };
+  $("#wvForm").addEventListener("submit", e => { e.preventDefault(); const u = $("#wvUrl").value; if (ytValide(u) && u.trim()) { lireVideo(u); $("#wvUrl").value = ""; $("#wvUrl").blur(); } else $("#wvUrl").classList.add("bad"); });
+  $("#wvUrl").addEventListener("input", e => e.target.classList.remove("bad"));
+  wr.addEventListener("click", e => {
+    const b = e.target.closest("[data-wv]"); if (!b) return;
+    const a = b.dataset.wv;
+    if (a === "back") api()?.video_back();
+    if (a === "home") api()?.video_home();
+    if (a === "reload") api()?.video_reload();
+    if (a === "off") { S.widgets.video = { ...S.widgets.video, pinned: false }; widgetChanged("video"); }
+  });
 }
 
 /* ════════ Mode widget (fenêtre épinglée) ════════ */
@@ -3404,7 +3509,7 @@ function bootWidget(kind) {
   $("#app").hidden = true; $("#welcome").hidden = true;
   const wr = $("#widgetRoot"); wr.hidden = false;
   let corps = wr;
-  if (!["crosshair", "picker"].includes(kind)) {
+  if (!["crosshair", "picker", "video"].includes(kind)) {
     wr.innerHTML = '<div class="wm" id="wWrap"><div class="wm-slot" id="wSlot"></div><div class="wm-body" id="wBody"></div></div>';
     corps = $("#wBody");
     if (MASC_KINDS.includes(kind)) installerMascotte(kind);
@@ -3416,13 +3521,13 @@ function bootWidget(kind) {
     const r = wr.getBoundingClientRect(), w = vide ? 0 : Math.ceil(r.width), h = vide ? 0 : Math.ceil(r.height);
     const envoyer = (x, y) => { if (x === taille[0] && y === taille[1]) return; taille = [x, y]; api()?.widget_fit(kind, x, y); };
     clearTimeout(retrecir);
-    if (vide || w >= taille[0] && h >= taille[1] || !taille[0]) { envoyer(w, h); return; }
+    if (vide || kind === "video" || w >= taille[0] && h >= taille[1] || !taille[0]) { envoyer(w, h); return; }
     // plus petit : on garde la taille actuelle (agrandie si besoin), puis on rétrécit quand le contenu ne bouge plus
     envoyer(Math.max(w, taille[0]), Math.max(h, taille[1]));
     retrecir = setTimeout(() => { const q = wr.getBoundingClientRect(); taille = [0, 0]; envoyer(Math.ceil(q.width), Math.ceil(q.height)); }, 1500);
   };
   if (kind !== "crosshair" && kind !== "picker") {
-    const zoom = () => { wr.style.zoom = wEchelle(kind); requestAnimationFrame(fit); };
+    const zoom = () => { wr.style.zoom = kind === "video" ? 1 : wEchelle(kind); requestAnimationFrame(fit); };
     zoom(); onSettingsChanged.push(zoom);
   }
   if (kind === "timers") {
@@ -3441,6 +3546,7 @@ function bootWidget(kind) {
       <svg class="spark" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true"></svg></div>`;
     tickPing(); setInterval(tickPing, 2000);
   }
+  if (kind === "video") bootVideo(wr);
   if (kind === "dps") {
     renderDps(); onSettingsChanged.push(renderDps);
     // Le widget laisse passer les clics au jeu, sauf sur ses boutons (remise à zéro, inspecter)
@@ -3614,8 +3720,8 @@ document.addEventListener("click", e => {
 
 /* ════════ Écran de placement des widgets (page transparente sur tout l'écran) ════════ */
 let LAYOUT_INFO = null;
-const L_NOMS = { timers: "Timers", ping: "Ping", dps: "DPS meter", cd: "Cooldowns", macro: "Macros", toast: "Alertes" };
-const L_KINDS = ["timers", "ping", "dps", "macro", "toast"];
+const L_NOMS = { timers: "Timers", ping: "Ping", dps: "DPS meter", cd: "Cooldowns", macro: "Macros", video: "Lecteur YouTube", toast: "Alertes" };
+const L_KINDS = ["timers", "ping", "dps", "macro", "video", "toast"];
 function dpsApercu() {
   const membres = [[901, (activeAcct() || {}).name || "Moi", 15, 52000, true], [902, "Kaelthys", 11, 61000], [903, "Sylvaine", 14, 47000], [904, "Elowen", 17, 15000]];
   const duree = 84000, joueurs = membres.map(([id, nom, classe, base, moi]) => ({ id, nom, classe, moi: !!moi, groupe: true, total: base * 84, dps: base, crit: 31, coups: 200, dos: 18, parfait: 9, double: 7, max: 41000, dot: 0, morts: 0, comp: [] }));
@@ -3628,6 +3734,7 @@ function contenuApercu(k) {
   if (k === "dps") return dpsWidgetHTML(DPS.combat ? DPS : dpsApercu());
   if (k === "cd") return cdWidgetHTML(true);
   if (k === "macro") return window.MacrosUI.apercuWidget();
+  if (k === "video") { const [W, H] = videoTaille(S.widgets.video); return `<div class="wbox wvid apercu" style="width:${W}px;height:${H}px"><div class="wvh"><span class="t">${svg("play")}Lecteur YouTube</span></div><div class="wvid-ph">${svg("play")}<small>${esc((S.video || {}).titre || "Vidéo YouTube")}</small></div></div>`; }
   if (k === "toast") return `<div class="wbox wtoast"><span class="bell" aria-hidden="true">${svg("bell")}</span><div style="min-width:0"><b>Exemple d'alerte</b><p>Faille dans 5 minutes</p></div></div>`;
   return "";
 }
@@ -3669,13 +3776,13 @@ function bootLayout() {
       inn.dataset.url = url;
       inn.innerHTML = `<div class="wm${masc ? " has-m" : ""}${side}" style="--msz:${Math.max(60, Math.min(220, +M.size || 110))}px"><div class="wm-slot${masc ? " on idle" : ""}">${masc && url ? `<img class="msc-img" src="${esc(url)}" alt="">` : ""}</div><div class="wm-body">${contenuApercu(k)}</div></div>`;
     }
-    inn.style.zoom = z;
+    inn.style.zoom = k === "video" ? 1 : z;
     inn.style.padding = "5px";
     inn.style.opacity = k === "toast" ? 1 : Math.max(.1, (+D[k].opacity || 90) / 100);
     el.classList.toggle("cache", !visibleEnJeu(k));
     el.classList.toggle("sel", sel === k);
     el.classList.toggle("tag-bas", !!P[k] && P[k].y < 34);
-    el.querySelector(".lw-tag").innerHTML = `${esc(L_NOMS[k])} <i>${Math.round(z * 100) + " %"}</i>${visibleEnJeu(k) ? "" : " <em>masqué en jeu</em>"}`;
+    el.querySelector(".lw-tag").innerHTML = `${esc(L_NOMS[k])} <i>${k === "video" ? videoTaille(D.video).join(" × ") : Math.round(z * 100) + " %"}</i>${visibleEnJeu(k) ? "" : " <em>masqué en jeu</em>"}`;
     return el;
   }
   const taille = k => { const el = boite(k); return [el.offsetWidth, el.offsetHeight]; };
@@ -3720,14 +3827,15 @@ function bootLayout() {
     if (!el) { if (!e.target.closest(".lt-bar, .lt-insp")) { sel = ""; L_KINDS.forEach(boite); inspecteur(); } return; }
     const k = el.dataset.k; sel = k; L_KINDS.forEach(boite); inspecteur();
     const grip = e.target.closest(".lw-grip");
-    geste = { k, grip: !!grip, sx: e.clientX, sy: e.clientY, x: P[k].x, y: P[k].y, w: el.offsetWidth, h: el.offsetHeight, z: echelle(k) };
+    geste = { k, grip: !!grip, sx: e.clientX, sy: e.clientY, x: P[k].x, y: P[k].y, w: el.offsetWidth, h: el.offsetHeight, z: echelle(k), vt: videoTaille(D.video) };
     el.classList.add("glisse"); root.classList.add("geste"); el.setPointerCapture(e.pointerId); e.preventDefault();
   });
   root.addEventListener("pointermove", e => {
     if (!geste) return;
     const g = geste, dx = e.clientX - g.sx, dy = e.clientY - g.sy, el = boite(g.k);
     if (g.grip) {
-      D[g.k].scale = Math.round(Math.max(.5, Math.min(2.5, g.z * (g.w + Math.max(dx, dy * g.w / g.h)) / g.w)) * 20) / 20;
+      if (g.k === "video") { D.video = { ...D.video, w: Math.max(260, Math.round(g.vt[0] + dx)), h: Math.max(180, Math.round(g.vt[1] + dy)) }; const b = el.querySelector(".wvid"); if (b) { b.style.width = D.video.w + "px"; b.style.height = D.video.h + "px"; } }
+      else D[g.k].scale = Math.round(Math.max(.5, Math.min(2.5, g.z * (g.w + Math.max(dx, dy * g.w / g.h)) / g.w)) * 20) / 20;
       boite(g.k); inspecteur();
     } else {
       const [x, y] = aimanter(g.k, g.x + dx, g.y + dy, el.offsetWidth, el.offsetHeight);
@@ -3754,7 +3862,7 @@ function bootLayout() {
       ${k === "toast" ? '<p class="note">Les alertes d\'événements apparaissent ici.</p>' : sw("pinned", !!c.pinned, "Afficher en jeu", "Quand l'interface est masquée")}
       ${k === "toast" ? "" : sw("click", !!c.click, "Clic à travers", "Les clics passent au jeu")}
       ${masc ? sw("masc", M.on !== false && M[k] !== false, "Mascotte animée", k === "macro" ? "À l'appui d'une macro" : "Pendant les combats") : ""}
-      ${`<div class="form-row"><span class="label">Taille</span><div class="slider-row"><input type="range" min="50" max="250" step="5" data-i="scale" value="${Math.round(echelle(k) * 100)}"><span class="mono">${Math.round(echelle(k) * 100)} %</span></div></div>`}
+      ${k === "video" ? `<p class="note">Taille : ${videoTaille(D.video).join(" × ")} px (tire le coin)</p>` : `<div class="form-row"><span class="label">Taille</span><div class="slider-row"><input type="range" min="50" max="250" step="5" data-i="scale" value="${Math.round(echelle(k) * 100)}"><span class="mono">${Math.round(echelle(k) * 100)} %</span></div></div>`}
       ${k === "toast" ? "" : `<div class="form-row"><span class="label">Opacité</span><div class="slider-row"><input type="range" min="20" max="100" step="5" data-i="opacity" value="${c.opacity ?? 90}"><span class="mono">${c.opacity ?? 90} %</span></div></div>`}
       <div class="lt-chips"><button type="button" class="btn sm" data-i="defaut">Position par défaut</button></div>`;
     placerInspecteur();
@@ -3797,7 +3905,7 @@ function bootLayout() {
   })();
   $("#ltAimant").addEventListener("click", e => { aimant = !aimant; e.currentTarget.setAttribute("aria-pressed", String(aimant)); });
   $("#ltReset").addEventListener("click", () => {
-    for (const k of L_KINDS) { const def = k === "toast" ? { pos: "br", size: "m" } : (DEFAULTS.widgets[k] || {}); D[k] = { ...D[k], pos: def.pos || "tr", x: null, y: null, scale: null, size: def.size || "m" }; }
+    for (const k of L_KINDS) { const def = k === "toast" ? { pos: "br", size: "m" } : (DEFAULTS.widgets[k] || {}); D[k] = { ...D[k], pos: def.pos || "tr", x: null, y: null, scale: null, size: def.size || "m" }; if (k === "video") Object.assign(D.video, { w: 520, h: 323 }); }
     for (const k of L_KINDS) { const el = boite(k); el.querySelector(".lw-in").dataset.pret = ""; boite(k); }
     toutPlacer(true);
   });
@@ -3807,7 +3915,7 @@ function bootLayout() {
     for (const k of L_KINDS) {
       if (k === "toast") continue;
       cfgs[k] = { ...D[k], pos: "free", x: Math.round(B.x + P[k].x), y: Math.round(B.y + P[k].y) };
-      cfgs[k].scale = echelle(k);
+      if (k !== "video") cfgs[k].scale = echelle(k);
     }
     const alertes = { pos: "free", x: Math.round(B.x + P.toast.x), y: Math.round(B.y + P.toast.y), scale: echelle("toast") };
     S.mascots = { ...S.mascots, ...M };
@@ -3916,6 +4024,7 @@ window.__onPush = msg => {
     case "sound": playTone(msg.tone, msg.volume); break;
     case "viseur": VISEUR = msg; renderXhState(); break;
     case "macro": window.MacrosUI.push(msg); break;
+    case "video": if (window.__videoTitre) window.__videoTitre(msg.titre); break;
     case "maj": majPush(msg); break;
     case "layout": LAYOUT_INFO = msg; if (window.__layoutPret) window.__layoutPret(); break;
     case "fond": { const b = $("#backdropImg"); if (!b) break; root.style.setProperty("--ecran-w", screen.width + "px"); root.style.setProperty("--ecran-h", screen.height + "px"); if (msg.url) { b.style.backgroundImage = `url("${msg.url}")`; b.classList.add("on"); } else { b.style.backgroundImage = ""; b.classList.remove("on"); } break; }
@@ -3955,10 +4064,10 @@ async function boot() {
     // l'interface apparaît quand la fenêtre est montrée ; filet de sécurité si le message n'arrive pas
     setTimeout(() => { if (!WINDOW_HIDDEN) ouvrirOverlay(); }, 2000);
   }
-  onSettingsChanged.push(renderWidgetPanels, renderParams, renderDpsControls, renderXhControls, renderCdList, renderMapTab, renderModules);
+  onSettingsChanged.push(renderWidgetPanels, renderParams, renderDpsControls, renderXhControls, renderCdList, renderMapTab, renderModules, renderVideo);
   showFields(); renderParams(); renderMascSettings(); onSettingsChanged.push(renderMascSettings); renderAlerts(); renderTimers(); renderWidgetPanels(); renderFavs(); renderRecents(); renderAccount();
   renderDpsControls(); renderCdList(); renderXhControls(); renderSrv();
-  renderMapTab(); renderModules(); renderInfos(); majRender();
+  renderMapTab(); renderModules(); renderInfos(); majRender(); renderVideo();
   if (DESKTOP) api().maj_state().then(st => { if (st && st.info && st.info.nouvelle && (S.maj.skip !== st.info.version)) { MAJ = { etat: "dispo", info: st.info, pct: 0, message: "" }; majRender(); } }).catch(() => {});
   requestAnimationFrame(() => placerGlider(true));
   setInterval(tickTimers, 1000);

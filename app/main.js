@@ -193,7 +193,7 @@ async function basculer() {
 }
 
 /* ════════ Widgets épinglés ════════ */
-const KINDS = ["timers", "ping", "dps", "macro"]; // Carte (2.3), Cooldowns (2.2) et Loupe (2.5) retirés
+const KINDS = ["timers", "ping", "dps", "macro", "video"]; // Carte (2.3), Cooldowns (2.2) et Loupe (2.5) retirés ; lecteur YouTube (2.6)
 const widgets = {};
 function configWidget(kind) {
   if (kind === "toast") { const a = S.alerts || {}; return { size: a.size || "m", scale: a.scale, opacity: 97, click: true, pos: a.pos || "br", x: a.x, y: a.y }; }
@@ -202,8 +202,8 @@ function configWidget(kind) {
 function ouvrirWidget(kind) {
   let o = widgets[kind];
   if (o && vivante(o.win)) return o;
-  const carte = kind === "map"; // la carte est un vrai site : fenêtre opaque qui peut recevoir le clavier et la souris
-  const libre = carte; // fenêtre redimensionnable à la souris
+  const carte = kind === "map", video = kind === "video"; // un vrai site (carte, YouTube) : fenêtre opaque qui reçoit le clavier et la souris
+  const libre = carte || video; // fenêtre redimensionnable à la souris
   const win = new BrowserWindow({
     show: false, frame: false, transparent: !libre, backgroundColor: libre ? "#05070d" : "#00000000", resizable: libre, minWidth: libre ? 160 : undefined, minHeight: libre ? 100 : undefined, skipTaskbar: true,
     focusable: libre, hasShadow: false, alwaysOnTop: true, width: 200, height: 80, title: `${APP_NAME} · ${kind}`, webPreferences: PREFS
@@ -215,6 +215,7 @@ function ouvrirWidget(kind) {
   win.webContents.on("did-finish-load", () => {
     o.pret = true;
     if (carte && !o.vue) { o.vue = vueCarte(); win.contentView.addChildView(o.vue); }
+    if (video && !o.vue) { o.vue = vueVideo(); win.contentView.addChildView(o.vue); placer(kind); }
     appliquerWidget(kind);
     if (kind === "toast" && o.message) pousser(win, { type: "toast", ...o.message });
     pousser(win, { type: "cd", debuts: cdDebuts });
@@ -232,7 +233,7 @@ function ouvrirWidget(kind) {
       ecrireReglages(); diffuserReglages();
     });
     win.on("resize", () => { if (o.vue) { const b = win.getContentBounds(); o.vue.setBounds({ x: 0, y: ENTETE_CARTE, width: b.width, height: Math.max(0, b.height - ENTETE_CARTE) }); } });
-    win.on("focus", () => { if (o.vue) o.vue.webContents.focus(); });
+    if (carte) win.on("focus", () => { if (o.vue) o.vue.webContents.focus(); });
   }
   return o;
 }
@@ -317,6 +318,7 @@ function synchroniserWidgets() {
       if (o.pret && o.w && !o.vide && !o.win.isVisible()) { placer(kind); o.win.showInactive(); o.win.setAlwaysOnTop(true, "screen-saver"); }
     } else {
       const o = widgets[kind];
+      if (kind === "video" && o && !W("video").pinned) { fermerVideo(); continue; } // lecteur masqué par l'utilisateur : la vidéo s'arrête
       if (o && vivante(o.win) && o.win.isVisible()) o.win.hide();
       // DPS meter masqué hors combat : fenêtre préparée en avance pour apparaître dès le premier coup
       if (kind === "dps" && !mainVisible && W(kind).pinned && !o) ouvrirWidget(kind);
@@ -379,6 +381,75 @@ function vueCarte() {
   v.url = urlCarte();
   wc.loadURL(v.url).catch(() => {});
   return v;
+}
+/* ════════ Lecteur YouTube (widget) ════════ */
+// Lien accepté : vidéo (watch, youtu.be, shorts, live, embed), playlist, ou rien (accueil de YouTube)
+function lienYoutube(texte) {
+  const t = String(texte || "").trim();
+  if (!t) return { id: null, liste: null, t: 0 };
+  if (/^[\w-]{11}$/.test(t)) return { id: t, liste: null, t: 0 };
+  let u; try { u = new URL(/^https?:\/\//i.test(t) ? t : "https://" + t); } catch { return null; }
+  const h = u.hostname.replace(/^(www|m|music)\./, "");
+  if (h !== "youtube.com" && h !== "youtu.be" && h !== "youtube-nocookie.com") return null;
+  let id = h === "youtu.be" ? u.pathname.slice(1, 12) : u.searchParams.get("v");
+  const m = u.pathname.match(/^\/(shorts|live|embed|v)\/([\w-]{11})/); if (m) id = m[2];
+  const sec = String(u.searchParams.get("t") || u.searchParams.get("start") || "").match(/^(?:(\d+)h)?(?:(\d+)m)?(\d+)?s?$/);
+  const t0 = sec ? (+sec[1] || 0) * 3600 + (+sec[2] || 0) * 60 + (+sec[3] || 0) : 0;
+  const liste = u.searchParams.get("list");
+  return (id && /^[\w-]{11}$/.test(id)) || liste ? { id: id && /^[\w-]{11}$/.test(id) ? id : null, liste, t: t0 } : null;
+}
+function urlVideo() {
+  const v = S.video || {}, l = lienYoutube(v.url) || { id: null, liste: null, t: 0 };
+  if (v.mode === "page" || (!l.id && !l.liste)) {
+    if (l.id) return `https://www.youtube.com/watch?v=${l.id}${l.liste ? "&list=" + encodeURIComponent(l.liste) : ""}${l.t ? "&t=" + l.t + "s" : ""}`;
+    if (l.liste) return `https://www.youtube.com/playlist?list=${encodeURIComponent(l.liste)}`;
+    return "https://www.youtube.com/";
+  }
+  const q = new URLSearchParams({ autoplay: "1", rel: "0", playsinline: "1", modestbranding: "1" });
+  if (l.t) q.set("start", String(l.t));
+  if (l.liste) q.set("list", l.liste);
+  if (!l.id && l.liste) q.set("listType", "playlist");
+  return `https://www.youtube.com/embed/${l.id || "videoseries"}?${q}`;
+}
+const hoteYoutube = u => /(^|\.)(youtube\.com|youtu\.be|youtube-nocookie\.com|google\.com|gstatic\.com|googlevideo\.com|ytimg\.com)$/.test(hote(u));
+let sessionVideo = null;
+function sessVideo() {
+  if (sessionVideo) return sessionVideo;
+  sessionVideo = session.fromPartition("persist:youtube"); // connexion YouTube conservée (abonnements, Premium)
+  sessionVideo.setUserAgent(UA);
+  sessionVideo.setPermissionRequestHandler((wc, permission, rep) => rep(permission === "fullscreen" || permission === "clipboard-sanitized-write"));
+  return sessionVideo;
+}
+function chargerVideo(v) {
+  if (!v || v.webContents.isDestroyed()) return;
+  v.url = urlVideo(); sigVideo = signatureVideo();
+  v.webContents.loadURL(v.url, { httpReferrer: "https://www.youtube.com/" }).catch(() => {}); // le lecteur intégré exige un référent
+}
+function vueVideo() {
+  const v = new WebContentsView({ webPreferences: { session: sessVideo(), sandbox: true, contextIsolation: true, nodeIntegration: false, spellcheck: false, backgroundThrottling: false } });
+  v.setBackgroundColor("#000000");
+  const wc = v.webContents;
+  wc.setWindowOpenHandler(({ url }) => {
+    if (/^https:\/\//i.test(url)) { if (hoteYoutube(url)) wc.loadURL(url).catch(() => {}); else shell.openExternal(url); }
+    return { action: "deny" };
+  });
+  wc.on("will-navigate", (e, url) => { if (hoteYoutube(url)) return; e.preventDefault(); if (/^https:\/\//i.test(url)) shell.openExternal(url); });
+  wc.on("did-fail-load", (e, code, desc, url, principal) => { if (principal && code !== -3) log("Vidéo non chargée :", desc, url); });
+  wc.on("page-title-updated", (e, titre) => { const o = widgets.video; if (o && vivante(o.win)) pousser(o.win, { type: "video", titre }); });
+  chargerVideo(v);
+  return v;
+}
+function fermerVideo() {
+  const o = widgets.video; if (!o) return;
+  delete widgets.video;
+  try { if (o.vue && !o.vue.webContents.isDestroyed()) o.vue.webContents.close(); } catch { /* déjà fermée */ }
+  if (vivante(o.win)) o.win.destroy();
+}
+let sigVideo = "";
+const signatureVideo = () => JSON.stringify([(S.video || {}).url || "", (S.video || {}).mode || ""]);
+function synchroniserVideo() {
+  const o = widgets.video;
+  if (o && o.vue && signatureVideo() !== sigVideo) chargerVideo(o.vue);
 }
 function pageErreurCarte(url, detail) {
   const e = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -1114,6 +1185,7 @@ function creerTray() {
 /* ════════ Après chaque changement de réglages ════════ */
 function apresReglages() {
   majCartes(false);
+  synchroniserVideo();
   synchroniserViseur();
   synchroniserTouches();
   boucleDps();
@@ -1202,6 +1274,10 @@ const API = {
   crosshair_preview: () => { viseurApercuJusque = Date.now() + 5000; synchroniserViseur(); setTimeout(synchroniserViseur, 5100); return true; },
   map_view: (e, r) => { placerCarteOnglet(r); return true; },
   map_reload: () => { majCartes(true); return true; },
+  video_check: (e, texte) => !!lienYoutube(texte),
+  video_reload: () => { const o = widgets.video; if (o && o.vue) chargerVideo(o.vue); return true; },
+  video_home: () => { const o = widgets.video; if (o && o.vue) o.vue.webContents.loadURL("https://www.youtube.com/").catch(() => {}); return true; },
+  video_back: () => { const o = widgets.video; if (o && o.vue && o.vue.webContents.navigationHistory.canGoBack()) o.vue.webContents.navigationHistory.goBack(); return true; },
   map_open: () => { shell.openExternal(urlCarte()); return true; },
   crosshair_state: () => ({ raison: raisonViseur(S.crosshair || {}), jeu: statut.name, fg: statut.fg }),
   dps_pick: (e, zone) => choisirZone(zone === "total" ? "total" : "dps"),

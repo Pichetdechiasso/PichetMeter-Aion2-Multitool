@@ -1,5 +1,9 @@
 # Journal des versions
 
+## 2.6.0
+
+- **Lecteur YouTube en widget** (onglet Vidéo, widget `video`) : fenêtre redimensionnable avec une barre de 30 px (lien, retour, accueil, recharger, masquer) et la page YouTube dessous (`WebContentsView`, session `persist:youtube` pour garder la connexion). Liens acceptés : vidéo, youtu.be, shorts, live, playlist, identifiant seul, avec le temps de départ (`t=`). Deux affichages : lecteur seul (`/embed`, avec référent YouTube) ou page YouTube complète. Masquer le lecteur ferme la page (la vidéo s'arrête) ; ouvrir l'interface ne la coupe pas. Récents avec miniatures et titres, taille, opacité, page de placement.
+
 ## 2.5.1
 
 - **Mise à jour automatique corrigée** : l'installeur était lancé par PowerShell détaché, sans console ; il s'arrêtait dès le premier affichage et l'application se fermait sans être mise à jour. Il est maintenant lancé par un script `mise-a-jour.cmd` dans sa propre fenêtre (`cmd start`), qui attend la fermeture de PichetMeter, exécute `installer.ps1 -Journal` et reste ouvert avec le message en cas d'échec.
