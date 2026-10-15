@@ -488,13 +488,13 @@ function placerEcranVideo() {
   const cible = { x: b.x + 1, y: b.y + ENTETE_CARTE, width: Math.max(1, b.width - 2), height: Math.max(1, b.height - ENTETE_CARTE - 1) };
   const a = o.ecran.getBounds();
   if (a.x !== cible.x || a.y !== cible.y || a.width !== cible.width || a.height !== cible.height) o.ecran.setBounds(cible);
-  const voir = o.win.isVisible() && o.lecture;
+  const voir = o.win.isVisible() && o.lecture && !o.menu; // menu de qualité ouvert : l'image s'efface pour le laisser voir
   if (voir && !o.ecran.isVisible()) { o.ecran.showInactive(); o.ecran.setAlwaysOnTop(true, "screen-saver"); }
   if (!voir && o.ecran.isVisible()) o.ecran.hide();
 }
 const hwnd = w => { const b = w.getNativeWindowHandle(); return (b.length >= 8 ? b.readBigUInt64LE(0) : BigInt(b.readUInt32LE(0))).toString(); };
 let lectureSeq = 0;
-async function lancerVlc() {
+async function lancerVlc(debut = 0) {
   const o = widgets.video; if (!o || !vivante(o.win)) return;
   const seq = ++lectureSeq, url = String((S.video || {}).url || "").trim();
   sigVideo = signatureVideo();
@@ -504,11 +504,14 @@ async function lancerVlc() {
     const vlc = await lecteur.trouverVlc((S.video || {}).vlc);
     if (!vlc) { pousserVideo({ titre: "VLC introuvable", message: "Installe VLC (videolan.org), puis clique sur ↻. Ou choisis « Navigateur intégré » dans l'onglet Vidéo.", erreur: true, vlcManquant: true }); return; }
     if (!o.ecran || !vivante(o.ecran)) creerEcranVideo(o);
-    const { titre } = await lecteur.lire(vlc, url, hwnd(o.ecran), message => { if (seq === lectureSeq) pousserVideo({ message }); });
+    const qualite = (S.video || {}).qualite || "auto";
+    const { titre, hauteur, audioSeul } = await lecteur.lire(vlc, url, hwnd(o.ecran), message => { if (seq === lectureSeq) pousserVideo({ message }); }, { qualite, debut });
     if (seq !== lectureSeq) return;
-    log("Vidéo : lecture dans VLC de", url.slice(0, 120), titre ? "(" + titre + ")" : "");
-    o.lecture = true; placerEcranVideo();
-    pousserVideo({ titre: titre || url, message: "", lecture: true });
+    log("Vidéo : lecture dans VLC de", url.slice(0, 120), titre ? "(" + titre + ")" : "", "qualité", qualite, hauteur ? hauteur + "p" : "");
+    o.lecture = !audioSeul; placerEcranVideo();
+    pousserVideo({ titre: titre || url, message: audioSeul ? "♪ Audio seul" : "", lecture: true, qualite, hauteur });
+    const vol = (S.video || {}).volume;
+    lecteur.volume(vol == null ? 100 : +vol).then(r => { if (r) pousserVideo({ etat: r }); });
   } catch (e) {
     if (seq !== lectureSeq) return;
     log("Vidéo : lecture impossible,", e.message);
@@ -1358,6 +1361,21 @@ const API = {
   video_reload: () => { const o = widgets.video; if (o && o.moteur === "vlc") lancerVlc(); else if (o && o.vue) chargerVideo(o.vue); return true; },
   video_home: () => { const o = widgets.video; if (o && o.vue) o.vue.webContents.loadURL(/twitch/.test(o.vue.url || "") ? "https://www.twitch.tv/" : "https://www.youtube.com/").catch(() => {}); return true; },
   video_cmd: (e, commande, val) => lecteur.requete(commande ? { command: String(commande), ...(val != null ? { val: String(val) } : {}) } : {}),
+  video_volume: (e, pourcent) => {
+    const v = Math.max(0, Math.min(125, Math.round(+pourcent || 0)));
+    S.video = { ...(S.video || {}), volume: v }; ecrireReglages();
+    return lecteur.requete({ command: "volume", val: String(Math.round(v * 2.56)) });
+  },
+  video_qualite: async (e, q) => {
+    const { QUALITES } = require("./lecteur");
+    if (!QUALITES.includes(q)) return false;
+    const st = await lecteur.requete();
+    S.video = { ...(S.video || {}), qualite: q }; ecrireReglages(); diffuserReglages();
+    const o = widgets.video; if (o) o.menu = false;
+    if (o && o.moteur === "vlc") lancerVlc(st && st.duree > 0 ? st.temps : 0); // une vidéo reprend au même moment ; un direct repart au direct
+    return true;
+  },
+  video_menu: (e, ouvert) => { const o = widgets.video; if (o) { o.menu = !!ouvert; placerEcranVideo(); } return true; },
   video_info: async () => ({ moteur: moteurVideo(), vlc: await lecteur.trouverVlc((S.video || {}).vlc), lecture: !!(widgets.video && widgets.video.lecture) }),
   video_back: () => { const o = widgets.video; if (o && o.vue && o.vue.webContents.navigationHistory.canGoBack()) o.vue.webContents.navigationHistory.goBack(); return true; },
   map_open: () => { shell.openExternal(urlCarte()); return true; },

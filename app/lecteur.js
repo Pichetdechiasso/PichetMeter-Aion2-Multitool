@@ -14,8 +14,15 @@ const { spawn, execFile } = require("child_process");
 
 const IS_WIN = process.platform === "win32";
 const YTDLP = "https://github.com/yt-dlp/yt-dlp/releases/latest/download/";
-// Vidéo H.264 jusqu'en 1080p + audio AAC (lus par VLC sans souci), sinon le meilleur flux unique (Twitch : HLS)
-const FORMAT = "bv*[height<=1080][vcodec^=avc1]+ba[acodec^=mp4a]/bv*[height<=1080]+ba/b[height<=1080]/b";
+// Qualités proposées : vidéo H.264 + audio AAC (lus par VLC sans souci), sinon le meilleur flux unique (Twitch : HLS)
+const QUALITES = ["auto", "max", "1080", "720", "480", "360", "audio"];
+function formatQualite(q) {
+  if (q === "audio") return "ba[acodec^=mp4a]/ba/b";
+  if (q === "max") return "bv*+ba/b";
+  const h = /^\d+$/.test(String(q)) ? +q : 1080;
+  return `bv*[height<=${h}][vcodec^=avc1]+ba[acodec^=mp4a]/bv*[height<=${h}]+ba/b[height<=${h}]/b`;
+}
+const FORMAT = formatQualite("auto");
 
 const executer = (exe, args, { timeout = 60000, env } = {}) => new Promise(resolve => {
   execFile(exe, args, { timeout, windowsHide: true, maxBuffer: 8 * 1024 * 1024, env: { ...process.env, PYTHONIOENCODING: "utf-8", ...(env || {}) } },
@@ -32,22 +39,24 @@ function source(url) {
   return "autre";
 }
 
-/** Sortie de yt-dlp (--print title, --print urls) : titre puis une ou deux adresses (vidéo, audio). */
+/** Sortie de yt-dlp (--print "#%(height)s", --print title, --print urls) : hauteur, titre, puis une ou deux adresses (vidéo, audio). */
 function lireSortie(texte) {
   const lignes = String(texte || "").split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   const urls = lignes.filter(l => /^https?:\/\//i.test(l));
-  const titre = lignes.find(l => !/^https?:\/\//i.test(l)) || "";
-  return { titre, urls: urls.slice(0, 2) };
+  const h = lignes.find(l => /^#(\d+|NA|None)$/.test(l));
+  const titre = lignes.find(l => !/^https?:\/\//i.test(l) && l !== h) || "";
+  return { titre, urls: urls.slice(0, 2), hauteur: h && /\d/.test(h) ? +h.slice(1) : 0 };
 }
 
 /** Arguments de VLC : aucune interface, image dans la fenêtre donnée, pilotage HTTP local. */
-function argsVlc({ hwnd, port, mdp, urls, titre }) {
+function argsVlc({ hwnd, port, mdp, urls, titre, debut }) {
   const a = ["-I", "dummy", "--dummy-quiet", "--no-one-instance", `--drawable-hwnd=${hwnd}`,
     "--no-video-title-show", "--no-mouse-events", "--no-keyboard-events", "--no-snapshot-preview", "--no-osd",
     "--network-caching=1500", "--extraintf=http", "--http-host=127.0.0.1", `--http-port=${port}`, `--http-password=${mdp}`,
     urls[0]];
   if (titre) a.push(`:meta-title=${titre}`);
   if (urls[1]) a.push(`:input-slave=${urls[1]}`);
+  if (debut > 1) a.push(`:start-time=${Math.floor(debut)}`); // changement de qualité : on reprend au même moment
   return a;
 }
 
@@ -98,10 +107,10 @@ class LecteurVlc {
   }
 
   /** Flux d'une page (YouTube, Twitch…) : { titre, urls }. PichetMeter sert de moteur JavaScript à yt-dlp (YouTube). */
-  async resoudre(url, progression = () => {}) {
+  async resoudre(url, progression = () => {}, qualite = "auto") {
     const exe = await this.ytdlp(progression);
     progression("Recherche du flux vidéo…");
-    const args = ["--no-playlist", "--no-warnings", "--no-progress", "-f", FORMAT, "--print", "title", "--print", "urls"];
+    const args = ["--no-playlist", "--no-warnings", "--no-progress", "-f", formatQualite(qualite), "--print", "#%(height)s", "--print", "title", "--print", "urls"];
     if (source(url) === "youtube") args.push("--js-runtimes", `node:${process.execPath}`);
     const r = await executer(exe, [...args, url], { timeout: 90000, env: { ELECTRON_RUN_AS_NODE: "1" } });
     const res = lireSortie(r.out);
@@ -113,16 +122,27 @@ class LecteurVlc {
   }
 
   /** Lit un lien dans la fenêtre `hwnd` (handle natif, en décimal). */
-  async lire(vlc, url, hwnd, progression = () => {}) {
+  async lire(vlc, url, hwnd, progression = () => {}, { qualite = "auto", debut = 0 } = {}) {
     this.arreter();
-    const { titre, urls } = await this.resoudre(url, progression);
+    const { titre, urls, hauteur } = await this.resoudre(url, progression, qualite);
     this.port = await portLibre(); this.mdp = crypto.randomBytes(12).toString("hex"); this.titre = titre; this.url = url;
     progression("Ouverture dans VLC…");
-    const p = spawn(vlc, argsVlc({ hwnd, port: this.port, mdp: this.mdp, urls, titre }), { windowsHide: true, stdio: "ignore" });
+    const p = spawn(vlc, argsVlc({ hwnd, port: this.port, mdp: this.mdp, urls, titre, debut }), { windowsHide: true, stdio: "ignore" });
     this.proc = p;
     p.on("error", e => { this.log("Vidéo : VLC ne démarre pas,", e.message); if (this.proc === p) this.proc = null; });
     p.on("exit", code => { if (this.proc === p) { this.proc = null; this.log("Vidéo : VLC fermé, code", code); } });
-    return { titre };
+    this.hauteur = hauteur;
+    return { titre, hauteur, audioSeul: qualite === "audio" };
+  }
+
+  /** Volume (0 à 125 %) dès que l'interface HTTP de VLC répond. */
+  async volume(pourcent, essais = 12) {
+    for (let i = 0; i < essais; i++) {
+      const r = await this.requete({ command: "volume", val: String(Math.round(Math.max(0, Math.min(125, pourcent)) * 2.56)) });
+      if (r) return r;
+      await new Promise(ok => setTimeout(ok, 500));
+    }
+    return null;
   }
 
   /** Commande de l'interface HTTP de VLC (pl_pause, seek, volume…) ; renvoie l'état. */
@@ -144,4 +164,4 @@ class LecteurVlc {
   }
 }
 
-module.exports = { LecteurVlc, source, lireSortie, argsVlc, FORMAT };
+module.exports = { LecteurVlc, source, lireSortie, argsVlc, formatQualite, QUALITES, FORMAT };

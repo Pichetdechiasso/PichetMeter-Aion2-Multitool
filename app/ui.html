@@ -1401,6 +1401,9 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
       <div class="form-row"><span class="label">Lecture par</span>
         <div class="seg" data-vid="moteur"><button type="button" data-v="vlc">VLC (recommandé)</button><button type="button" data-v="web">Navigateur intégré</button></div>
         <span class="note" id="vidMoteurNote"></span></div>
+      <div class="form-row" id="vidQRow"><span class="label">Qualité (VLC)</span>
+        <div class="seg" data-vid="qualite"><button type="button" data-v="auto">Auto</button><button type="button" data-v="1080">1080p</button><button type="button" data-v="720">720p</button><button type="button" data-v="480">480p</button><button type="button" data-v="audio">Audio</button></div>
+        <span class="note">Aussi dans le widget (bouton de qualité), avec « Maximale » et 360p.</span></div>
       <div class="form-row" id="vidModeRow"><span class="label">Affichage du navigateur</span>
         <div class="seg" data-vid="mode"><button type="button" data-v="embed">Lecteur seul</button><button type="button" data-v="page">Site complet</button></div>
         <span class="note">« Site complet » permet de chercher et de se connecter (abonnements YouTube, Twitch).</span></div>
@@ -1581,7 +1584,7 @@ const DEFAULTS = {
     macro: { pinned: true, opacity: 92, pos: "tc", size: "m", click: true },
     video: { pinned: false, opacity: 100, pos: "mr", size: "m", click: false, w: 520, h: 323 }
   },
-  video: { url: "", mode: "embed", moteur: "vlc", recents: [] },
+  video: { url: "", mode: "embed", moteur: "vlc", qualite: "auto", volume: 100, recents: [] },
   macro: { enabled: true, hideOnRun: true },
   maj: { auto: true, skip: "" },
   mascots: { on: true, macro: true, dps: true, timers: true, size: 110, lead: 5, fx: true },
@@ -3464,7 +3467,7 @@ function renderVideo() {
     : `<span class="vid-ic">${svg("play")}</span><div><span class="label">Rien en cours</span><b>Colle un lien pour commencer</b><small>${v.moteur === "web" ? "Sans lien, le widget ouvre l'accueil de YouTube." : "Lien YouTube ou Twitch (chaîne en direct, rediffusion, clip)."}</small></div>`;
   $("#vidRecents").innerHTML = (v.recents || []).map((r, i) => `<button type="button" class="vid-rec" data-vrec="${i}" title="${esc(r.url)}">${vignette(r.url, "default")}<span>${esc(r.titre || twitchNom(r.url) || r.url.replace(/^https?:\/\/(www\.)?/, ""))}</span></button>`).join("") || '<p class="note">Les vidéos lues apparaîtront ici.</p>';
   $$("[data-vid]").forEach(seg => { const k = seg.dataset.vid, cur = k === "taille" ? videoTaille(w).join("x") : (v[k] || DEFAULTS.video[k]); seg.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === cur))); });
-  $("#vidModeRow").hidden = v.moteur !== "web";
+  $("#vidModeRow").hidden = v.moteur !== "web"; $("#vidQRow").hidden = v.moteur === "web";
   const i = VIDEO_INFO;
   $("#vidMoteurNote").innerHTML = v.moteur === "web" ? "Le site YouTube ou Twitch s'affiche dans le widget. Certaines vidéos refusent ce mode : utilise alors VLC."
     : !DESKTOP ? "VLC lit la vidéo dans le widget ; le flux est trouvé par yt-dlp (téléchargé une fois depuis GitHub)."
@@ -3482,6 +3485,7 @@ if (!WIDGET && $("#view-video")) {
     const b = e.target.closest("[data-vid] button"); if (!b) return;
     const k = b.closest("[data-vid]").dataset.vid;
     if (k === "taille") { const [w, h] = b.dataset.v.split("x").map(Number); S.widgets.video = { ...S.widgets.video, w, h }; widgetChanged("video"); }
+    else if (k === "qualite") { S.video = { ...DEFAULTS.video, ...S.video, qualite: b.dataset.v }; if (DESKTOP) api().video_qualite(b.dataset.v); else save(); }
     else { S.video = { ...DEFAULTS.video, ...S.video, [k]: b.dataset.v }; save(); if (k === "moteur") infoVideo(); }
     renderVideo();
   });
@@ -3489,16 +3493,19 @@ if (!WIDGET && $("#view-video")) {
 }
 /* Fenêtre du lecteur : barre de 30 px ; l'image (VLC ou page web) est affichée dessous par le processus principal */
 const fmtTemps = s => { s = Math.max(0, Math.round(+s || 0)); const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, x = String(s % 60).padStart(2, "0"); return h ? `${h}:${String(m).padStart(2, "0")}:${x}` : `${m}:${x}`; };
+const QUALITES_VIDEO = [["auto", "Auto", "jusqu'en 1080p"], ["max", "Maximale", "4K si disponible"], ["1080", "1080p", "Full HD"], ["720", "720p", "HD, plus léger"], ["480", "480p", "économe"], ["360", "360p", "très léger"], ["audio", "Audio seul", "sans image"]];
+const nomQualite = q => (QUALITES_VIDEO.find(x => x[0] === q) || QUALITES_VIDEO[0])[1];
 function bootVideo(wr) {
   document.body.classList.add("wm");
   const vlc = (S.video || {}).moteur !== "web";
   wr.innerHTML = `<div class="wbox wvid${vlc ? " vlc" : ""}" id="wv"><div class="wvh pywebview-drag-region">
       <span class="t">${svg("play")}<b id="wvTitre">${vlc ? "Lecteur vidéo" : "YouTube"}</b><i class="mono" id="wvTemps"></i></span>
       <form id="wvForm" autocomplete="off"><input id="wvUrl" placeholder="Lien YouTube ou Twitch…" aria-label="Lien YouTube ou Twitch"></form>
-      ${vlc ? `<button type="button" data-wv="recul" title="Reculer de 10 s" aria-label="Reculer de 10 secondes">«</button><button type="button" data-wv="pause" id="wvPause" title="Pause / lecture" aria-label="Pause ou lecture">❚❚</button><button type="button" data-wv="avance" title="Avancer de 10 s" aria-label="Avancer de 10 secondes">»</button><button type="button" data-wv="son" id="wvSon" title="Couper / remettre le son" aria-label="Couper ou remettre le son">♪</button>`
+      ${vlc ? `<button type="button" data-wv="recul" title="Reculer de 10 s" aria-label="Reculer de 10 secondes">«</button><button type="button" data-wv="pause" id="wvPause" title="Pause / lecture" aria-label="Pause ou lecture">❚❚</button><button type="button" data-wv="avance" title="Avancer de 10 s" aria-label="Avancer de 10 secondes">»</button><button type="button" data-wv="son" id="wvSon" title="Couper / remettre le son" aria-label="Couper ou remettre le son">♪</button><input type="range" class="wv-vol" id="wvVol" min="0" max="125" step="1" title="Volume" aria-label="Volume"><button type="button" class="wv-q" data-wv="qualite" id="wvQ" title="Qualité de la vidéo" aria-label="Qualité de la vidéo" aria-haspopup="menu" aria-expanded="false">Auto</button>`
         : `<button type="button" data-wv="back" title="Retour" aria-label="Retour">‹</button><button type="button" data-wv="home" title="Accueil" aria-label="Accueil">⌂</button>`}
       <button type="button" data-wv="reload" title="Recharger" aria-label="Recharger">↻</button><button type="button" data-wv="off" title="Arrêter et masquer le lecteur" aria-label="Arrêter et masquer le lecteur">✕</button></div>
-    <div class="wv-msg" id="wvMsg">${vlc ? "Chargement…" : ""}</div></div>`;
+    <div class="wv-msg" id="wvMsg">${vlc ? "Chargement…" : ""}</div>
+    <div class="wv-menu" id="wvMenu" role="menu" hidden><span class="label">Qualité</span>${QUALITES_VIDEO.map(([q, t, d]) => `<button type="button" role="menuitemradio" data-q="${q}"><b>${t}</b><small>${d}</small></button>`).join("")}</div></div>`;
   const box = $("#wv");
   const taille = () => { const [W, H] = videoTaille(S.widgets.video); box.style.width = W + "px"; box.style.height = H + "px"; };
   taille(); onSettingsChanged.push(taille);
@@ -3507,11 +3514,24 @@ function bootVideo(wr) {
       S.video.titre = titre; (S.video.recents || []).forEach(r => { if (r.url === S.video.url) r.titre = titre; }); save();
     }
   };
-  let volumeAvant = 100, etat = null;
+  let volumeAvant = 100, etat = null, glisseVol = false, hauteur = 0;
+  const qualite = () => (S.video || {}).qualite || "auto";
+  const peindreQualite = () => {
+    const q = $("#wvQ"); if (!q) return;
+    q.textContent = qualite() === "auto" && hauteur ? hauteur + "p" : qualite() === "max" && hauteur ? hauteur + "p+" : nomQualite(qualite()).replace("Audio seul", "♪");
+    $$("#wvMenu [data-q]").forEach(b => b.setAttribute("aria-checked", String(b.dataset.q === qualite())));
+  };
+  const menu = ouvrir => {
+    const m = $("#wvMenu"); if (!m) return;
+    m.hidden = !ouvrir; $("#wvQ").setAttribute("aria-expanded", String(ouvrir));
+    api()?.video_menu(ouvrir); peindreQualite();
+  };
   window.__videoTitre = m => {
     if (typeof m === "string") m = { titre: m };
-    if (m.titre != null) { const t = String(m.titre).replace(/\s*-\s*(YouTube|Twitch)\s*$/, "").trim(); $("#wvTitre").textContent = t || "Lecteur vidéo"; if (!m.erreur) retenirTitre(t); }
+    if (m.titre != null) { const t = String(m.titre).replace(/\s*-\s*(YouTube|Twitch)\s*$/, "").trim(); $("#wvTitre").textContent = t || "Lecteur vidéo"; $("#wvTitre").title = t; if (!m.erreur) retenirTitre(t); }
     if (m.message != null) { const el = $("#wvMsg"); el.textContent = m.message; el.classList.toggle("err", !!m.erreur); el.hidden = !m.message; }
+    if (m.hauteur != null) { hauteur = +m.hauteur || 0; peindreQualite(); }
+    if (m.etat) { etat = m.etat; peindre(); }
   };
   $("#wvForm").addEventListener("submit", e => { e.preventDefault(); const u = $("#wvUrl").value; if (videoValide(u) && u.trim()) { lireVideo(u); $("#wvUrl").value = ""; $("#wvUrl").blur(); } else $("#wvUrl").classList.add("bad"); });
   $("#wvUrl").addEventListener("input", e => e.target.classList.remove("bad"));
@@ -3521,7 +3541,30 @@ function bootVideo(wr) {
     $("#wvPause").textContent = etat.etat === "playing" ? "❚❚" : "▶";
     $("#wvSon").textContent = etat.volume ? "♪" : "∅"; $("#wvSon").classList.toggle("off", !etat.volume);
     $("#wvTemps").textContent = etat.duree ? `${fmtTemps(etat.temps)} / ${fmtTemps(etat.duree)}` : etat.etat === "playing" ? "● direct" : "";
+    const v = $("#wvVol"); if (v && !glisseVol) { v.value = Math.min(125, etat.volume); v.style.setProperty("--p", Math.min(125, etat.volume) / 1.25 + "%"); v.title = `Volume ${etat.volume} %`; }
   };
+  const vol = $("#wvVol");
+  if (vol) {
+    const init = (S.video || {}).volume ?? 100; vol.value = init; vol.style.setProperty("--p", init / 1.25 + "%");
+    let t = 0;
+    vol.addEventListener("pointerdown", () => { glisseVol = true; });
+    vol.addEventListener("input", () => {
+      vol.style.setProperty("--p", vol.value / 1.25 + "%"); vol.title = `Volume ${vol.value} %`;
+      clearTimeout(t); t = setTimeout(() => api()?.video_volume(+vol.value).then(r => { if (r && r.etat) { etat = r; } }), 80);
+    });
+    const fin = () => { glisseVol = false; if (S.video) S.video.volume = +vol.value; };
+    vol.addEventListener("change", fin); vol.addEventListener("pointerup", fin);
+    vol.addEventListener("wheel", e => { e.preventDefault(); vol.value = Math.max(0, Math.min(125, +vol.value + (e.deltaY < 0 ? 5 : -5))); vol.dispatchEvent(new Event("input")); fin(); }, { passive: false });
+  }
+  peindreQualite();
+  document.addEventListener("click", e => { if (!e.target.closest("#wvMenu, #wvQ") && !$("#wvMenu")?.hidden) menu(false); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#wvMenu")?.hidden) menu(false); });
+  $("#wvMenu")?.addEventListener("click", e => {
+    const b = e.target.closest("[data-q]"); if (!b) return;
+    S.video = { ...(S.video || {}), qualite: b.dataset.q }; hauteur = 0; menu(false);
+    const el = $("#wvMsg"); el.textContent = `Qualité ${nomQualite(b.dataset.q)}…`; el.classList.remove("err"); el.hidden = false;
+    api()?.video_qualite(b.dataset.q);
+  });
   if (vlc && DESKTOP) setInterval(() => { if (document.visibilityState !== "hidden") cmd(); }, 1500);
   wr.addEventListener("click", e => {
     const b = e.target.closest("[data-wv]"); if (!b) return;
@@ -3532,7 +3575,8 @@ function bootVideo(wr) {
     if (a === "pause") cmd("pl_pause");
     if (a === "recul") cmd("seek", "-10s");
     if (a === "avance") cmd("seek", "+10s");
-    if (a === "son") { if (etat && etat.volume) { volumeAvant = etat.volume; cmd("volume", 0); } else cmd("volume", Math.round((volumeAvant || 100) * 2.56)); }
+    if (a === "son") { if (etat && etat.volume) { volumeAvant = etat.volume; api()?.video_volume(0).then(r => { if (r) { etat = r; peindre(); } }); } else api()?.video_volume(volumeAvant || 100).then(r => { if (r) { etat = r; peindre(); } }); }
+    if (a === "qualite") menu($("#wvMenu").hidden);
     if (a === "off") { S.widgets.video = { ...S.widgets.video, pinned: false }; widgetChanged("video"); }
   });
 }

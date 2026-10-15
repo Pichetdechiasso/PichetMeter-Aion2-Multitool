@@ -228,3 +228,22 @@ body.widget.wm #widgetRoot { padding: 0; display: inline-block; vertical-align: 
 .wvid.vlc .wvh form { flex-basis: 34%; }
 .vid-ic.tw svg { color: #a970ff; }
 .vid-ic.tw { background: #160d24; }
+/* Lecteur vidéo : volume et qualité */
+.wv-vol { -webkit-app-region: no-drag; appearance: none; -webkit-appearance: none; flex: 0 1 70px; min-width: 44px; height: 21px; margin: 0; background: transparent; cursor: pointer; }
+.wv-vol::-webkit-slider-runnable-track { height: 4px; border-radius: 4px; background: linear-gradient(90deg, var(--cy, #00e5ff) var(--p, 80%), rgba(150, 210, 255, .2) var(--p, 80%)); box-shadow: 0 0 6px rgba(0, 229, 255, .35); }
+.wv-vol::-webkit-slider-thumb { -webkit-appearance: none; width: 11px; height: 11px; margin-top: -3.5px; border-radius: 50%; background: #fff; border: 0; box-shadow: 0 0 0 2px var(--cy, #00e5ff), 0 0 8px rgba(0, 229, 255, .8); }
+.wvh button.wv-q { width: auto; min-width: 40px; padding: 0 6px; font: 700 10.5px var(--f-data, monospace); color: var(--cy, #00e5ff); }
+.wvh button.wv-q[aria-expanded="true"] { border-color: var(--cy, #00e5ff); background: rgba(0, 229, 255, .12); }
+.wv-menu { position: absolute; top: 34px; right: 34px; z-index: 5; display: grid; gap: 2px; padding: 6px; min-width: 170px; border-radius: 8px; background: rgba(6, 9, 15, .97);
+  border: 1px solid rgba(0, 229, 255, .45); box-shadow: 0 0 18px rgba(0, 229, 255, .25), 0 10px 26px rgba(0, 0, 0, .7); -webkit-app-region: no-drag; animation: wvMenu .16s ease-out; }
+.wv-menu .label { padding: 2px 8px 4px; font-size: 10px; }
+.wv-menu button { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 5px 8px; border: 0; border-radius: 6px; background: transparent; color: #eaf2ff; cursor: pointer; text-align: left; font: 600 12.5px var(--f-body); }
+.wv-menu button small { color: #95a6c4; font-size: 11px; font-weight: 500; }
+.wv-menu button:hover { background: rgba(0, 229, 255, .1); }
+.wv-menu button[aria-checked="true"] { background: rgba(0, 229, 255, .16); box-shadow: inset 2px 0 0 var(--cy, #00e5ff); }
+.wv-menu button[aria-checked="true"] b::before { content: "● "; color: var(--cy, #00e5ff); font-size: 9px; vertical-align: 2px; }
+@keyframes wvMenu { from { opacity: 0; transform: translateY(-4px); } }
+.wvh input.wv-vol, .wvh input.wv-vol:focus { height: 21px; width: auto; padding: 0; border: 0; box-shadow: none; background: transparent; accent-color: auto; }
+.wvh input.wv-vol::-webkit-slider-thumb { width: 11px !important; height: 11px !important; margin-top: -3.5px; border: 0 !important; background: #fff !important; box-shadow: 0 0 0 2px var(--cy, #00e5ff), 0 0 8px rgba(0, 229, 255, .8) !important; }
+.wvid.vlc .wvh .t { flex: 1 1 auto; min-width: 70px; }
+.wvid.vlc .wvh form { flex: 0 1 120px; min-width: 50px; }

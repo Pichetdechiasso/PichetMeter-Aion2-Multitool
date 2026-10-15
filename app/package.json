@@ -1,7 +1,7 @@
 {
   "name": "pichetmeter",
   "productName": "PichetMeter",
-  "version": "2.7.0",
+  "version": "2.8.0",
   "description": "PichetMeter : compagnon pour Aion 2 (armurerie, classement, tâches, timers, DPS meter de groupe, cooldowns, macros Pichet Macro, viseur, carte). Version personnelle.",
   "main": "main.js",
   "author": "@atomedims",

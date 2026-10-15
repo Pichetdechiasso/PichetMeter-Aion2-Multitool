@@ -1,5 +1,10 @@
 # Journal des versions
 
+## 2.8.0
+
+- **Lecteur vidéo** : barre de volume dans le widget (0 à 125 %, molette), appliquée par l'interface HTTP de VLC et retenue dans les réglages (`video.volume`, réappliquée à chaque lecture).
+- **Qualité** : menu dans le widget (Auto ≤ 1080p, Maximale, 1080p, 720p, 480p, 360p, audio seul) et choix dans l'onglet Vidéo (`video.qualite`). Le format yt-dlp suit la qualité ; la lecture repart au même moment (`:start-time`) pour une vidéo, au direct pour un live. L'image de VLC s'efface pendant que le menu est ouvert. La hauteur réellement lue s'affiche sur le bouton.
+
 ## 2.7.0
 
 - **Lecteur vidéo par VLC** (`app/lecteur.js`) : yt-dlp (téléchargé depuis les releases GitHub, empreinte SHA-256 vérifiée, `-U` une fois par jour) trouve les flux (vidéo H.264 ≤ 1080p + audio AAC, ou HLS pour Twitch) ; PichetMeter sert de moteur JavaScript à yt-dlp pour YouTube (`--js-runtimes node:…`, `ELECTRON_RUN_AS_NODE`). VLC installé (registre ou Program Files) les lit sans interface (`-I dummy`) dans une fenêtre noire posée sous la barre du widget (`--drawable-hwnd`), qui suit le widget ; pilotage par l'interface HTTP locale de VLC (pause, ±10 s, son, temps).
