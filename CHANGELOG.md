@@ -1,5 +1,10 @@
 # Journal des versions
 
+## 3.2.0
+
+- **Compte YouTube lié** (onglet Vidéo) : fenêtre de connexion sur la page officielle de Google, dans la session du lecteur (`persist:youtube`, agent utilisateur de Chrome) ; la fenêtre se ferme seule une fois les cookies de connexion de YouTube présents. PichetMeter ne lit que la présence de ces cookies. « Délier » efface les cookies et les données de YouTube et de Google de cette session.
+- **Volet ☰** : onglets « À suivre » (recommandations de la vidéo en cours, personnalisées si le compte est lié) et « Pour toi » (accueil YouTube du compte, 40 vidéos, cache 5 min) ; les pages YouTube sont lues avec les cookies de la session (`credentials: "include"`).
+
 ## 3.1.0
 
 - **Lecteur vidéo (VLC)** : la fenêtre du widget devient transparente et se pose sur l'image de VLC (fenêtre noire placée dessous, plus « possédée » par le widget) ; barres du haut et du bas en surimpression, visibles au survol, masquées au bout de 2 s de lecture (curseur masqué aussi) ; clic sur l'image : pause. La page indique la zone de l'image (`video_zone`), où se placent l'image de VLC, la page du navigateur intégré et la mascotte.

@@ -490,23 +490,79 @@ function vueVideo() {
 const pousserVideo = m => { const o = widgets.video; if (o && vivante(o.win)) pousser(o.win, { type: "video", ...m }); };
 
 /* Volet du lecteur : playlist (yt-dlp) ou vidéos recommandées (page publique de la vidéo YouTube) */
-const { lireInitialData, recommandations } = require("./suggestions");
+const { lireInitialData, recommandations, extraireVideos } = require("./suggestions");
 const suggestionsCache = new Map();
-async function listeVideo() {
-  const url = String((S.video || {}).url || "").trim();
-  if (!url) return { type: "aucun", entrees: [], message: "Colle un lien pour voir la playlist ou des suggestions." };
-  if (lienTwitch(url)) return { type: "aucun", entrees: [], message: "Pas de suggestions pour Twitch." };
-  const l = require("./lecteur").lienListe(url);
-  if (l) return { type: "playlist", ...(await lecteur.liste(url)) };
-  const id = (lienYoutube(url) || {}).id;
-  if (!id) return { type: "aucun", entrees: [], message: "Suggestions disponibles pour les vidéos YouTube." };
-  const deja = suggestionsCache.get(id); if (deja && Date.now() - deja.t < 600000) return deja.r;
-  const rep = await sessVideo().fetch(`https://www.youtube.com/watch?v=${id}&hl=fr&gl=FR`, { headers: { "Accept-Language": "fr-FR,fr;q=0.9,en;q=0.6" } });
+const pageYoutube = async url => {
+  const rep = await sessVideo().fetch(url, { headers: { "Accept-Language": "fr-FR,fr;q=0.9,en;q=0.6" }, credentials: "include", cache: "no-store" });
   if (!rep.ok) throw new Error("YouTube a répondu HTTP " + rep.status);
-  const entrees = recommandations(lireInitialData(await rep.text()), id);
-  const r = { type: "suggestions", entrees, message: entrees.length ? "" : "YouTube n'a pas renvoyé de suggestions pour cette vidéo." };
+  return lireInitialData(await rep.text());
+};
+async function listeVideo(onglet) {
+  const url = String((S.video || {}).url || "").trim();
+  const l = url && require("./lecteur").lienListe(url);
+  if (l) return { type: "playlist", ...(await lecteur.liste(url)) };
+  const lie = await compteYoutube();
+  // « Pour toi » : l'accueil YouTube du compte lié (ses recommandations personnelles)
+  if (onglet === "pourtoi") {
+    if (!lie) return { type: "pourtoi", lie, entrees: [], message: "Lie ton compte YouTube (onglet Vidéo) pour voir tes recommandations personnelles." };
+    const deja = suggestionsCache.get("accueil"); if (deja && Date.now() - deja.t < 300000) return deja.r;
+    const data = await pageYoutube("https://www.youtube.com/?hl=fr&gl=FR");
+    const entrees = extraireVideos(data && data.contents, { max: 40 });
+    const r = { type: "pourtoi", lie, entrees, message: entrees.length ? "" : "YouTube n'a rien proposé : regarde quelques vidéos avec ton compte, puis réessaie." };
+    suggestionsCache.set("accueil", { t: Date.now(), r });
+    return r;
+  }
+  if (!url) return { type: "suivre", lie, entrees: [], message: "Colle un lien pour voir les vidéos à suivre, ou ouvre « Pour toi »." };
+  if (lienTwitch(url)) return { type: "suivre", lie, entrees: [], message: "Pas de suggestions pour Twitch." };
+  const id = (lienYoutube(url) || {}).id;
+  if (!id) return { type: "suivre", lie, entrees: [], message: "Suggestions disponibles pour les vidéos YouTube." };
+  const deja = suggestionsCache.get(id); if (deja && Date.now() - deja.t < 600000) return deja.r;
+  const entrees = recommandations(await pageYoutube(`https://www.youtube.com/watch?v=${id}&hl=fr&gl=FR`), id);
+  const r = { type: "suivre", lie, entrees, message: entrees.length ? "" : "YouTube n'a pas renvoyé de suggestions pour cette vidéo." };
   suggestionsCache.set(id, { t: Date.now(), r });
   return r;
+}
+/* Compte YouTube lié : connexion faite par l'utilisateur sur la page officielle de Google, dans la session du lecteur
+   (persist:youtube). PichetMeter ne voit ni le mot de passe ni le code : il garde seulement les cookies de connexion de
+   cette session, sur le PC, comme un navigateur. Les recommandations et l'accueil YouTube deviennent alors personnels. */
+const COOKIES_COMPTE = /^(SAPISID|__Secure-3PAPISID|LOGIN_INFO)$/;
+async function compteYoutube() {
+  try { return (await sessVideo().cookies.get({ domain: ".youtube.com" })).some(c => COOKIES_COMPTE.test(c.name)); } catch { return false; }
+}
+let fenetreCompte = null;
+function lierYoutube() {
+  if (vivante(fenetreCompte)) { fenetreCompte.show(); fenetreCompte.focus(); return Promise.resolve(null); }
+  return new Promise(fin => {
+    const win = fenetreCompte = new BrowserWindow({ width: 500, height: 720, title: "Lier mon compte YouTube", parent: vivante(main) ? main : undefined, modal: false, autoHideMenuBar: true,
+      backgroundColor: "#ffffff", icon: ICON, webPreferences: { session: sessVideo(), sandbox: true, contextIsolation: true, nodeIntegration: false, spellcheck: false } });
+    win.setMenuBarVisibility(false);
+    win.setAlwaysOnTop(true, "screen-saver");
+    const autorise = u => /(^|\.)(google\.[a-z.]+|youtube\.com|gstatic\.com|googleusercontent\.com|accounts\.youtube\.com)$/.test(hote(u));
+    win.webContents.setWindowOpenHandler(({ url }) => { if (/^https:\/\//.test(url)) { if (autorise(url)) win.loadURL(url).catch(() => {}); else shell.openExternal(url); } return { action: "deny" }; });
+    win.webContents.on("will-navigate", (e, url) => { if (!autorise(url)) { e.preventDefault(); if (/^https:\/\//.test(url)) shell.openExternal(url); } });
+    let fini = false;
+    const verifier = async () => {
+      if (fini || !vivante(win)) return;
+      if (await compteYoutube() && /(^|\.)youtube\.com$/.test(hote(win.webContents.getURL()))) {
+        fini = true; suggestionsCache.clear(); log("Compte YouTube lié");
+        diffuser({ type: "youtube", lie: true }); setTimeout(() => { if (vivante(win)) win.close(); }, 600);
+      }
+    };
+    win.webContents.on("did-navigate", verifier); win.webContents.on("did-navigate-in-page", verifier);
+    win.on("closed", async () => { fenetreCompte = null; const lie = await compteYoutube(); diffuser({ type: "youtube", lie }); fin({ lie }); });
+    win.loadURL("https://accounts.google.com/ServiceLogin?service=youtube&hl=fr&continue=" + encodeURIComponent("https://www.youtube.com/signin?action_handle_signin=true&app=desktop&next=%2F")).catch(() => {});
+  });
+}
+async function delierYoutube() {
+  const ses = sessVideo();
+  await ses.clearStorageData({ origins: ["https://www.youtube.com", "https://youtube.com", "https://accounts.google.com", "https://www.google.com", "https://accounts.youtube.com"], storages: ["cookies", "localstorage", "indexdb", "serviceworkers", "cachestorage"] }).catch(() => {});
+  for (const d of [".youtube.com", ".google.com", "accounts.google.com", ".accounts.google.com"]) {
+    for (const c of await ses.cookies.get({ domain: d }).catch(() => [])) await ses.cookies.remove(`http${c.secure ? "s" : ""}://${c.domain.replace(/^\./, "")}${c.path}`, c.name).catch(() => {});
+  }
+  sessionVideo.cookies.set({ url: "https://www.youtube.com", domain: ".youtube.com", name: "SOCS", value: "CAI", secure: true, sameSite: "lax", expirationDate: Date.now() / 1000 + 3.15e7 }).catch(() => {});
+  suggestionsCache.clear(); log("Compte YouTube délié");
+  const lie = await compteYoutube(); diffuser({ type: "youtube", lie });
+  return { lie };
 }
 /* VLC : l'image est dessinée dans une fenêtre noire posée sous le widget transparent, qui la suit */
 function creerEcranVideo(o) {
@@ -1586,7 +1642,10 @@ const API = {
     placerEcranVideo(); placerMascotteVideo();
     return true;
   },
-  video_liste: () => listeVideo(),
+  video_liste: (e, onglet) => listeVideo(onglet),
+  youtube_compte: async () => ({ lie: await compteYoutube() }),
+  youtube_lier: () => lierYoutube(),
+  youtube_delier: () => delierYoutube(),
   video_info: async () => ({ moteur: moteurVideo(), vlc: await lecteur.trouverVlc((S.video || {}).vlc), lecture: !!(widgets.video && widgets.video.lecture) }),
   video_back: () => { const o = widgets.video; if (o && o.vue && o.vue.webContents.navigationHistory.canGoBack()) o.vue.webContents.navigationHistory.goBack(); return true; },
   map_open: () => { shell.openExternal(urlCarte()); return true; },

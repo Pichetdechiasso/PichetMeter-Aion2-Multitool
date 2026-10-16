@@ -245,6 +245,12 @@
     "Cris de guerre": "Battle cries", "Une bulle discrète d'un ou deux émojis au-dessus de leur tête": "A subtle bubble of one or two emojis above their heads",
     "Module secret débloqué": "Secret module unlocked", "La récré": "Playtime", "Que la bataille commence !": "Let the battle begin!", "Fin de la bataille.": "The battle is over.",
     "C'est la récré ! Deux armées se battent en bas de l'écran. Re-clique sur Sonic pour sonner la fin ; réglages dans Paramètres > Mascottes.": "Playtime! Two armies fight at the bottom of the screen. Click Sonic again to end it; settings in Settings > Mascots.",
+    "Compte YouTube": "YouTube account", "Compte YouTube lié": "YouTube account linked", "Compte YouTube non lié": "YouTube account not linked", "Lier mon compte": "Link my account", "Délier": "Unlink",
+    "Lie ton compte pour des vidéos recommandées à ton goût (volet ☰ du lecteur, onglet « Pour toi »).": "Link your account for recommendations that match your taste (player ☰ panel, “For you” tab).",
+    "Le volet ☰ du lecteur montre tes recommandations (« À suivre » et « Pour toi »).": "The player ☰ panel shows your recommendations (“Up next” and “For you”).",
+    "La connexion se fait sur la page officielle de Google : PichetMeter ne voit ni ton mot de passe ni tes codes. Elle reste sur ce PC (comme dans un navigateur) et sert au lecteur et à ses recommandations. « Délier » te déconnecte.":
+      "You sign in on Google's official page: PichetMeter never sees your password or codes. The sign-in stays on this PC (like in a browser) and is used by the player and its recommendations. “Unlink” signs you out.",
+    "À suivre": "Up next", "Pour toi": "For you", "Vidéos à suivre": "Up next", "Recommandations de ton compte YouTube": "Recommendations from your YouTube account", "Sans compte lié : suggestions générales": "No linked account: general suggestions",
     "Mascotte": "Mascot", "Au hasard": "Random", "Aucune": "None", "Mascotte de cette macro": "This macro's mascot",
     "Apparaît à côté du widget Macros quand cette macro tourne. Plusieurs macros en même temps : plusieurs mascottes.": "Shows next to the Macros widget while this macro runs. Several macros at once: several mascots.",
     "Mises à jour": "Updates", "Vérifier au lancement": "Check at launch", "Propose d'installer la dernière version publiée sur GitHub": "Offers to install the latest version published on GitHub"

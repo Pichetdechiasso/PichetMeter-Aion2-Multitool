@@ -1,7 +1,7 @@
 "use strict";
 // Volet du lecteur vidéo : vidéos recommandées lues dans la page YouTube (anciens et nouveaux formats)
 const assert = require("assert");
-const { lireInitialData, recommandations } = require("../app/suggestions");
+const { lireInitialData, recommandations, extraireVideos } = require("../app/suggestions");
 const data = { contents: { twoColumnWatchNextResults: {
   results: { results: { contents: [{ videoPrimaryInfoRenderer: { title: { runs: [{ text: "Vidéo courante" }] } } }] } },
   secondaryResults: { secondaryResults: { results: [
@@ -21,4 +21,11 @@ assert.strictEqual(r.length, 2, "la vidéo courante et les playlists sont écart
 assert.deepStrictEqual(r[0], { id: "aaaaaaaaaaa", titre: "Ancienne vignette", auteur: "Chaîne A", duree: "4:20", vues: "" });
 assert.deepStrictEqual(r[1], { id: "bbbbbbbbbbb", titre: "Nouvelle vignette \"guillemets\" {accolade}", auteur: "Chaîne B", duree: "12:05", vues: "12 k vues" });
 assert.strictEqual(lireInitialData("<html>rien</html>"), null);
+// accueil YouTube (« Pour toi ») : grille de vignettes, les shorts sont ignorés
+const accueil = { twoColumnBrowseResultsRenderer: { tabs: [{ tabRenderer: { content: { richGridRenderer: { contents: [
+  { richItemRenderer: { content: { videoRenderer: { videoId: "ddddddddddd", title: { runs: [{ text: "Pour toi 1" }] }, ownerText: { runs: [{ text: "Chaîne D" }] }, lengthText: { simpleText: "9:59" } } } } },
+  { richSectionRenderer: { content: { richShelfRenderer: { contents: [{ richItemRenderer: { content: { shortsLockupViewModel: { entityId: "x", overlayMetadata: { primaryText: { content: "Un short" } } } } } }] } } } },
+  { richItemRenderer: { content: { lockupViewModel: { contentId: "eeeeeeeeeee", contentType: "LOCKUP_CONTENT_TYPE_VIDEO", metadata: { lockupMetadataViewModel: { title: { content: "Pour toi 2" } } } } } } }
+] } } } }] } };
+assert.deepStrictEqual(extraireVideos(accueil).map(v => v.id), ["ddddddddddd", "eeeeeeeeeee"]);
 console.log("suggestions.test ok");

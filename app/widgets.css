@@ -425,3 +425,15 @@ body.no-anim .rc-corps, body.no-anim .rc-bulle { animation: none !important; }
 .wvv-t small { font-size: 10.5px; color: #9a9fa8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wvv-vide { padding: 16px 12px; color: #9a9fa8; font-size: 12.5px; text-align: center; margin: 0; }
 .wvid.vlc:not(.survol) .wvh { -webkit-app-region: no-drag; }
+/* Volet : onglets « À suivre » / « Pour toi » (3.2) */
+.wvv-o { display: flex; gap: 4px; margin-top: 6px; padding: 3px; border-radius: 9px; background: rgba(0, 0, 0, .28); }
+.wvv-o[hidden] { display: none; }
+.wvv-o button { flex: 1; border: 0; border-radius: 7px; padding: 4px 6px; background: transparent; color: #9a9fa8; font: 700 11.5px var(--f-body); cursor: pointer; }
+.wvv-o button:hover { color: #fff; }
+.wvv-o button[aria-selected="true"] { background: #3a3d42; color: #fff; box-shadow: 0 2px 6px rgba(0, 0, 0, .35); }
+/* Onglet Vidéo : compte YouTube */
+.yt-compte { gap: 12px; }
+.yt-compte > span:nth-child(2) { flex: 1; min-width: 0; }
+.yt-ic { width: 34px; height: 34px; flex: none; border-radius: 10px; display: grid; place-items: center; background: #3a3d42; color: #fff; }
+.yt-ic svg { width: 22px; height: 22px; }
+.yt-compte.on .yt-ic { background: #ff0033; }

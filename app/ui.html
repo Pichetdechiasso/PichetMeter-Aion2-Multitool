@@ -1395,6 +1395,11 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
       <div class="vid-now" id="vidNow"></div>
       <h3 class="reg-t">Récemment</h3>
       <div class="vid-recents" id="vidRecents"></div>
+      <h3 class="reg-t">Compte YouTube</h3>
+      <div class="set-item yt-compte" id="ytCompte"><span class="yt-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M9 6.5v11l9-5.5z"/></svg></span><span><span class="t" id="ytEtat">Compte YouTube non lié</span>
+        <span class="d" id="ytDesc">Lie ton compte pour des vidéos recommandées à ton goût (volet ☰ du lecteur, onglet « Pour toi »).</span></span>
+        <button class="btn sm primary" type="button" id="ytLier">Lier mon compte</button><button class="btn sm" type="button" id="ytDelier" hidden>Délier</button></div>
+      <p class="note">La connexion se fait sur la page officielle de Google : PichetMeter ne voit ni ton mot de passe ni tes codes. Elle reste sur ce PC (comme dans un navigateur) et sert au lecteur et à ses recommandations. « Délier » te déconnecte.</p>
     </section>
     <section class="card neu-extruded span-5">
       <div class="card-head"><h2>Réglages</h2></div>
@@ -3492,7 +3497,7 @@ function onView(v) {
   syncMapView();
   if (v === "dps") { renderDpsControls(); refreshZonePreviews(); }
   if (v === "cd") { renderCdList(); renderMySkills(); renderKeyTest(); if (DESKTOP) { loadDiag().then(renderKeyTest); api().cd_keys().then(k => { if (k) { KEYS = k; renderKeyTest(); } }); } }
-  if (v === "video") { renderVideo(); infoVideo(); }
+  if (v === "video") { renderVideo(); infoVideo(); etatYoutube(); }
   if (v === "viseur") { renderXhControls(); if (DESKTOP) api().crosshair_state().then(st => { if (st) { VISEUR = { ...VISEUR, ...st }; renderXhState(); } }); }
   if (v === "params") loadDiag();
   if (v === "timers") renderSrv();
@@ -3543,6 +3548,27 @@ function renderVideo() {
   $("#vidOp").value = w.opacity ?? 100; $("#vidOpV").textContent = (w.opacity ?? 100) + " %";
   $$(".hk-txt").forEach(e => e.textContent = S.hotkey);
 }
+/* Compte YouTube lié (recommandations personnelles du volet) */
+let YT_LIE = null;
+function renderYoutube() {
+  if (WIDGET || !$("#ytCompte")) return;
+  const lie = !!YT_LIE;
+  $("#ytEtat").textContent = YT_LIE == null ? "Compte YouTube…" : lie ? "Compte YouTube lié" : "Compte YouTube non lié";
+  $("#ytDesc").textContent = lie ? "Le volet ☰ du lecteur montre tes recommandations (« À suivre » et « Pour toi »)." : "Lie ton compte pour des vidéos recommandées à ton goût (volet ☰ du lecteur, onglet « Pour toi »).";
+  $("#ytCompte").classList.toggle("on", lie);
+  $("#ytLier").hidden = lie; $("#ytDelier").hidden = !lie;
+}
+async function etatYoutube() { if (!DESKTOP) { YT_LIE = false; renderYoutube(); return; } try { const r = await api().youtube_compte(); YT_LIE = !!(r && r.lie); } catch { YT_LIE = false; } renderYoutube(); }
+if (!WIDGET && $("#ytLier")) {
+  $("#ytLier").addEventListener("click", async () => {
+    if (!DESKTOP) return notify("Compte YouTube", "La connexion se fait dans l'application de bureau.");
+    const b = $("#ytLier"); b.disabled = true; b.textContent = "Connexion en cours…";
+    try { const r = await api().youtube_lier(); if (r) YT_LIE = !!r.lie; } catch {}
+    b.disabled = false; b.textContent = "Lier mon compte"; renderYoutube();
+    if (YT_LIE) notify("Compte YouTube", "Compte lié : le volet ☰ du lecteur montre maintenant tes recommandations.");
+  });
+  $("#ytDelier").addEventListener("click", async () => { try { const r = await api()?.youtube_delier(); YT_LIE = !!(r && r.lie); } catch {} renderYoutube(); });
+}
 async function infoVideo() { if (!DESKTOP) return; try { const r = await api().video_info(); if (r && r.ok !== false) { VIDEO_INFO = r; renderVideo(); } } catch {} }
 if (!WIDGET && $("#view-video")) {
   $("#vidForm").addEventListener("submit", e => { e.preventDefault(); if (lireVideo($("#vidUrl").value)) { $("#vidUrl").blur(); renderVideo(); notify("Lecteur vidéo", `Le lecteur s'affiche par-dessus le jeu quand tu masques l'interface (${S.hotkey}).`); } });
@@ -3588,7 +3614,8 @@ function bootVideo(wr) {
       <button type="button" class="wv-son" data-wv="volume" id="wvSon" title="Volume (clic droit : couper le son)" aria-label="Volume" aria-expanded="false">${ICONE_SON}</button>
       <span class="wv-grip" id="wvGrip" title="Taille du lecteur (le format de la vidéo est gardé)"></span></div>` : ""}
     <div class="wv-menu" id="wvMenu" role="menu" hidden><span class="label">Qualité</span>${QUALITES_VIDEO.map(([q, t, d]) => `<button type="button" role="menuitemradio" data-q="${q}"><b>${t}</b><small>${d}</small></button>`).join("")}</div></div>
-    <aside class="wv-volet" id="wvVolet" hidden><div class="wvv-h"><b id="wvvTitre">Vidéos recommandées</b><small id="wvvSous"></small></div><div class="wvv-l" id="wvvListe"></div></aside></div>`;
+    <aside class="wv-volet" id="wvVolet" hidden><div class="wvv-h"><b id="wvvTitre">Vidéos recommandées</b><small id="wvvSous"></small>
+      <div class="wvv-o" id="wvvOnglets" role="tablist"><button type="button" role="tab" data-vo="suivre">À suivre</button><button type="button" role="tab" data-vo="pourtoi">Pour toi</button></div></div><div class="wvv-l" id="wvvListe"></div></aside></div>`;
   const box = $("#wv"), volet = $("#wvVolet");
   let zoneEnvoyee = "";
   const envoyerZone = () => {
@@ -3636,6 +3663,7 @@ function bootVideo(wr) {
   };
   /* ── Volet : playlist ou recommandations ── */
   let LISTE = null, listeUrl = "", listeEnCours = false;
+  const onglet = () => ((S.video || {}).voletOnglet === "pourtoi" ? "pourtoi" : "suivre");
   const idCourant = () => ytId((S.video || {}).url);
   const peindreVolet = () => {
     if (volet.hidden) return;
@@ -3644,29 +3672,35 @@ function bootVideo(wr) {
     if (!LISTE) { l.innerHTML = '<p class="wvv-vide">—</p>'; return; }
     if (LISTE.erreur) { l.innerHTML = `<p class="wvv-vide">${esc(LISTE.erreur)}</p>`; return; }
     const pl = LISTE.type === "playlist", cur = idCourant();
-    $("#wvvTitre").textContent = pl ? (LISTE.titre || "Playlist") : "Vidéos recommandées";
-    $("#wvvSous").textContent = pl ? `${(LISTE.entrees.findIndex(x => x.id === cur) + 1) || "—"} / ${LISTE.entrees.length}${LISTE.musique ? " · YouTube Music" : ""}` : LISTE.entrees.length ? "" : "";
+    $("#wvvOnglets").hidden = pl;
+    $$("#wvvOnglets [data-vo]").forEach(b => b.setAttribute("aria-selected", String(b.dataset.vo === onglet())));
+    $("#wvvTitre").textContent = pl ? (LISTE.titre || "Playlist") : LISTE.type === "pourtoi" ? "Pour toi" : "Vidéos à suivre";
+    $("#wvvSous").textContent = pl ? `${(LISTE.entrees.findIndex(x => x.id === cur) + 1) || "—"} / ${LISTE.entrees.length}${LISTE.musique ? " · YouTube Music" : ""}` : LISTE.lie ? "Recommandations de ton compte YouTube" : "Sans compte lié : suggestions générales";
     l.innerHTML = LISTE.entrees.map((x, i) => `<button type="button" class="wvv-e${x.id === cur ? " on" : ""}" data-ve="${i}" title="${esc(x.titre)}">
         <span class="wvv-v"><img src="https://i.ytimg.com/vi/${esc(x.id)}/mqdefault.jpg" alt="" loading="lazy" referrerpolicy="no-referrer">${x.duree ? `<i>${esc(typeof x.duree === "number" ? fmtTemps(x.duree) : x.duree)}</i>` : ""}${pl ? `<em>${x.id === cur ? "▶" : i + 1}</em>` : ""}</span>
         <span class="wvv-t"><b>${esc(x.titre || "Vidéo")}</b><small>${esc([x.auteur, x.vues].filter(Boolean).join(" · "))}</small></span></button>`).join("") || `<p class="wvv-vide">${esc(LISTE.message || "Aucune vidéo.")}</p>`;
     const on = l.querySelector(".wvv-e.on"); if (on && pl) on.scrollIntoView({ block: "nearest" });
   };
   const chargerListe = async (force = false) => {
-    const url = String((S.video || {}).url || "");
+    const url = String((S.video || {}).url || ""), cle = url + "|" + onglet();
     const meme = LISTE && LISTE.type === "playlist" && ytListe(url) && ytListe(url) === LISTE.liste; // même playlist : on garde la liste
-    if (!force && (url === listeUrl || meme)) { listeUrl = url; peindreVolet(); return; }
-    listeUrl = url; listeEnCours = true; if (!meme) LISTE = null; peindreVolet();
-    try { const r = DESKTOP ? await api().video_liste() : null; if (url === listeUrl) LISTE = r && r.ok !== false ? r : { erreur: (r && r.error) || "Liste indisponible." }; }
-    catch (e) { if (url === listeUrl) LISTE = { erreur: String(e.message || e).replace(/^Error invoking remote method '\w+': (Error: )?/, "") }; }
+    if (!force && (cle === listeUrl || meme)) { listeUrl = cle; peindreVolet(); return; }
+    listeUrl = cle; listeEnCours = true; if (!meme) LISTE = null; peindreVolet();
+    try { const r = DESKTOP ? await api().video_liste(onglet()) : null; if (cle === listeUrl) LISTE = r && r.ok !== false ? r : { erreur: (r && r.error) || "Liste indisponible." }; }
+    catch (e) { if (cle === listeUrl) LISTE = { erreur: String(e.message || e).replace(/^Error invoking remote method '\w+': (Error: )?/, "") }; }
     listeEnCours = false; peindreVolet();
   };
-  volet.addEventListener("click", e => { const b = e.target.closest("[data-ve]"); if (!b || !LISTE) return; const x = LISTE.entrees[+b.dataset.ve]; if (x) lireVideo(lienEntree(LISTE, x)); });
+  window.__videoCompte = () => chargerListe(true); // compte lié ou délié : recommandations relues
+  volet.addEventListener("click", e => {
+    const o = e.target.closest("[data-vo]");
+    if (o) { S.video = { ...(S.video || {}), voletOnglet: o.dataset.vo }; save(); chargerListe(); return; }
+    const b = e.target.closest("[data-ve]"); if (!b || !LISTE) return; const x = LISTE.entrees[+b.dataset.ve]; if (x) lireVideo(lienEntree(LISTE, x)); });
   const suivante = () => { // fin d'une vidéo de playlist : on enchaîne
     if (!LISTE || LISTE.type !== "playlist") return;
     const i = LISTE.entrees.findIndex(x => x.id === idCourant()), x = LISTE.entrees[i + 1];
     if (x) lireVideo(lienEntree(LISTE, x));
   };
-  onSettingsChanged.push(() => { if ((S.video || {}).url !== listeUrl && (ytListe((S.video || {}).url) || !volet.hidden)) chargerListe(); else peindreVolet(); });
+  onSettingsChanged.push(() => { if (((S.video || {}).url || "") + "|" + onglet() !== listeUrl && (ytListe((S.video || {}).url) || !volet.hidden)) chargerListe(); else peindreVolet(); });
   if (ytListe((S.video || {}).url) || (S.video || {}).volet) chargerListe();
   const peindre = () => {
     if (!etat || !vlc) return;
@@ -4319,7 +4353,7 @@ function renderInfos() {
       ${sec(L("Logiciel non officiel", "Unofficial software"), `<p>${esc(L("PichetMeter est un outil communautaire gratuit et non officiel. Il n'est ni développé, ni approuvé, ni soutenu par NCSOFT. AION et AION 2 sont des marques de NCSOFT Corporation ; les noms, icônes et images du jeu restent la propriété de leurs détenteurs.", "PichetMeter is a free, unofficial community tool. It is not developed, endorsed or supported by NCSOFT. AION and AION 2 are trademarks of NCSOFT Corporation; game names, icons and images belong to their owners."))}</p>`)}
       ${sec(L("Fonctionnement", "How it works"), `<p>${esc(L("PichetMeter ne modifie pas le jeu et n'injecte rien dans son processus : il affiche ses propres fenêtres par-dessus. Le DPS meter lit passivement le trafic réseau avec Npcap, sans rien envoyer. La détection des cooldowns écoute uniquement les touches choisies, sans jamais les bloquer. Seul le module Macros envoie des touches et des clics, par le driver Interception, quand tu lances une macro. Les FPS et les infos système viennent des compteurs publics de Windows et de PresentMon (outil d'Intel), sans toucher au jeu.", "PichetMeter does not modify the game or inject anything into it: it shows its own windows on top. The DPS meter passively reads network traffic with Npcap and sends nothing. Cooldown tracking only listens to the keys you chose and never blocks them. Only the Macros module sends keys and clicks, through the Interception driver, when you run a macro. FPS and system info come from public Windows counters and PresentMon (an Intel tool), without touching the game."))}</p>`)}
       ${sec(L("Responsabilité", "Responsibility"), `<p>${esc(L("Les règles de l'éditeur sur les outils tiers peuvent évoluer : chaque joueur utilise PichetMeter sous sa propre responsabilité. Le logiciel est fourni « tel quel », sans garantie ; l'auteur ne peut être tenu responsable d'un dommage, d'une perte de données ou d'une sanction liée à son utilisation.", "The publisher's rules on third-party tools may change: each player uses PichetMeter at their own risk. The software is provided “as is”, without warranty; the author cannot be held liable for any damage, data loss or sanction resulting from its use."))}</p>`)}
-      ${sec(L("Données personnelles", "Personal data"), `<p>${esc(L("Aucune donnée n'est collectée ni envoyée à l'auteur. Comptes, réglages et historiques restent sur ton PC, dans", "No data is collected or sent to the author. Accounts, settings and history stay on your PC, in"))} <code>%APPDATA%\\PichetMeter</code>. ${esc(L("Connexions : services officiels de NCSOFT (fiches, classements, images), carte communautaire choisie, polices Google Fonts, GitHub (installation, mises à jour, yt-dlp et PresentMon), YouTube ou Twitch quand tu lis une vidéo. Le ping ouvre une simple connexion vers le serveur, sans échange de données.", "Connections: NCSOFT official services (profiles, rankings, images), the community map you picked, Google Fonts, GitHub (setup, updates, yt-dlp and PresentMon), YouTube or Twitch when you play a video. The ping opens a plain connection to the server, with no data exchanged."))}</p>`)}
+      ${sec(L("Données personnelles", "Personal data"), `<p>${esc(L("Aucune donnée n'est collectée ni envoyée à l'auteur. Comptes, réglages et historiques restent sur ton PC, dans", "No data is collected or sent to the author. Accounts, settings and history stay on your PC, in"))} <code>%APPDATA%\\PichetMeter</code>. ${esc(L("Connexions : services officiels de NCSOFT (fiches, classements, images), carte communautaire choisie, polices Google Fonts, GitHub (installation, mises à jour, yt-dlp et PresentMon), YouTube ou Twitch quand tu lis une vidéo (ton compte YouTube, si tu le lies, reste connecté sur ce PC uniquement). Le ping ouvre une simple connexion vers le serveur, sans échange de données.", "Connections: NCSOFT official services (profiles, rankings, images), the community map you picked, Google Fonts, GitHub (setup, updates, yt-dlp and PresentMon), YouTube or Twitch when you play a video (your YouTube account, if you link it, stays signed in on this PC only). The ping opens a plain connection to the server, with no data exchanged."))}</p>`)}
       ${sec(L("Logo", "Logo"), `<p>${esc(L("Le logo de PichetMeter est un fan art. Sonic the Hedgehog est une marque de SEGA, sans lien avec ce logiciel.", "The PichetMeter logo is fan art. Sonic the Hedgehog is a trademark of SEGA, unrelated to this software."))}</p>`)}
     </div>
   </section>
@@ -4374,6 +4408,7 @@ window.__onPush = msg => {
     case "macro": window.MacrosUI.push(msg); break;
     case "systeme": if (window.__systeme) window.__systeme(msg.infos, msg.opts); break;
     case "son": if (window.__son) window.__son(msg); break;
+    case "youtube": YT_LIE = !!msg.lie; renderYoutube(); if (window.__videoCompte) window.__videoCompte(YT_LIE); break;
     case "video": if (window.__videoTitre) window.__videoTitre(msg); break;
     case "maj": majPush(msg); break;
     case "layout": LAYOUT_INFO = msg; if (window.__layoutPret) window.__layoutPret(); break;
