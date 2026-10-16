@@ -1,5 +1,14 @@
 # Journal des versions
 
+## 3.1.0
+
+- **Lecteur vidéo (VLC)** : la fenêtre du widget devient transparente et se pose sur l'image de VLC (fenêtre noire placée dessous, plus « possédée » par le widget) ; barres du haut et du bas en surimpression, visibles au survol, masquées au bout de 2 s de lecture (curseur masqué aussi) ; clic sur l'image : pause. La page indique la zone de l'image (`video_zone`), où se placent l'image de VLC, la page du navigateur intégré et la mascotte.
+- **Format gardé** : yt-dlp donne aussi la largeur (`#%(width)sx%(height)s`), le rapport est retenu (`video.ratio`) et la taille du lecteur en découle (poignée, écran de placement, tailles de l'onglet Vidéo) ; vidéos verticales prises en compte.
+- **Volet ☰** (`video.volet`) : playlist YouTube / YouTube Music lue par `yt-dlp --flat-playlist` (200 vidéos, cache 10 min, mix « RD » depuis leur vidéo), enchaînement automatique en fin de vidéo ; sinon vidéos recommandées lues dans la page publique de la vidéo (`app/suggestions.js`, anciens et nouveaux formats de YouTube). Un lien de playlist seul lit sa première vidéo (`--playlist-items 1`).
+- **Macros** : mascottes sous le widget, en demi-taille.
+- **Fluidité** : requêtes à l'armurerie par la pile réseau de Chromium (préconnexion à l'ouverture, repli sur Node), dédoublonnées ; 20 dernières fiches gardées dans `fiches.json` et affichées immédiatement ; plateaux Daevanion préchargés ; fond du jeu capturé en petit et agrandi (plus de `filter: blur` plein écran) ; `backdrop-filter` retirés ; reflet des barres du DPS en `transform` ; fond en pixel art à 30 images/s. Réglage « Limite d'images de l'overlay » (sans effet) retiré.
+- **Module secret** : entièrement refait (`app/recre.js`, un seul canvas, 60 images/s).
+
 ## 3.0.0
 
 - **Direction artistique « Dashboard »** (`app/theme-dash.css`, remplace `theme-cyber.css`) : anthracite mat, cartes arrondies en relief doux (double ombre), champs enfoncés, accents rouge corail et ambre sur les éléments interactifs et les états ; typographie Sora / Nunito Sans (Orbitron et Chakra Petch retirées). Onglets de réglages soulignés, navigation latérale avec repère rouge, widgets, écran de placement, lecteur vidéo, éditeur de macros et animation de lancement assortis.

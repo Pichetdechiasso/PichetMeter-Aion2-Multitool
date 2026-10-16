@@ -55,9 +55,12 @@
     new ResizeObserver(taille).observe(canvas); taille();
     const jaillir = (x, y, n, couleurs, force = 1) => { for (let i = 0; i < n; i++) particules.push({ x, y, vx: (Math.random() - .5) * 3 * force, vy: -Math.random() * 2.6 * force, v: 1, c: couleurs[i % couleurs.length] }); };
     let dernierT = 0, evts = {};
+    let derniere = 0;
     function image(now) {
       raf = 0;
       if (!actif()) { arreter(); return; }
+      if (now - derniere < 32) { raf = requestAnimationFrame(image); return; } // 30 images/s suffisent au pixel art : moins de travail pour la fenêtre
+      derniere = now;
       const e = W < 200 ? 2 : 3, sol = H - 12, haut = 16 * e, l = 16 * e; // ×2 dans la colonne de gauche
       const t = ((now - debut) / 1000) % DUREE;
       if (t < dernierT) evts = {}; // nouveau combat

@@ -39,13 +39,33 @@ function source(url) {
   return "autre";
 }
 
-/** Sortie de yt-dlp (--print "#%(height)s", --print title, --print urls) : hauteur, titre, puis une ou deux adresses (vidéo, audio). */
+/** Sortie de yt-dlp (--print "#%(width)sx%(height)s", --print title, --print urls) : taille de l'image, titre, puis une ou deux adresses (vidéo, audio). */
 function lireSortie(texte) {
   const lignes = String(texte || "").split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   const urls = lignes.filter(l => /^https?:\/\//i.test(l));
-  const h = lignes.find(l => /^#(\d+|NA|None)$/.test(l));
+  const h = lignes.find(l => /^#((\d+|NA|None)x)?(\d+|NA|None)$/.test(l));
   const titre = lignes.find(l => !/^https?:\/\//i.test(l) && l !== h) || "";
-  return { titre, urls: urls.slice(0, 2), hauteur: h && /\d/.test(h) ? +h.slice(1) : 0 };
+  const m = h ? h.match(/^#(?:(\d+|NA|None)x)?(\d+|NA|None)$/) : null;
+  return { titre, urls: urls.slice(0, 2), hauteur: m && /^\d+$/.test(m[2]) ? +m[2] : 0, largeur: m && m[1] && /^\d+$/.test(m[1]) ? +m[1] : 0 };
+}
+/** Identifiant de playlist d'un lien YouTube ou YouTube Music (list=…), et identifiant de vidéo (v=…). */
+function lienListe(url) {
+  try {
+    const u = new URL(url), h = u.hostname.replace(/^(www|m)\./, "");
+    if (!/^(music\.)?youtube\.com$|^youtu\.be$/.test(h)) return null;
+    const liste = u.searchParams.get("list"); if (!liste) return null;
+    return { liste, video: h === "youtu.be" ? u.pathname.slice(1, 12) : u.searchParams.get("v"), musique: h.startsWith("music.") };
+  } catch { return null; }
+}
+/** Sortie de yt-dlp --flat-playlist (id, titre, durée, chaîne, titre de la playlist séparés par des tabulations). */
+function lireListe(texte) {
+  let titre = "";
+  const entrees = String(texte || "").split(/\r?\n/).map(l => l.split("\t")).filter(c => /^[\w-]{11}$/.test((c[0] || "").trim())).map(c => {
+    if (!titre && c[4] && c[4] !== "NA") titre = c[4].trim();
+    const d = parseFloat(c[2]);
+    return { id: c[0].trim(), titre: (c[1] || "").trim() === "NA" ? "" : (c[1] || "").trim(), duree: isFinite(d) ? Math.round(d) : 0, auteur: (c[3] || "").trim() === "NA" ? "" : (c[3] || "").trim() };
+  });
+  return { titre, entrees };
 }
 
 /** Arguments de VLC : aucune interface, image dans la fenêtre donnée, pilotage HTTP local. */
@@ -110,7 +130,8 @@ class LecteurVlc {
   async resoudre(url, progression = () => {}, qualite = "auto") {
     const exe = await this.ytdlp(progression);
     progression("Recherche du flux vidéo…");
-    const args = ["--no-playlist", "--no-warnings", "--no-progress", "-f", formatQualite(qualite), "--print", "#%(height)s", "--print", "title", "--print", "urls"];
+    const args = ["--no-playlist", "--no-warnings", "--no-progress", "-f", formatQualite(qualite), "--print", "#%(width)sx%(height)s", "--print", "title", "--print", "urls"];
+    const l = lienListe(url); if (l && !l.video) args.push("--playlist-items", "1"); // lien de playlist seul : sa première vidéo
     if (source(url) === "youtube") args.push("--js-runtimes", `node:${process.execPath}`);
     const r = await executer(exe, [...args, url], { timeout: 90000, env: { ELECTRON_RUN_AS_NODE: "1" } });
     const res = lireSortie(r.out);
@@ -121,10 +142,26 @@ class LecteurVlc {
     return res;
   }
 
+  /** Contenu d'une playlist YouTube ou YouTube Music (200 vidéos au plus), mis en cache 10 minutes. */
+  async liste(url) {
+    const l = lienListe(url); if (!l) return null;
+    this.listes = this.listes || new Map();
+    const deja = this.listes.get(l.liste); if (deja && Date.now() - deja.t < 600000) return deja.r;
+    const exe = await this.ytdlp();
+    // mix / radio (RD…) : seulement depuis la vidéo qui l'a lancée ; sinon la page de la playlist
+    const cible = /^RD/.test(l.liste) && l.video ? `https://www.youtube.com/watch?v=${l.video}&list=${l.liste}` : `https://www.youtube.com/playlist?list=${l.liste}`;
+    const r0 = await executer(exe, ["--flat-playlist", "--no-warnings", "--playlist-end", "200", "--print", "%(id)s\t%(title)s\t%(duration)s\t%(channel,uploader)s\t%(playlist_title)s", "--js-runtimes", `node:${process.execPath}`, cible],
+      { timeout: 60000, env: { ELECTRON_RUN_AS_NODE: "1" } });
+    const r = { ...lireListe(r0.out), liste: l.liste, musique: l.musique };
+    if (!r.entrees.length) throw new Error((r0.err.split(/\r?\n/).reverse().find(x => /ERROR/.test(x)) || "playlist introuvable").replace(/^ERROR:\s*(\[\w+\]\s*)?/, ""));
+    this.listes.set(l.liste, { t: Date.now(), r });
+    return r;
+  }
+
   /** Lit un lien dans la fenêtre `hwnd` (handle natif, en décimal). */
   async lire(vlc, url, hwnd, progression = () => {}, { qualite = "auto", debut = 0 } = {}) {
     this.arreter();
-    const { titre, urls, hauteur } = await this.resoudre(url, progression, qualite);
+    const { titre, urls, hauteur, largeur } = await this.resoudre(url, progression, qualite);
     this.port = await portLibre(); this.mdp = crypto.randomBytes(12).toString("hex"); this.titre = titre; this.url = url;
     progression("Ouverture dans VLC…");
     const p = spawn(vlc, argsVlc({ hwnd, port: this.port, mdp: this.mdp, urls, titre, debut }), { windowsHide: true, stdio: "ignore" });
@@ -132,7 +169,7 @@ class LecteurVlc {
     p.on("error", e => { this.log("Vidéo : VLC ne démarre pas,", e.message); if (this.proc === p) this.proc = null; });
     p.on("exit", code => { if (this.proc === p) { this.proc = null; this.log("Vidéo : VLC fermé, code", code); } });
     this.hauteur = hauteur;
-    return { titre, hauteur, audioSeul: qualite === "audio" };
+    return { titre, hauteur, largeur, audioSeul: qualite === "audio" };
   }
 
   /** Volume (0 à 125 %) dès que l'interface HTTP de VLC répond. */
@@ -164,4 +201,4 @@ class LecteurVlc {
   }
 }
 
-module.exports = { LecteurVlc, source, lireSortie, argsVlc, formatQualite, QUALITES, FORMAT };
+module.exports = { LecteurVlc, source, lireSortie, lireListe, lienListe, argsVlc, formatQualite, QUALITES, FORMAT };

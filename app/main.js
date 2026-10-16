@@ -158,11 +158,13 @@ function creerPrincipale() {
 /* Fond flouté : capture de l'écran (le jeu) juste avant d'afficher l'interface, floutée dans la page */
 async function capturerFond() {
   if ((S.display && S.display.mode) === "window" || (S.display && S.display.blur === false)) return null;
-  const d = ecran();
-  const sources = await desktopCapturer.getSources({ types: ["screen"], thumbnailSize: { width: Math.round(d.bounds.width / 2), height: Math.round(d.bounds.height / 2) } });
+  const d = ecran(), flou = Math.max(0, Math.min(20, +((S.display || {}).flou ?? 6)));
+  // petite capture : agrandie par la page, elle paraît floue sans filtre CSS (rapide à capturer, à transmettre et à afficher)
+  const div = flou ? Math.max(3, Math.min(16, flou * 1.3)) : 2;
+  const sources = await desktopCapturer.getSources({ types: ["screen"], thumbnailSize: { width: Math.round(d.bounds.width / div), height: Math.round(d.bounds.height / div) } });
   const src = sources.find(x => String(x.display_id) === String(d.id)) || sources[0];
   if (!src || src.thumbnail.isEmpty()) return null;
-  return "data:image/jpeg;base64," + src.thumbnail.toJPEG(70).toString("base64");
+  return "data:image/jpeg;base64," + src.thumbnail.toJPEG(flou ? 80 : 75).toString("base64");
 }
 async function envoyerFond() {
   let url = null;
@@ -186,7 +188,7 @@ async function basculer() {
     main.hide(); mainVisible = false;
   }
   else {
-    ouverture = true;
+    ouverture = true; prechaufferArmurerie();
     try { await envoyerFond(); } finally { ouverture = false; }
     main.show(); main.setAlwaysOnTop(true, "screen-saver"); main.focus(); mainVisible = true;
   }
@@ -208,8 +210,9 @@ function ouvrirWidget(kind) {
   const carte = kind === "map", video = kind === "video"; // un vrai site (carte, YouTube) : fenêtre opaque qui reçoit le clavier et la souris
   const libre = carte || video; // fenêtre opaque, qui reçoit le clavier et la souris
   const bords = carte || (video && moteurVideo() === "web"); // redimensionnable par ses bords (VLC : poignée dans la barre du bas)
+  const videoVlc = video && moteurVideo() === "vlc"; // VLC : fenêtre transparente posée sur l'image, barres affichées au survol
   const win = new BrowserWindow({
-    show: false, frame: false, transparent: !libre, backgroundColor: libre ? "#05070d" : "#00000000", resizable: bords, thickFrame: bords, roundedCorners: false,
+    show: false, frame: false, transparent: !libre || videoVlc, backgroundColor: libre && !videoVlc ? "#05070d" : "#00000000", resizable: bords, thickFrame: bords, roundedCorners: false,
     minWidth: bords ? 160 : undefined, minHeight: bords ? 100 : undefined, skipTaskbar: true,
     focusable: libre, hasShadow: false, alwaysOnTop: true, width: 200, height: 80, title: `${APP_NAME} · ${kind}`, webPreferences: PREFS
   });
@@ -242,7 +245,7 @@ function ouvrirWidget(kind) {
       ecrireReglages(); diffuserReglages();
     });
     if (video) { for (const ev of ["move", "resize", "show", "hide"]) { win.on(ev, placerEcranVideo); win.on(ev, placerMascotteVideo); } }
-    win.on("resize", () => { if (o.vue) { const b = win.getContentBounds(); o.vue.setBounds({ x: 0, y: ENTETE_CARTE, width: b.width, height: Math.max(0, b.height - ENTETE_CARTE) }); } });
+    win.on("resize", () => { if (o.vue) o.vue.setBounds(zoneVue(o)); });
     if (carte) win.on("focus", () => { if (o.vue) o.vue.webContents.focus(); });
   }
   return o;
@@ -282,7 +285,10 @@ function placer(kind) {
   const cfg = configWidget(kind), wa = ecran().workArea, M = 16;
   let x, y;
   const pos = cfg.pos || "tr";
-  if (pos === "free" && cfg.x != null) { x = cfg.x; y = cfg.y; }
+  if (pos === "free" && cfg.x != null) {
+    x = cfg.x; y = cfg.y;
+    if (kind === "video") { x = Math.max(wa.x, Math.min(wa.x + wa.width - o.w, x)); y = Math.max(wa.y, Math.min(wa.y + wa.height - o.h, y)); } // volet ouvert : il reste à l'écran
+  }
   else {
     const p = /^[tmb][lcr]$/.test(pos) ? pos : "tr";
     x = { l: wa.x + M, c: wa.x + Math.round((wa.width - o.w) / 2), r: wa.x + wa.width - o.w - M }[p[1]];
@@ -299,7 +305,13 @@ function placer(kind) {
   if (b.x === cible.x && b.y === cible.y && b.width === cible.width && b.height === cible.height) return; // rien ne bouge : pas de redimensionnement
   o.placement = Date.now();
   o.win.setBounds(cible);
-  if (o.vue) o.vue.setBounds({ x: 0, y: ENTETE_CARTE, width: o.w, height: Math.max(0, o.h - ENTETE_CARTE) });
+  if (o.vue) o.vue.setBounds(zoneVue(o));
+}
+// Page intégrée (carte, lecteur vidéo du navigateur) : sous l'en-tête, ou dans la zone indiquée par le lecteur (volet ouvert)
+function zoneVue(o) {
+  const b = o.win.getContentBounds(), z = o.zone;
+  if (z && z.w > 0 && z.h > 0) return { x: z.x, y: z.y, width: z.w, height: z.h };
+  return { x: 0, y: ENTETE_CARTE, width: b.width, height: Math.max(0, b.height - ENTETE_CARTE) };
 }
 function deplace(kind) {
   const o = widgets[kind];
@@ -357,7 +369,6 @@ const CARTES = {
   wikily: "https://wikily.gg/aion-2/interactive-map"
 };
 const ENTETE_CARTE = 30;
-const PIED_VIDEO = 34; // barre du bas du lecteur VLC (progression, temps, volume)
 function urlCarte() {
   const m = S.map || {};
   return CARTES.aion2run; // AION2.run uniquement
@@ -478,9 +489,29 @@ function vueVideo() {
 }
 const pousserVideo = m => { const o = widgets.video; if (o && vivante(o.win)) pousser(o.win, { type: "video", ...m }); };
 
-/* VLC : l'image est dessinée dans une fenêtre noire posée sous la barre du widget, qui le suit */
+/* Volet du lecteur : playlist (yt-dlp) ou vidéos recommandées (page publique de la vidéo YouTube) */
+const { lireInitialData, recommandations } = require("./suggestions");
+const suggestionsCache = new Map();
+async function listeVideo() {
+  const url = String((S.video || {}).url || "").trim();
+  if (!url) return { type: "aucun", entrees: [], message: "Colle un lien pour voir la playlist ou des suggestions." };
+  if (lienTwitch(url)) return { type: "aucun", entrees: [], message: "Pas de suggestions pour Twitch." };
+  const l = require("./lecteur").lienListe(url);
+  if (l) return { type: "playlist", ...(await lecteur.liste(url)) };
+  const id = (lienYoutube(url) || {}).id;
+  if (!id) return { type: "aucun", entrees: [], message: "Suggestions disponibles pour les vidéos YouTube." };
+  const deja = suggestionsCache.get(id); if (deja && Date.now() - deja.t < 600000) return deja.r;
+  const rep = await sessVideo().fetch(`https://www.youtube.com/watch?v=${id}&hl=fr&gl=FR`, { headers: { "Accept-Language": "fr-FR,fr;q=0.9,en;q=0.6" } });
+  if (!rep.ok) throw new Error("YouTube a répondu HTTP " + rep.status);
+  const entrees = recommandations(lireInitialData(await rep.text()), id);
+  const r = { type: "suggestions", entrees, message: entrees.length ? "" : "YouTube n'a pas renvoyé de suggestions pour cette vidéo." };
+  suggestionsCache.set(id, { t: Date.now(), r });
+  return r;
+}
+/* VLC : l'image est dessinée dans une fenêtre noire posée sous le widget transparent, qui la suit */
 function creerEcranVideo(o) {
-  const e = new BrowserWindow({ parent: o.win, show: false, frame: false, transparent: false, backgroundColor: "#000000", resizable: false, movable: false, focusable: false, thickFrame: false, roundedCorners: false,
+  // l'image est sous la fenêtre du widget (transparente) : les barres et le volet se posent par-dessus
+  const e = new BrowserWindow({ show: false, frame: false, transparent: false, backgroundColor: "#000000", resizable: false, movable: false, focusable: false, thickFrame: false, roundedCorners: false,
     skipTaskbar: true, hasShadow: false, alwaysOnTop: true, width: 320, height: 180, title: `${APP_NAME} · vidéo`, webPreferences: { sandbox: true, contextIsolation: true } });
   e.setAlwaysOnTop(true, "screen-saver");
   e.setIgnoreMouseEvents(true); // les clics traversent l'image (VLC est piloté depuis la barre)
@@ -491,12 +522,12 @@ function creerEcranVideo(o) {
 }
 function placerEcranVideo() {
   const o = widgets.video; if (!o || !o.ecran || !vivante(o.ecran) || !vivante(o.win)) return;
-  const b = o.win.getContentBounds();
-  const cible = { x: b.x + 1, y: b.y + ENTETE_CARTE, width: Math.max(1, b.width - 2), height: Math.max(1, b.height - ENTETE_CARTE - PIED_VIDEO) }; // entre la barre du haut et celle du bas
+  const b = o.win.getContentBounds(), z = o.zone || { x: 0, y: 0, w: b.width, h: b.height };
+  const cible = { x: b.x + z.x, y: b.y + z.y, width: Math.max(1, z.w), height: Math.max(1, z.h) }; // toute la zone de l'image : les barres la recouvrent au survol
   const a = o.ecran.getBounds();
   if (a.x !== cible.x || a.y !== cible.y || a.width !== cible.width || a.height !== cible.height) o.ecran.setBounds(cible);
-  const voir = o.win.isVisible() && o.lecture && !o.menu; // menu de qualité ouvert : l'image s'efface pour le laisser voir
-  if (voir && !o.ecran.isVisible()) { o.ecran.showInactive(); o.ecran.setAlwaysOnTop(true, "screen-saver"); }
+  const voir = o.win.isVisible() && o.lecture;
+  if (voir && !o.ecran.isVisible()) { o.ecran.showInactive(); o.ecran.setAlwaysOnTop(true, "screen-saver"); o.win.moveTop(); if (masqueVideo && vivante(masqueVideo.win)) masqueVideo.win.moveTop(); }
   if (!voir && o.ecran.isVisible()) o.ecran.hide();
   placerMascotteVideo();
 }
@@ -523,7 +554,8 @@ function placerMascotteVideo() {
   const mv = creerMascotteVideo(); if (!mv.pret) return;
   const t = tailleMascotteVideo();
   if (t !== mv.t) mv.t = t;
-  const W2 = t + 60, H2 = t + 46, b = o.win.getBounds(), wa = screen.getDisplayMatching(b).workArea;
+  const W2 = t + 60, H2 = t + 46, bw = o.win.getBounds(), z = o.zone, wa = screen.getDisplayMatching(bw).workArea;
+  const b = z && z.w > 0 ? { x: bw.x + z.x, y: bw.y + z.y, width: z.w, height: z.h } : bw; // posée sur l'image, pas sur le volet
   // posée sur le bord haut du widget, côté droit ; à l'intérieur s'il n'y a pas la place au-dessus
   let x = b.x + b.width - W2 - 6, y = b.y - H2 + 12;
   if (y < wa.y) y = b.y + 2;
@@ -563,11 +595,11 @@ async function lancerVlc(debut = 0) {
     if (!vlc) { pousserVideo({ titre: "VLC introuvable", message: "Installe VLC (videolan.org), puis clique sur ↻. Ou choisis « Navigateur intégré » dans l'onglet Vidéo.", erreur: true, vlcManquant: true }); return; }
     if (!o.ecran || !vivante(o.ecran)) creerEcranVideo(o);
     const qualite = (S.video || {}).qualite || "auto";
-    const { titre, hauteur, audioSeul } = await lecteur.lire(vlc, url, hwnd(o.ecran), message => { if (seq === lectureSeq) pousserVideo({ message }); }, { qualite, debut });
+    const { titre, hauteur, largeur, audioSeul } = await lecteur.lire(vlc, url, hwnd(o.ecran), message => { if (seq === lectureSeq) pousserVideo({ message }); }, { qualite, debut });
     if (seq !== lectureSeq) return;
     log("Vidéo : lecture dans VLC de", url.slice(0, 120), titre ? "(" + titre + ")" : "", "qualité", qualite, hauteur ? hauteur + "p" : "");
     o.lecture = !audioSeul; placerEcranVideo();
-    pousserVideo({ titre: titre || url, message: audioSeul ? "♪ Audio seul" : "", lecture: true, qualite, hauteur });
+    pousserVideo({ titre: titre || url, message: audioSeul ? "♪ Audio seul" : "", lecture: true, qualite, hauteur, largeur });
     const vol = (S.video || {}).volume;
     lecteur.volume(vol == null ? 100 : +vol).then(async r => {
       if (r) pousserVideo({ etat: r });
@@ -984,23 +1016,57 @@ const PORTRAITS = "https://profileimg.plaync.com";
 const langueApi = () => (S.lang === "en" ? "en-US" : "fr-FR"); // langue des données de l'armurerie
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36";
 const cacheWeb = new Map();
+// Requêtes à l'armurerie : pile réseau de Chromium (connexions gardées ouvertes, HTTP/2, préconnexion à l'ouverture
+// de l'interface), la même requête n'est jamais envoyée deux fois en même temps, et repli sur fetch de Node si besoin.
+const enVol = new Map();
+let pileChromium = true;
+function prechaufferArmurerie() { try { session.defaultSession.preconnect({ url: SITE, numSockets: 2 }); } catch { /* sans effet */ } }
+async function requeteArmurerie(full) {
+  const headers = { "User-Agent": UA, Accept: "application/json, text/plain, */*", "Accept-Language": "fr-FR,fr;q=0.9,en;q=0.8", Referer: SITE + "/fr-fr/characters/", Origin: SITE };
+  if (pileChromium) {
+    try {
+      const r = await session.defaultSession.fetch(full, { headers, signal: AbortSignal.timeout(15000), cache: "no-store" });
+      if (r.ok || r.status === 404) return r;
+      log("Armurerie : HTTP", r.status, "par Chromium, nouvel essai par Node");
+    } catch (e) {
+      if (e.name === "TimeoutError") throw e;
+      log("Armurerie : pile Chromium indisponible (" + e.message + "), repli sur Node");
+    }
+    pileChromium = false;
+  }
+  return fetch(full, { headers, signal: AbortSignal.timeout(15000) });
+}
 async function obtenir(url, params, ttl = 300000) {
   const q = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) if (v !== null && v !== undefined && v !== "") q.set(k, String(v));
   const full = url + "?" + q;
   const hit = cacheWeb.get(full);
   if (hit && Date.now() - hit.t < ttl) return hit.d;
-  let r;
-  try {
-    r = await fetch(full, { headers: { "User-Agent": UA, Accept: "application/json, text/plain, */*", "Accept-Language": "fr-FR,fr;q=0.9,en;q=0.8", Referer: SITE + "/fr-fr/characters/", Origin: SITE }, signal: AbortSignal.timeout(15000) });
-  } catch (e) {
-    throw new Error(e.name === "TimeoutError" ? "l'armurerie officielle ne répond pas (délai dépassé)" : "armurerie injoignable (" + ((e.cause && e.cause.code) || e.message) + ")");
-  }
-  if (!r.ok) throw new Error("l'armurerie officielle a répondu HTTP " + r.status);
-  let d;
-  try { d = await r.json(); } catch { throw new Error("réponse illisible de l'armurerie officielle"); }
-  cacheWeb.set(full, { t: Date.now(), d });
-  return d;
+  if (enVol.has(full)) return enVol.get(full);
+  const p = (async () => {
+    let r;
+    try { r = await requeteArmurerie(full); }
+    catch (e) { throw new Error(e.name === "TimeoutError" ? "l'armurerie officielle ne répond pas (délai dépassé)" : "armurerie injoignable (" + ((e.cause && e.cause.code) || e.message) + ")"); }
+    if (!r.ok) throw new Error("l'armurerie officielle a répondu HTTP " + r.status);
+    let d;
+    try { d = await r.json(); } catch { throw new Error("réponse illisible de l'armurerie officielle"); }
+    cacheWeb.set(full, { t: Date.now(), d });
+    if (cacheWeb.size > 300) cacheWeb.delete(cacheWeb.keys().next().value);
+    return d;
+  })();
+  enVol.set(full, p);
+  try { return await p; } finally { enVol.delete(full); }
+}
+// Dernières fiches consultées, gardées sur le disque : affichées tout de suite, puis rafraîchies
+const FICHIER_FICHES = path.join(DATA, "fiches.json");
+let fichesDisque = null;
+const cleFiche = (serverId, characterId, region) => `${region || "eu"}|${serverId}|${idPerso(characterId)}`;
+function fichesMemo() { if (!fichesDisque) { fichesDisque = lireJson(FICHIER_FICHES, {}); if (!fichesDisque || typeof fichesDisque !== "object") fichesDisque = {}; } return fichesDisque; }
+let fichesT = null;
+function retenirFiche(cle, data) {
+  const f = fichesMemo(); delete f[cle]; f[cle] = { t: Date.now(), data };
+  const cles = Object.keys(f); while (cles.length > 20) delete f[cles.shift()];
+  clearTimeout(fichesT); fichesT = setTimeout(() => { try { ecrireJson(FICHIER_FICHES, f); } catch (e) { log("Fiches :", e.message); } }, 1500);
 }
 const site = region => ({ lang: langueApi(), region: region || "eu" });
 const idPerso = id => { const s = String(id || ""); if (!s.includes("%")) return s; try { return decodeURIComponent(s); } catch { return s; } };
@@ -1043,8 +1109,11 @@ const armurerie = {
     const p = { ...site(region), serverId, characterId: idPerso(characterId) }, ttl = force ? -1 : 120000; // « Actualiser » : jamais le cache
     const [info, equipment] = await Promise.all([obtenir(`${SITE}/api/character/info`, p, ttl), obtenir(`${SITE}/api/character/equipment`, p, ttl)]);
     if (!(info.profile && info.profile.characterId)) throw new Error("personnage introuvable sur l'armurerie officielle");
-    return { info: icones(info), equipment: icones(equipment) };
+    const data = { info: icones(info), equipment: icones(equipment) };
+    retenirFiche(cleFiche(serverId, characterId, region), data);
+    return data;
   },
+  ficheMemo(serverId, characterId, region) { const e = fichesMemo()[cleFiche(serverId, characterId, region)]; return e ? { ...e.data, memo: e.t } : null; },
   async daevanion(serverId, characterId, boardId, region) {
     return icones(await obtenir(`${SITE}/api/character/daevanion/detail`, { ...site(region), serverId, characterId: idPerso(characterId), boardId }, 300000));
   },
@@ -1375,14 +1444,15 @@ function creerTray() {
 
 /* ════════ Après chaque changement de réglages ════════ */
 /* ════════ Module secret : la récré (mascottes qui jouent en bas de l'écran, 3.0) ════════ */
-// Fenêtre transparente sur toute la largeur de l'écran du jeu, au-dessus de la barre des tâches. Les clics la traversent.
+// Fenêtre transparente sur toute la largeur de l'écran du jeu, collée au bas de l'écran (par-dessus la barre des
+// tâches) : les pieds des personnages touchent le bord. Les clics la traversent.
 let recre = null;
-const hauteurRecre = () => Math.round(Math.max(50, Math.min(150, +((S.recre || {}).taille) || 78)) * 2.3);
+const hauteurRecre = () => Math.round(Math.max(2, Math.min(5, +((S.recre || {}).echelle) || 3)) * 16 + 130);
 function synchroniserRecre() {
   const r = S.recre || {};
   if (!r.on) { if (vivante(recre)) recre.destroy(); recre = null; return; }
-  const wa = ecran().workArea, h = Math.min(hauteurRecre(), wa.height);
-  const cible = { x: wa.x, y: wa.y + wa.height - h, width: wa.width, height: h };
+  const b = ecran().bounds, h = Math.min(hauteurRecre(), b.height);
+  const cible = { x: b.x, y: b.y + b.height - h, width: b.width, height: h };
   if (!vivante(recre)) {
     recre = new BrowserWindow({ ...cible, show: false, frame: false, transparent: true, backgroundColor: "#00000000", resizable: false, movable: false, focusable: false, thickFrame: false,
       roundedCorners: false, skipTaskbar: true, hasShadow: false, alwaysOnTop: true, title: `${APP_NAME} · récré`, webPreferences: PREFS });
@@ -1394,8 +1464,8 @@ function synchroniserRecre() {
     log("Récré : ouverte");
     return;
   }
-  const b = recre.getBounds();
-  if (b.x !== cible.x || b.y !== cible.y || b.width !== cible.width || b.height !== cible.height) recre.setBounds(cible);
+  const a = recre.getBounds();
+  if (a.x !== cible.x || a.y !== cible.y || a.width !== cible.width || a.height !== cible.height) recre.setBounds(cible);
 }
 function apresReglages() {
   synchroniserRecre();
@@ -1429,6 +1499,7 @@ const API = {
   classes: (e, region) => resultat(() => armurerie.classes(region)),
   search: (e, mot, serverId, region) => resultat(() => armurerie.recherche(mot, serverId, region)),
   character: (e, serverId, characterId, region, force) => resultat(() => armurerie.fiche(serverId, characterId, region, !!force)),
+  character_cache: (e, serverId, characterId, region) => ({ ok: true, data: armurerie.ficheMemo(serverId, characterId, region) }),
   daevanion: (e, serverId, characterId, boardId, region) => resultat(() => armurerie.daevanion(serverId, characterId, boardId, region)),
   ranking: (e, contenu, serverId, classe, nom, region) => resultat(() => armurerie.classement(contenu, serverId, classe, nom, region)),
   ping: async () => ({ ok: true, data: await mesurerPing() }),
@@ -1507,7 +1578,15 @@ const API = {
     if (o && o.moteur === "vlc") lancerVlc(st && st.temps > 1 && !direct ? st.temps : 0); // une vidéo reprend au même moment ; un direct repart au direct
     return true;
   },
-  video_menu: (e, ouvert) => { const o = widgets.video; if (o) { o.menu = !!ouvert; placerEcranVideo(); } return true; },
+  video_menu: () => true,
+  video_zone: (e, z) => {
+    const o = widgets.video; if (!o || !z) return false;
+    o.zone = { x: Math.max(0, Math.round(+z.x || 0)), y: Math.max(0, Math.round(+z.y || 0)), w: Math.max(1, Math.round(+z.w || 1)), h: Math.max(1, Math.round(+z.h || 1)) };
+    if (o.vue) o.vue.setBounds(zoneVue(o));
+    placerEcranVideo(); placerMascotteVideo();
+    return true;
+  },
+  video_liste: () => listeVideo(),
   video_info: async () => ({ moteur: moteurVideo(), vlc: await lecteur.trouverVlc((S.video || {}).vlc), lecture: !!(widgets.video && widgets.video.lecture) }),
   video_back: () => { const o = widgets.video; if (o && o.vue && o.vue.webContents.navigationHistory.canGoBack()) o.vue.webContents.navigationHistory.goBack(); return true; },
   map_open: () => { shell.openExternal(urlCarte()); return true; },
@@ -1704,6 +1783,7 @@ async function eleverSiBesoin() {
 }
 function demarrer() {
   Menu.setApplicationMenu(null);
+  prechaufferArmurerie();
   relireJournalMaj();
   setTimeout(() => { if ((S.maj || {}).auto !== false) verifierMaj(false); }, 15000); // vérification au lancement
   log("Démarrage", APP_NAME, app.getVersion(), "Electron", process.versions.electron);

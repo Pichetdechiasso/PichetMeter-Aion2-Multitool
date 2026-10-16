@@ -1408,8 +1408,8 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
         <div class="seg" data-vid="mode"><button type="button" data-v="embed">Lecteur seul</button><button type="button" data-v="page">Site complet</button></div>
         <span class="note">« Site complet » permet de chercher et de se connecter (abonnements YouTube, Twitch).</span></div>
       <div class="form-row"><span class="label">Taille du widget</span>
-        <div class="seg" data-vid="taille"><button type="button" data-v="400x255">Petit</button><button type="button" data-v="520x323">Moyen</button><button type="button" data-v="720x435">Grand</button><button type="button" data-v="960x570">Très grand</button></div>
-        <span class="note">Tu peux aussi tirer les bords du widget.</span></div>
+        <div class="seg" data-vid="taille"><button type="button" data-v="400">Petit</button><button type="button" data-v="520">Moyen</button><button type="button" data-v="720">Grand</button><button type="button" data-v="960">Très grand</button></div>
+        <span class="note">Tire le coin du lecteur pour sa taille : le format de la vidéo est gardé. Les barres apparaissent au survol ; ☰ ouvre la playlist ou les vidéos recommandées.</span></div>
       <div class="form-row"><span class="label">Opacité du widget (image comprise)</span>
         <div class="slider-row"><input type="range" min="30" max="100" step="5" id="vidOp" aria-label="Opacité du lecteur"><span class="mono" id="vidOpV"></span></div></div>
       <button class="btn" type="button" data-layout="video" style="justify-self:start">Placer et régler les widgets</button>
@@ -1500,12 +1500,10 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
     </section>
     <section class="card neu-extruded" id="mascCard" data-sec="Mascottes"></section>
     <section class="card neu-extruded" data-sec="Général">
-      <div class="card-head"><h2>Raccourci &amp; performances</h2></div>
+      <div class="card-head"><h2>Raccourci</h2></div>
       <div class="form-row"><span class="label">Afficher / masquer l'overlay</span>
         <input class="field" id="hotkeyInput" readonly style="font-family:var(--f-data);text-align:center;cursor:pointer;caret-color:transparent" aria-label="Raccourci, cliquer puis presser une combinaison">
         <p class="note">Clique le champ puis presse ta combinaison. Échap masque aussi l'overlay.</p></div>
-      <div class="form-row"><span class="label">Limite d'images de l'overlay</span>
-        <div class="seg" id="fpsSeg"><button data-v="30">30 IPS</button><button data-v="60">60 IPS</button><button data-v="sync">Synchro jeu</button></div></div>
     </section>
     <section class="card neu-extruded" data-sec="Général">
       <div class="card-head"><h2>Comportement</h2></div>
@@ -1947,9 +1945,18 @@ async function inspect(r, force) {
   }
   switchView("perso");
   $("#profileEmpty").hidden = true; $("#profileBody").hidden = false;
-  $("#pName").textContent = ref.name; $("#pMeta").textContent = "Chargement de la fiche officielle…";
+  const jeton = inspect.jeton = (inspect.jeton || 0) + 1;
+  // dernière version connue de la fiche, affichée tout de suite pendant que l'armurerie répond
+  let memo = null;
+  if (!force && DESKTOP) { try { memo = await call("character_cache", ref.serverId, ref.characterId, region()); } catch {} }
+  if (memo && memo.info && jeton === inspect.jeton) {
+    current = { ref, ...memo, majA: memo.memo };
+    renderProfile(); renderGear(); renderSkills(); renderDaevanion();
+    $("#pMaj").textContent = "Mise à jour en cours…";
+  } else { $("#pName").textContent = ref.name; $("#pMeta").textContent = "Chargement de la fiche officielle…"; }
   try {
     const data = await call("character", ref.serverId, ref.characterId, region(), !!force);
+    if (jeton !== inspect.jeton) return; // une autre fiche a été ouverte entre-temps
     current = { ref, ...data, majA: Date.now() };
     const p = data.info?.profile || {};
     ref.className = p.className || ref.className; ref.imageUrl = p.profileImage || ref.imageUrl; ref.name = p.characterName || ref.name;
@@ -1958,7 +1965,11 @@ async function inspect(r, force) {
     save(); renderRecents(); renderFavs();
     renderProfile(); renderGear(); renderSkills(); renderDaevanion();
     $("#pMaj").textContent = (force ? "Actualisé à " : "Mis à jour à ") + new Date().toLocaleTimeString(LOC, { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-  } catch (ex) { $("#pMeta").textContent = "Impossible de charger la fiche : " + ex.message; }
+  } catch (ex) {
+    if (jeton !== inspect.jeton) return;
+    if (memo && memo.info) $("#pMaj").textContent = "Armurerie injoignable : fiche du " + new Date(memo.memo).toLocaleString(LOC, { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+    else $("#pMeta").textContent = "Impossible de charger la fiche : " + ex.message;
+  }
 }
 /* Bouton « Actualiser » : relit la fiche officielle sans cache (niveau d'objet, puissance de combat, équipement) */
 $("#refreshBtn").addEventListener("click", async () => {
@@ -2083,6 +2094,7 @@ function renderDaevanion() {
       <b class="mono" style="margin-left:auto">${pct(b)} %</b></span>
       <span class="bar"><span style="width:${pct(b)}%"></span></span></button>`).join("") : '<p class="gm">Aucun plateau Daevanion renvoyé.</p>';
   $("#boardDetail").textContent = boards.length ? "Sélectionne un plateau pour afficher ses bonus actifs." : "";
+  if (DESKTOP && boards.length) { const ref = current.ref, j = inspect.jeton; boards.forEach((b, i) => setTimeout(() => { if (inspect.jeton === j) call("daevanion", ref.serverId, ref.characterId, +b.id, region()).catch(() => {}); }, 600 + i * 250)); }
   $$("#boards .board").forEach(b => b.addEventListener("click", async () => {
     $$("#boards .board").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
     $("#boardDetail").textContent = "Chargement…";
@@ -3336,7 +3348,6 @@ function renderParams() {
   $("#optMajAuto").checked = S.maj.auto !== false;
   $("#optSync").checked = S.autosync; $("#optNotif").checked = S.notif; $("#optStreamer").checked = S.streamer; $("#optAdmin").checked = S.admin !== false;
   $("#hotkeyInput").value = S.hotkey; $("#hotkeyBadge").textContent = S.hotkey; $("#hkFoot").textContent = S.hotkey;
-  $$("#fpsSeg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === S.fps)));
   $$("#dispMode button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === S.display.mode)));
   $("#dispOp").value = S.display.opacity; $("#dispOpV").textContent = S.display.opacity + " %";
   const fl = S.display.flou ?? 6; $("#dispBlur").value = fl; $("#dispBlurV").textContent = fl ? fl + " px" : "Aucun";
@@ -3405,7 +3416,6 @@ $("#majCheck").addEventListener("click", async () => {
 });
 $("#optAnim").addEventListener("change", e => { S.display.anim = e.target.checked; save(); renderParams(); });
 $("#optWfg").addEventListener("change", e => { S.display.widgetsFg = e.target.checked; save(); if (DESKTOP) refreshStatus(); });
-$$("#fpsSeg button").forEach(b => b.addEventListener("click", () => { S.fps = b.dataset.v; save(); renderParams(); }));
 $$("#dispMode button").forEach(b => b.addEventListener("click", () => { S.display.mode = b.dataset.v; renderParams(); saveNow().then(() => api()?.display_update()); }));
 $("#dispOp").addEventListener("input", e => { S.display.opacity = +e.target.value; $("#dispOpV").textContent = e.target.value + " %"; clearTimeout(e.target._t); e.target._t = setTimeout(() => saveNow().then(() => api()?.display_update()), 120); });
 $("#dispBlur").addEventListener("input", e => { S.display.flou = +e.target.value; renderParams(); save(); });
@@ -3414,11 +3424,11 @@ $("#themeBtn").addEventListener("click", () => { S.theme = isDark() ? "light" : 
 function majLogo() { const b = $("#logoBtn"); if (b) b.classList.toggle("on", !!(S.recre || {}).on); }
 $("#logoBtn").addEventListener("click", () => {
   const r = S.recre || {}, on = !r.on, premiere = !r.decouvert;
-  S.recre = { nombre: 5, taille: 78, bulles: true, objets: true, ...r, on, decouvert: true };
+  S.recre = { nombre: 4, echelle: 3, bulles: true, ...r, on, decouvert: true };
   save(); majLogo(); renderMascSettings();
   const b = $("#logoBtn"); b.classList.remove("boing"); void b.offsetWidth; b.classList.add("boing");
-  if (premiere) notify("Module secret débloqué", "C'est la récré ! Les mascottes jouent en bas de l'écran. Re-clique sur Sonic pour les ranger ; réglages dans Paramètres > Mascottes.");
-  else notify("La récré", on ? "Les mascottes sont de sortie." : "Les mascottes sont rentrées.");
+  if (premiere) notify("Module secret débloqué", "C'est la récré ! Deux armées se battent en bas de l'écran. Re-clique sur Sonic pour sonner la fin ; réglages dans Paramètres > Mascottes.");
+  else notify("La récré", on ? "Que la bataille commence !" : "Fin de la bataille.");
 });
 onSettingsChanged.push(majLogo); majLogo();
 document.addEventListener("click", e => { if (!WIDGET && e.target.closest(".info-hero .logo-xl")) $("#logoBtn").click(); }); // le grand Sonic de l'onglet Infos aussi
@@ -3490,7 +3500,13 @@ function onView(v) {
 }
 
 /* ════════ Lecteur vidéo (YouTube, Twitch) : onglet et widget ════════ */
-const videoTaille = c => [Math.max(260, Math.round(+(c && c.w) || 520)), Math.max(180, Math.round(+(c && c.h) || 323))];
+// Taille du lecteur au format de la vidéo (16:9 par défaut, vertical pour les shorts) ; le navigateur intégré garde son en-tête de 30 px
+const ratioVideo = () => Math.max(.3, Math.min(2.2, +((S.video || {}).ratio) || .5625));
+const videoTaille = c => {
+  const base = Math.max(260, Math.min(2400, Math.round(+(c && c.w) || 520))), r = ratioVideo(), web = (S.video || {}).moteur === "web";
+  const [w, h] = r <= 1 ? [base, Math.round(base * r)] : [Math.round(base * .75 / r), Math.round(base * .75)];
+  return [w, h + (web ? 30 : 0)];
+};
 const ytId = t => { const m = String(t || "").match(/(?:v=|youtu\.be\/|shorts\/|live\/|embed\/)([\w-]{11})/) || String(t || "").trim().match(/^([\w-]{11})$/); return m ? m[1] : null; };
 const ytListe = t => { const m = String(t || "").match(/[?&]list=([\w-]+)/); return m ? m[1] : null; };
 const estTwitch = t => /(^|\/\/|\.)twitch\.tv\//i.test(String(t || ""));
@@ -3517,7 +3533,7 @@ function renderVideo() {
   $("#vidNow").innerHTML = v.url ? `${vignette(v.url, "mqdefault")}<div><span class="label">En cours · ${genre}</span><b>${esc(v.titre || twitchNom(v.url) || (ytListe(v.url) && !ytId(v.url) ? "Playlist YouTube" : "Vidéo"))}</b><small class="mono">${esc(v.url)}</small></div>`
     : `<span class="vid-ic">${svg("play")}</span><div><span class="label">Rien en cours</span><b>Colle un lien pour commencer</b><small>${v.moteur === "web" ? "Sans lien, le widget ouvre l'accueil de YouTube." : "Lien YouTube ou Twitch (chaîne en direct, rediffusion, clip)."}</small></div>`;
   $("#vidRecents").innerHTML = (v.recents || []).map((r, i) => `<button type="button" class="vid-rec" data-vrec="${i}" title="${esc(r.url)}">${vignette(r.url, "default")}<span>${esc(r.titre || twitchNom(r.url) || r.url.replace(/^https?:\/\/(www\.)?/, ""))}</span></button>`).join("") || '<p class="note">Les vidéos lues apparaîtront ici.</p>';
-  $$("[data-vid]").forEach(seg => { const k = seg.dataset.vid, cur = k === "taille" ? videoTaille(w).join("x") : (v[k] || DEFAULTS.video[k]); seg.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === cur))); });
+  $$("[data-vid]").forEach(seg => { const k = seg.dataset.vid, cur = k === "taille" ? String(Math.round(+w.w || 520)) : (v[k] || DEFAULTS.video[k]); seg.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === cur))); });
   $("#vidModeRow").hidden = v.moteur !== "web"; $("#vidQRow").hidden = v.moteur === "web";
   const i = VIDEO_INFO;
   $("#vidMoteurNote").innerHTML = v.moteur === "web" ? "Le site YouTube ou Twitch s'affiche dans le widget. Certaines vidéos refusent ce mode : utilise alors VLC."
@@ -3535,7 +3551,7 @@ if (!WIDGET && $("#view-video")) {
   $("#view-video").addEventListener("click", e => {
     const b = e.target.closest("[data-vid] button"); if (!b) return;
     const k = b.closest("[data-vid]").dataset.vid;
-    if (k === "taille") { const [w, h] = b.dataset.v.split("x").map(Number); S.widgets.video = { ...S.widgets.video, w, h }; widgetChanged("video"); }
+    if (k === "taille") { S.widgets.video = { ...S.widgets.video, w: +b.dataset.v }; widgetChanged("video"); }
     else if (k === "qualite") { S.video = { ...DEFAULTS.video, ...S.video, qualite: b.dataset.v }; if (DESKTOP) api().video_qualite(b.dataset.v); else save(); }
     else { S.video = { ...DEFAULTS.video, ...S.video, [k]: b.dataset.v }; save(); if (k === "moteur") infoVideo(); }
     renderVideo();
@@ -3548,16 +3564,21 @@ const QUALITES_VIDEO = [["auto", "Auto", "jusqu'en 1080p"], ["max", "Maximale", 
 const ICONE_SON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
 const ICONE_MUET = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="m17 9 5 6M22 9l-5 6"/></svg>';
 const nomQualite = q => (QUALITES_VIDEO.find(x => x[0] === q) || QUALITES_VIDEO[0])[1];
+/* Volet du lecteur : playlist (YouTube, YouTube Music) ou vidéos recommandées */
+const VOLET_L = 300;
+const lienEntree = (liste, x) => liste && liste.type === "playlist" ? `https://${liste.musique ? "music" : "www"}.youtube.com/watch?v=${x.id}&list=${liste.liste}` : `https://www.youtube.com/watch?v=${x.id}`;
 function bootVideo(wr) {
   document.body.classList.add("wm");
   const vlc = (S.video || {}).moteur !== "web";
-  wr.innerHTML = `<div class="wbox wvid${vlc ? " vlc" : ""}" id="wv"><div class="wvh pywebview-drag-region">
+  wr.innerHTML = `<div class="wv2" id="wv2"><div class="wbox wvid${vlc ? " vlc" : ""}" id="wv"><div class="wv-fond" id="wvFond"></div>
+    <div class="wv-msg" id="wvMsg">${vlc ? "Chargement…" : ""}</div>
+    <div class="wvh pywebview-drag-region">
       <span class="t">${svg("play")}<b id="wvTitre">${vlc ? "Lecteur vidéo" : "YouTube"}</b></span>
       <form id="wvForm" autocomplete="off"><input id="wvUrl" placeholder="Lien YouTube ou Twitch…" aria-label="Lien YouTube ou Twitch"></form>
       ${vlc ? `<button type="button" class="wv-q" data-wv="qualite" id="wvQ" title="Qualité de la vidéo" aria-label="Qualité de la vidéo" aria-haspopup="menu" aria-expanded="false">Auto</button>`
         : `<button type="button" data-wv="back" title="Retour" aria-label="Retour">‹</button><button type="button" data-wv="home" title="Accueil" aria-label="Accueil">⌂</button>`}
+      <button type="button" data-wv="volet" id="wvVoletBtn" title="Playlist et vidéos recommandées" aria-label="Playlist et vidéos recommandées" aria-expanded="false">☰</button>
       <button type="button" data-wv="reload" title="Recharger" aria-label="Recharger">↻</button><button type="button" data-wv="off" title="Arrêter et masquer le lecteur" aria-label="Arrêter et masquer le lecteur">✕</button></div>
-    <div class="wv-msg" id="wvMsg">${vlc ? "Chargement…" : ""}</div>
     ${vlc ? `<div class="wvb" id="wvb">
       <button type="button" data-wv="recul" title="Reculer de 10 s" aria-label="Reculer de 10 secondes">-10</button><button type="button" class="wv-pp" data-wv="pause" id="wvPause" title="Pause / lecture" aria-label="Pause ou lecture">❚❚</button><button type="button" data-wv="avance" title="Avancer de 10 s" aria-label="Avancer de 10 secondes">+10</button>
       <span class="wv-t mono" id="wvEcoule">0:00</span>
@@ -3565,17 +3586,43 @@ function bootVideo(wr) {
       <span class="wv-t mono" id="wvReste" title="Temps restant">—</span>
       <span class="wv-volpop" id="wvVolPop"><input type="range" class="wv-vol" id="wvVol" min="0" max="125" step="1" aria-label="Volume"><i class="mono" id="wvVolV"></i></span>
       <button type="button" class="wv-son" data-wv="volume" id="wvSon" title="Volume (clic droit : couper le son)" aria-label="Volume" aria-expanded="false">${ICONE_SON}</button>
-      <span class="wv-grip" id="wvGrip" title="Taille du lecteur"></span></div>` : ""}
-    <div class="wv-menu" id="wvMenu" role="menu" hidden><span class="label">Qualité</span>${QUALITES_VIDEO.map(([q, t, d]) => `<button type="button" role="menuitemradio" data-q="${q}"><b>${t}</b><small>${d}</small></button>`).join("")}</div></div>`;
-  const box = $("#wv");
-  const taille = () => { const [W, H] = videoTaille(S.widgets.video); box.style.width = W + "px"; box.style.height = H + "px"; };
-  taille(); onSettingsChanged.push(taille);
+      <span class="wv-grip" id="wvGrip" title="Taille du lecteur (le format de la vidéo est gardé)"></span></div>` : ""}
+    <div class="wv-menu" id="wvMenu" role="menu" hidden><span class="label">Qualité</span>${QUALITES_VIDEO.map(([q, t, d]) => `<button type="button" role="menuitemradio" data-q="${q}"><b>${t}</b><small>${d}</small></button>`).join("")}</div></div>
+    <aside class="wv-volet" id="wvVolet" hidden><div class="wvv-h"><b id="wvvTitre">Vidéos recommandées</b><small id="wvvSous"></small></div><div class="wvv-l" id="wvvListe"></div></aside></div>`;
+  const box = $("#wv"), volet = $("#wvVolet");
+  let zoneEnvoyee = "";
+  const envoyerZone = () => {
+    // zone de l'image dans la fenêtre : VLC dessine sous les barres (qui la recouvrent au survol), le navigateur sous l'en-tête
+    const r = box.getBoundingClientRect(), y = vlc ? 0 : 30;
+    const z = { x: Math.round(r.left), y: Math.round(r.top + y), w: Math.round(r.width), h: Math.round(r.height - y) }, k = JSON.stringify(z);
+    if (k !== zoneEnvoyee) { zoneEnvoyee = k; api()?.video_zone(z); }
+  };
+  const taille = () => {
+    const [W, H] = videoTaille(S.widgets.video);
+    box.style.width = W + "px"; box.style.height = H + "px";
+    const ouvert = !!(S.video || {}).volet; volet.hidden = !ouvert; volet.style.height = H + "px";
+    $("#wvVoletBtn").setAttribute("aria-expanded", String(ouvert));
+    requestAnimationFrame(envoyerZone);
+  };
+  taille(); onSettingsChanged.push(taille); new ResizeObserver(envoyerZone).observe(box);
   const retenirTitre = titre => {
     if (titre && S.video && S.video.url && S.video.titre !== titre && !/^(YouTube|Twitch)$/i.test(titre)) { // titre retenu pour l'onglet et les récents
       S.video.titre = titre; (S.video.recents || []).forEach(r => { if (r.url === S.video.url) r.titre = titre; }); save();
     }
   };
-  let volumeAvant = 100, etat = null, glisseVol = false, glisseSeek = false, hauteur = 0, volT = 0;
+  let volumeAvant = 100, etat = null, avant = null, glisseVol = false, glisseSeek = false, hauteur = 0, volT = 0, lecture = false, surBarre = false, geste = null;
+  /* ── Barres affichées au survol (VLC) ── */
+  let survolT = 0;
+  const garder = () => !$("#wvMenu").hidden || $("#wvVolPop")?.classList.contains("on") || document.activeElement === $("#wvUrl") || glisseSeek || glisseVol || !!geste || surBarre || !lecture || !etat || etat.etat !== "playing";
+  const cacher = () => { clearTimeout(survolT); if (garder()) { survolT = setTimeout(cacher, 700); return; } box.classList.remove("survol"); };
+  const montrer = () => { box.classList.add("survol"); clearTimeout(survolT); survolT = setTimeout(cacher, 2200); };
+  if (vlc) {
+    box.addEventListener("mousemove", montrer);
+    box.addEventListener("mouseleave", () => { surBarre = false; clearTimeout(survolT); survolT = setTimeout(cacher, 350); });
+    for (const b of box.querySelectorAll(".wvh, .wvb")) { b.addEventListener("mouseenter", () => { surBarre = true; montrer(); }); b.addEventListener("mouseleave", () => { surBarre = false; }); }
+    $("#wvFond").addEventListener("click", () => { if (lecture) cmd("pl_pause"); montrer(); }); // clic sur l'image : pause / lecture
+    box.classList.add("survol"); survolT = setTimeout(cacher, 3000);
+  } else box.classList.add("survol", "fixe");
   const qualite = () => (S.video || {}).qualite || "auto";
   const peindreQualite = () => {
     const q = $("#wvQ"); if (!q) return;
@@ -3585,8 +3632,42 @@ function bootVideo(wr) {
   const menu = ouvrir => {
     const m = $("#wvMenu"); if (!m || !$("#wvQ")) return;
     m.hidden = !ouvrir; $("#wvQ").setAttribute("aria-expanded", String(ouvrir));
-    api()?.video_menu(ouvrir); peindreQualite();
+    if (ouvrir) montrer(); peindreQualite();
   };
+  /* ── Volet : playlist ou recommandations ── */
+  let LISTE = null, listeUrl = "", listeEnCours = false;
+  const idCourant = () => ytId((S.video || {}).url);
+  const peindreVolet = () => {
+    if (volet.hidden) return;
+    const l = $("#wvvListe");
+    if (listeEnCours && !LISTE) { l.innerHTML = '<p class="wvv-vide">Chargement…</p>'; return; }
+    if (!LISTE) { l.innerHTML = '<p class="wvv-vide">—</p>'; return; }
+    if (LISTE.erreur) { l.innerHTML = `<p class="wvv-vide">${esc(LISTE.erreur)}</p>`; return; }
+    const pl = LISTE.type === "playlist", cur = idCourant();
+    $("#wvvTitre").textContent = pl ? (LISTE.titre || "Playlist") : "Vidéos recommandées";
+    $("#wvvSous").textContent = pl ? `${(LISTE.entrees.findIndex(x => x.id === cur) + 1) || "—"} / ${LISTE.entrees.length}${LISTE.musique ? " · YouTube Music" : ""}` : LISTE.entrees.length ? "" : "";
+    l.innerHTML = LISTE.entrees.map((x, i) => `<button type="button" class="wvv-e${x.id === cur ? " on" : ""}" data-ve="${i}" title="${esc(x.titre)}">
+        <span class="wvv-v"><img src="https://i.ytimg.com/vi/${esc(x.id)}/mqdefault.jpg" alt="" loading="lazy" referrerpolicy="no-referrer">${x.duree ? `<i>${esc(typeof x.duree === "number" ? fmtTemps(x.duree) : x.duree)}</i>` : ""}${pl ? `<em>${x.id === cur ? "▶" : i + 1}</em>` : ""}</span>
+        <span class="wvv-t"><b>${esc(x.titre || "Vidéo")}</b><small>${esc([x.auteur, x.vues].filter(Boolean).join(" · "))}</small></span></button>`).join("") || `<p class="wvv-vide">${esc(LISTE.message || "Aucune vidéo.")}</p>`;
+    const on = l.querySelector(".wvv-e.on"); if (on && pl) on.scrollIntoView({ block: "nearest" });
+  };
+  const chargerListe = async (force = false) => {
+    const url = String((S.video || {}).url || "");
+    const meme = LISTE && LISTE.type === "playlist" && ytListe(url) && ytListe(url) === LISTE.liste; // même playlist : on garde la liste
+    if (!force && (url === listeUrl || meme)) { listeUrl = url; peindreVolet(); return; }
+    listeUrl = url; listeEnCours = true; if (!meme) LISTE = null; peindreVolet();
+    try { const r = DESKTOP ? await api().video_liste() : null; if (url === listeUrl) LISTE = r && r.ok !== false ? r : { erreur: (r && r.error) || "Liste indisponible." }; }
+    catch (e) { if (url === listeUrl) LISTE = { erreur: String(e.message || e).replace(/^Error invoking remote method '\w+': (Error: )?/, "") }; }
+    listeEnCours = false; peindreVolet();
+  };
+  volet.addEventListener("click", e => { const b = e.target.closest("[data-ve]"); if (!b || !LISTE) return; const x = LISTE.entrees[+b.dataset.ve]; if (x) lireVideo(lienEntree(LISTE, x)); });
+  const suivante = () => { // fin d'une vidéo de playlist : on enchaîne
+    if (!LISTE || LISTE.type !== "playlist") return;
+    const i = LISTE.entrees.findIndex(x => x.id === idCourant()), x = LISTE.entrees[i + 1];
+    if (x) lireVideo(lienEntree(LISTE, x));
+  };
+  onSettingsChanged.push(() => { if ((S.video || {}).url !== listeUrl && (ytListe((S.video || {}).url) || !volet.hidden)) chargerListe(); else peindreVolet(); });
+  if (ytListe((S.video || {}).url) || (S.video || {}).volet) chargerListe();
   const peindre = () => {
     if (!etat || !vlc) return;
     $("#wvPause").textContent = etat.etat === "playing" ? "❚❚" : "▶";
@@ -3603,12 +3684,20 @@ function bootVideo(wr) {
     }
     seek.disabled = direct;
     const v = $("#wvVol"); if (v && !glisseVol) { v.value = Math.min(125, etat.volume); v.style.setProperty("--p", Math.min(125, etat.volume) / 1.25 + "%"); $("#wvVolV").textContent = etat.volume + "%"; }
+    if (avant && avant.etat === "playing" && etat.etat === "stopped" && avant.duree > 0 && avant.temps >= avant.duree - 3) suivante();
+    avant = etat;
   };
   window.__videoTitre = m => {
     if (typeof m === "string") m = { titre: m };
     if (m.titre != null) { const t = String(m.titre).replace(/\s*-\s*(YouTube|Twitch)\s*$/, "").trim(); $("#wvTitre").textContent = t || "Lecteur vidéo"; $("#wvTitre").title = t; if (!m.erreur) retenirTitre(t); }
     if (m.message != null) { const el = $("#wvMsg"); el.textContent = m.message; el.classList.toggle("err", !!m.erreur); el.hidden = !m.message; }
+    if (m.lecture != null) lecture = !!m.lecture;
+    if (m.erreur) { lecture = false; montrer(); }
     if (m.hauteur != null) { hauteur = +m.hauteur || 0; peindreQualite(); }
+    if (+m.largeur > 0 && +m.hauteur > 0) { // format de la vidéo : le widget le garde
+      const r = Math.round(+m.hauteur / +m.largeur * 1e4) / 1e4;
+      if (Math.abs(r - ratioVideo()) > .01) { S.video = { ...(S.video || {}), ratio: r }; widgetChanged("video"); }
+    }
     if (m.etat) { etat = m.etat; peindre(); }
   };
   $("#wvForm").addEventListener("submit", e => { e.preventDefault(); const u = $("#wvUrl").value; if (videoValide(u) && u.trim()) { lireVideo(u); $("#wvUrl").value = ""; $("#wvUrl").blur(); } else $("#wvUrl").classList.add("bad"); });
@@ -3643,10 +3732,14 @@ function bootVideo(wr) {
     vol.addEventListener("change", finVol); vol.addEventListener("pointerup", finVol);
     for (const el of [vol, $("#wvSon")]) el.addEventListener("wheel", e => { e.preventDefault(); reglerVol(+vol.value + (e.deltaY < 0 ? 5 : -5)); }, { passive: false });
     $("#wvSon").addEventListener("contextmenu", e => { e.preventDefault(); if (etat && etat.volume) { volumeAvant = etat.volume; reglerVol(0); } else reglerVol(volumeAvant || 100); });
-    // Poignée : la taille du lecteur suit la souris (la fenêtre s'ajuste au contenu)
-    const g = $("#wvGrip"); let geste = null;
-    g.addEventListener("pointerdown", e => { if (e.button !== 0) return; const [w, h] = videoTaille(S.widgets.video); geste = { x: e.screenX, y: e.screenY, w, h }; g.setPointerCapture(e.pointerId); e.preventDefault(); });
-    g.addEventListener("pointermove", e => { if (!geste) return; S.widgets.video = { ...S.widgets.video, w: Math.max(320, Math.round(geste.w + e.screenX - geste.x)), h: Math.max(200, Math.round(geste.h + e.screenY - geste.y)) }; taille(); });
+    // Poignée : la taille suit la souris, au format de la vidéo
+    const g = $("#wvGrip");
+    g.addEventListener("pointerdown", e => { if (e.button !== 0) return; const [w, h] = videoTaille(S.widgets.video); geste = { x: e.screenX, y: e.screenY, w, h, base: +(S.widgets.video || {}).w || 520 }; g.setPointerCapture(e.pointerId); e.preventDefault(); });
+    g.addEventListener("pointermove", e => {
+      if (!geste) return;
+      const k = Math.max((geste.w + e.screenX - geste.x) / geste.w, (geste.h + e.screenY - geste.y) / geste.h); // le plus grand des deux gestes, format gardé
+      S.widgets.video = { ...S.widgets.video, w: Math.max(260, Math.min(2400, Math.round(geste.base * k))) }; taille();
+    });
     const finG = e => { if (!geste) return; geste = null; try { g.releasePointerCapture(e.pointerId); } catch {} widgetChanged("video"); };
     g.addEventListener("pointerup", finG); g.addEventListener("pointercancel", finG);
   }
@@ -3673,6 +3766,7 @@ function bootVideo(wr) {
     if (a === "avance") cmd("seek", "+10s");
     if (a === "volume") { const p = $("#wvVolPop"); const o = !p.classList.contains("on"); p.classList.toggle("on", o); b.setAttribute("aria-expanded", String(o)); clearTimeout(volT); if (o) volT = setTimeout(() => { if (!glisseVol) { p.classList.remove("on"); b.setAttribute("aria-expanded", "false"); } }, 4000); }
     if (a === "qualite") menu($("#wvMenu").hidden);
+    if (a === "volet") { S.video = { ...(S.video || {}), volet: !(S.video || {}).volet }; widgetChanged("video"); taille(); if (S.video.volet) chargerListe(); }
     if (a === "off") { S.widgets.video = { ...S.widgets.video, pinned: false }; widgetChanged("video"); }
   });
 }
@@ -3854,15 +3948,18 @@ function installerMascotte(kind) {
   SCENE = kind === "macro" ? new window.Mascottes.Troupe($("#wSlot"), urlMascotteMacro) : new window.Mascottes.Scene($("#wSlot"));
   window.Mascottes.fx = () => !S.mascots || S.mascots.fx !== false;
   window.Mascottes.charger(api());
+  const bas = kind === "macro"; // Macros : les mascottes se rangent sous le widget, en demi-taille
+  if (bas) wrap.classList.add("wm-bas");
   const maj = () => {
-    const on = mascOn(kind);
+    const on = mascOn(kind), t = Math.max(60, Math.min(220, +(S.mascots || {}).size || 110));
     wrap.classList.toggle("has-m", on);
-    wrap.style.setProperty("--msz", Math.max(60, Math.min(220, +(S.mascots || {}).size || 110)) + "px");
+    wrap.style.setProperty("--msz", Math.round(bas ? t / 2 : t) + "px");
     if (!on && SCENE.visible) SCENE.cacher();
   };
   // la mascotte se place du côté du centre de l'écran (à droite d'un widget de gauche, à gauche d'un widget de droite)
   const cote = () => { const centre = window.screenX + window.outerWidth / 2, milieu = (screen.availLeft || 0) + screen.width / 2; wrap.classList.toggle("side-r", centre < milieu); };
-  maj(); cote(); onSettingsChanged.push(maj); setInterval(cote, 1500);
+  maj(); onSettingsChanged.push(maj);
+  if (!bas) { cote(); setInterval(cote, 1500); }
 }
 let dpsCombat = false;
 function mascotteDps(st) {
@@ -3896,22 +3993,27 @@ function mascotteTimers() {
 }
 /* Module secret « la récré » : réglages, visibles une fois découvert (clic sur Sonic) */
 function recreHTML() {
-  const r = { nombre: 5, taille: 78, ...(S.recre || {}) };
+  const r = { nombre: 4, echelle: 3, ...(S.recre || {}) };
   const sw = (k, t, d, v) => `<label class="set-item"><span><span class="t">${t}</span><span class="d">${d}</span></span><span class="switch"><input type="checkbox" data-rc="${k}" role="switch" ${v ? "checked" : ""}><span class="track"></span><span class="knob"></span></span></label>`;
+  const nb = Math.max(2, Math.min(8, +r.nombre || 4)), ech = Math.max(2, Math.min(5, +r.echelle || 3));
   return `<h3 class="reg-t">La récré · module secret</h3>
-    ${sw("on", "Mascottes en bas de l'écran", "Elles se promènent, jouent au ballon, se battent à l'épée, lancent des sorts et discutent", !!r.on)}
-    <div class="form-row"><span class="label">Nombre de mascottes</span><div class="slider-row"><input type="range" min="2" max="10" step="1" value="${+r.nombre || 5}" data-rc="nombre" aria-label="Nombre de mascottes"><span class="mono" id="rcNb">${+r.nombre || 5}</span></div></div>
-    <div class="form-row"><span class="label">Taille</span><div class="slider-row"><input type="range" min="50" max="150" step="5" value="${+r.taille || 78}" data-rc="taille" aria-label="Taille des mascottes de la récré"><span class="mono" id="rcT">${+r.taille || 78} px</span></div></div>
-    ${sw("bulles", "Bulles de discussion", "Un ou deux émojis au-dessus de leur tête", r.bulles !== false)}
-    ${sw("objets", "Ballon, épées et sorts", "Sinon, elles se contentent de se promener et de danser", r.objets !== false)}`;
+    ${sw("on", "Bataille en bas de l'écran", "Deux camps de chevaliers, archers et mages en pixel art se battent : charges, replis, flèches et sorts", !!r.on)}
+    <div class="form-row"><span class="label">Combattants par camp</span><div class="slider-row"><input type="range" min="2" max="8" step="1" value="${nb}" data-rc="nombre" aria-label="Combattants par camp"><span class="mono" id="rcNb">${nb}</span></div></div>
+    <div class="form-row"><span class="label">Taille des personnages</span><div class="seg" data-rcseg="echelle">${[[2, "Petite"], [3, "Moyenne"], [4, "Grande"], [5, "Très grande"]].map(([v, t]) => `<button type="button" data-v="${v}" aria-pressed="${v === ech}">${t}</button>`).join("")}</div></div>
+    ${sw("bulles", "Cris de guerre", "Une bulle discrète d'un ou deux émojis au-dessus de leur tête", r.bulles !== false)}`;
 }
 document.addEventListener("change", e => {
   const t = e.target; if (!t.dataset || !t.dataset.rc || WIDGET) return;
   S.recre = { ...(S.recre || {}), [t.dataset.rc]: t.type === "checkbox" ? t.checked : +t.value }; save(); majLogo();
 });
 document.addEventListener("input", e => {
-  const t = e.target; if (!t.dataset || !["nombre", "taille"].includes(t.dataset.rc) || WIDGET) return;
-  const el = $(t.dataset.rc === "nombre" ? "#rcNb" : "#rcT"); if (el) el.textContent = t.value + (t.dataset.rc === "taille" ? " px" : "");
+  const t = e.target; if (!t.dataset || t.dataset.rc !== "nombre" || WIDGET) return;
+  const el = $("#rcNb"); if (el) el.textContent = t.value;
+});
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-rcseg] button"); if (!b || WIDGET) return;
+  S.recre = { ...(S.recre || {}), echelle: +b.dataset.v }; save();
+  b.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
 });
 /* Paramètres : carte « Mascottes & animations » */
 async function renderMascSettings() {
@@ -3974,7 +4076,7 @@ function contenuApercu(k) {
   if (k === "dps") return dpsWidgetHTML(DPS.combat ? DPS : dpsApercu());
   if (k === "cd") return cdWidgetHTML(true);
   if (k === "macro") return window.MacrosUI.apercuWidget();
-  if (k === "video") { const [W, H] = videoTaille(S.widgets.video); return `<div class="wbox wvid apercu" style="width:${W}px;height:${H}px"><div class="wvh"><span class="t">${svg("play")}Lecteur vidéo</span></div><div class="wvid-ph">${svg("play")}<small>${esc((S.video || {}).titre || "Vidéo YouTube")}</small></div></div>`; }
+  if (k === "video") { const [W, H] = videoTaille(document.body.classList.contains("layout") && window.__layoutD ? window.__layoutD.video : S.widgets.video); return `<div class="wbox wvid apercu" style="width:${W}px;height:${H}px"><div class="wvh"><span class="t">${svg("play")}Lecteur vidéo</span></div><div class="wvid-ph">${svg("play")}<small>${esc((S.video || {}).titre || "Vidéo YouTube")}</small></div></div>`; }
   if (k === "toast") return `<div class="wbox wtoast"><span class="bell" aria-hidden="true">${svg("bell")}</span><div style="min-width:0"><b>Exemple d'alerte</b><p>Faille dans 5 minutes</p></div></div>`;
   return "";
 }
@@ -3984,7 +4086,7 @@ function bootLayout() {
   const sel0 = decodeURIComponent((location.hash.match(/k=(\w+)/) || [])[1] || "");
   const root = document.createElement("div"); root.id = "layoutRoot"; document.body.appendChild(root);
   // brouillon : copies des réglages, enregistrées seulement avec « Enregistrer »
-  const D = {}; for (const k of L_KINDS) D[k] = k === "toast" ? { ...S.alerts } : { ...(S.widgets[k] || {}) };
+  const D = {}; for (const k of L_KINDS) D[k] = k === "toast" ? { ...S.alerts } : { ...(S.widgets[k] || {}) }; window.__layoutD = D;
   const M = { ...S.mascots };
   const P = {}; // positions (relatives à l'écran) : { x, y }
   let aimant = true, sel = sel0 || "", B = { x: 0, y: 0, width: innerWidth, height: innerHeight }, WA = { x: 0, y: 0, width: innerWidth, height: innerHeight };
@@ -4014,7 +4116,8 @@ function bootLayout() {
       inn.dataset.pret = "1"; inn.dataset.masc = String(masc); inn.dataset.side = side;
       const url = masc ? (inn.dataset.url || window.Mascottes.auHasard()) : "";
       inn.dataset.url = url;
-      inn.innerHTML = `<div class="wm${masc ? " has-m" : ""}${side}" style="--msz:${Math.max(60, Math.min(220, +M.size || 110))}px"><div class="wm-slot${masc ? " on idle" : ""}">${masc && url ? `<img class="msc-img" src="${esc(url)}" alt="">` : ""}</div><div class="wm-body">${contenuApercu(k)}</div></div>`;
+      const tm = Math.max(60, Math.min(220, +M.size || 110)), bas = k === "macro";
+      inn.innerHTML = `<div class="wm${masc ? " has-m" : ""}${bas ? " wm-bas" : side}" style="--msz:${bas ? Math.round(tm / 2) : tm}px"><div class="wm-slot${masc ? " on idle" : ""}">${masc && url ? `<img class="msc-img" src="${esc(url)}" alt="">` : ""}</div><div class="wm-body">${contenuApercu(k)}</div></div>`;
     }
     inn.style.zoom = k === "video" ? 1 : z;
     inn.style.padding = "5px";
@@ -4067,14 +4170,17 @@ function bootLayout() {
     if (!el) { if (!e.target.closest(".lt-bar, .lt-insp")) { sel = ""; L_KINDS.forEach(boite); inspecteur(); } return; }
     const k = el.dataset.k; sel = k; L_KINDS.forEach(boite); inspecteur();
     const grip = e.target.closest(".lw-grip");
-    geste = { k, grip: !!grip, sx: e.clientX, sy: e.clientY, x: P[k].x, y: P[k].y, w: el.offsetWidth, h: el.offsetHeight, z: echelle(k), vt: videoTaille(D.video) };
+    geste = { k, grip: !!grip, sx: e.clientX, sy: e.clientY, x: P[k].x, y: P[k].y, w: el.offsetWidth, h: el.offsetHeight, z: echelle(k), vt: videoTaille(D.video), base: +D.video.w || 520 };
     el.classList.add("glisse"); root.classList.add("geste"); el.setPointerCapture(e.pointerId); e.preventDefault();
   });
   root.addEventListener("pointermove", e => {
     if (!geste) return;
     const g = geste, dx = e.clientX - g.sx, dy = e.clientY - g.sy, el = boite(g.k);
     if (g.grip) {
-      if (g.k === "video") { D.video = { ...D.video, w: Math.max(260, Math.round(g.vt[0] + dx)), h: Math.max(180, Math.round(g.vt[1] + dy)) }; const b = el.querySelector(".wvid"); if (b) { b.style.width = D.video.w + "px"; b.style.height = D.video.h + "px"; } }
+      if (g.k === "video") { // le format de la vidéo est gardé : le plus grand des deux gestes donne l'échelle
+        const k2 = Math.max((g.vt[0] + dx) / g.vt[0], (g.vt[1] + dy) / g.vt[1]);
+        D.video = { ...D.video, w: Math.max(260, Math.min(2400, Math.round((+g.base || 520) * k2))) }; const [vw, vh] = videoTaille(D.video);
+        const b = el.querySelector(".wvid"); if (b) { b.style.width = vw + "px"; b.style.height = vh + "px"; } }
       else D[g.k].scale = Math.round(Math.max(.5, Math.min(2.5, g.z * (g.w + Math.max(dx, dy * g.w / g.h)) / g.w)) * 20) / 20;
       boite(g.k); inspecteur();
     } else {

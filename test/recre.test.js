@@ -1,5 +1,5 @@
 "use strict";
-// Module secret « la récré » : bulles d'un ou deux émojis au plus ; lanceur de mise à jour qui se ferme seul
+// Module secret « la récré » : bataille en pixel art (sprites, cris d'un ou deux émojis) ; lanceur de mise à jour qui se ferme seul
 const assert = require("assert");
 const fs = require("fs");
 const path = require("path");
@@ -7,12 +7,15 @@ const vm = require("vm");
 const ctx = { window: {}, document: {}, performance: { now: () => 0 }, setTimeout, console };
 vm.createContext(ctx);
 vm.runInContext(fs.readFileSync(path.join(__dirname, "../app/recre.js"), "utf8"), ctx);
-const { DIALOGUES } = ctx.window.Recre;
-assert(DIALOGUES.length >= 6, "assez de discussions");
-for (const d of DIALOGUES) {
-  assert(d.length >= 2, "une discussion se fait à deux");
-  for (const ligne of d) assert(ligne.length >= 1 && ligne.length <= 2, "une bulle = un ou deux émojis : " + ligne.join(""));
+const { CRIS, SPRITES } = ctx.window.Recre;
+for (const [nom, liste] of Object.entries(CRIS)) for (const c of liste) assert(c.length >= 1 && c.length <= 2, `cri « ${nom} » : un ou deux émojis au plus`);
+// sprites : 16 lignes de même largeur, tournés vers la droite, couleurs du camp (T / t)
+for (const [classe, poses] of Object.entries(SPRITES)) for (const [pose, l] of Object.entries(poses)) {
+  assert.strictEqual(l.length, 16, `${classe}.${pose} : 16 lignes`);
+  assert(l.every(x => x.length === l[0].length), `${classe}.${pose} : lignes de même largeur`);
+  assert(l.join("").includes("T"), `${classe}.${pose} : couleur du camp`);
 }
+assert(SPRITES.archer.tir.join("") !== SPRITES.archer.repos.join(""), "l'archer bande son arc");
 const maj = require("../app/maj");
 const cmd = maj.scriptLanceur("C:\\x\\installer.ps1", "C:\\x\\journal.log");
 assert(/\r\nexit\r\n$/.test(cmd), "le lanceur se termine par « exit » (sinon cmd /K garde la fenêtre ouverte)");

@@ -327,3 +327,18 @@ input[type="range"]::-webkit-slider-thumb { width: 20px; height: 20px; backgroun
 .dm-row.moi .nm { color: #fff; }
 .dm-row .who em { background: rgba(0, 0, 0, .35); color: #fff; border: 0; }
 .dm-row.moi .who em { background: var(--rouge); color: #fff; }
+
+/* ════════ Fluidité (3.1) ════════ */
+/* Plus de flou d'arrière-plan calculé en direct (bulles d'info, menus) : fonds pleins, même rendu, bien moins coûteux */
+.menu, .welcome .box, .tip, body.desktop:not(.winmode):not(.widget) .welcome { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+/* Fond du jeu : petite capture agrandie (déjà floue), sans filtre plein écran */
+#backdrop .img { filter: none !important; transform: translateZ(0); }
+#backdrop::before { content: ""; position: absolute; inset: 0; z-index: 1; background: rgba(12, 13, 15, .3); pointer-events: none; }
+#backdrop::after { z-index: 2; }
+/* Reflet des barres du DPS : déplacement (composité) au lieu d'un dégradé repeint à chaque image */
+.wq-row .fill, .dm-row .fill { overflow: hidden; }
+.wq-row .fill::after, .dm-row .fill::after { inset: 0 auto 0 0 !important; width: 45%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .22), transparent) !important;
+  background-size: auto !important; mix-blend-mode: normal !important; animation: wqReflet2 2.4s linear infinite !important; will-change: transform; }
+@keyframes wqReflet2 { from { transform: translateX(-110%); } to { transform: translateX(260%); } }
+.card { transition: none; }
+.main { contain: content; }
