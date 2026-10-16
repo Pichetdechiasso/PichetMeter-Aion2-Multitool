@@ -15,7 +15,7 @@ NODE_TYPES: dict[str, dict] = {
         "title": "Déclencheur", "category": "Flux", "icon": "▶", "color": "#5eead4", "has_in": False,
         "outs": [("out", "")], "defaults": {},
         "help": "Point d'entrée de la macro (un seul par macro). Il démarre quand on appuie sur le raccourci "
-                "de la macro ou sur « Lancer ». Sélectionnez-le pour régler la macro : répétitions, vitesse, "
+                "de la macro ou sur « Lancer ». Sélectionne-le pour régler la macro : répétitions, vitesse, "
                 "variation…",
     },
     "wait": {
@@ -32,8 +32,8 @@ NODE_TYPES: dict[str, dict] = {
     },
     "sequence": {
         "title": "Séquence", "category": "Flux", "icon": "⇶", "color": "#fcd34d", "has_in": True,
-        "outs": [("then0", "Then 0"), ("then1", "Then 1"), ("then2", "Then 2")], "defaults": {},
-        "help": "Exécute trois branches l'une après l'autre : Then 0 jusqu'au bout, puis Then 1, puis Then 2. "
+        "outs": [("then0", "Étape 1"), ("then1", "Étape 2"), ("then2", "Étape 3")], "defaults": {},
+        "help": "Exécute trois branches l'une après l'autre : l'étape 1 jusqu'au bout, puis l'étape 2, puis l'étape 3. "
                 "Pratique pour organiser une longue macro en étapes.",
     },
     "parallel": {
@@ -58,8 +58,8 @@ NODE_TYPES: dict[str, dict] = {
         "outs": [("out", "")],
         "defaults": {"sc": 0, "ext": False, "label": "", "action": "press", "hold": 40, "delay": 0},
         "help": "Envoie une touche par le driver. Action : « Appui » (enfoncer puis relâcher après la durée "
-                "d'appui), « Maintenir » (reste enfoncée) ou « Relâcher ». Capturez la touche physique ou "
-                "choisissez une touche spéciale.",
+                "d'appui), « Maintenir » (reste enfoncée) ou « Relâcher ». Capture la touche physique ou "
+                "choisis une touche spéciale.",
     },
     "combo": {
         "title": "Raccourci clavier", "category": "Clavier", "icon": "⌘", "color": "#93c5fd", "has_in": True,
@@ -82,14 +82,14 @@ NODE_TYPES: dict[str, dict] = {
                      "delay": 0},
         "help": "Clic, double-clic, maintien ou relâchement d'un bouton (gauche, droit, milieu, latéraux). "
                 "Peut d'abord placer le curseur à une position précise (ignorée si l'interrupteur "
-                "« mouvements souris » est coupé).",
+                "« Souris » de la macro est coupé).",
     },
     "mouse_move": {
         "title": "Déplacer la souris", "category": "Souris", "icon": "✥", "color": "#a5b4fc", "has_in": True,
         "outs": [("out", "")], "defaults": {"mode": "absolute", "x": 0, "y": 0, "duration": 0, "delay": 0},
         "help": "Déplace le curseur. Absolu : vers des coordonnées de l'écran. Relatif : d'un écart X / Y "
                 "(jeux en vue 3D). « Durée » rend le mouvement fluide. Ignoré si l'interrupteur "
-                "« mouvements souris » est coupé.",
+                "« Souris » de la macro est coupé.",
     },
     "scroll": {
         "title": "Molette", "category": "Souris", "icon": "↕", "color": "#fde68a", "has_in": True,
@@ -99,8 +99,8 @@ NODE_TYPES: dict[str, dict] = {
     "recorded": {
         "title": "Séquence enregistrée", "category": "Enregistrement", "icon": "⏺", "color": "#f0abfc",
         "has_in": True, "outs": [("out", "")], "defaults": {"events": [], "delay": 0},
-        "help": "Rejoue tel quel ce que vous avez enregistré (F8) : touches, clics, molette et mouvements, "
-                "avec leurs délais. Chaque évènement et son délai se modifient dans le panneau Détails.",
+        "help": "Rejoue tel quel ce que tu as enregistré (F8) : touches, clics, molette et mouvements, "
+                "avec leurs délais. Chaque événement et son délai se modifient dans le panneau de réglages, à droite.",
     },
 }
 NODE_TYPES.update({
@@ -110,7 +110,7 @@ NODE_TYPES.update({
         "defaults": {"ms": 5000, "wait": False},
         "help": "Cooldown, comme un sort de MMO : la sortie « Prêt » n'est prise qu'une fois toutes les N ms. "
                 "Avant la fin du délai, on passe par « En recharge » (ou on attend la fin, si l'option est "
-                "cochée). Le cooldown est conservé entre deux lancements de la macro.",
+                "activée). Le cooldown est conservé entre deux lancements de la macro.",
     },
     "filler": {
         "title": "Remplissage (filler)", "category": "Logique", "icon": "☁", "color": "#a7f3d0", "has_in": True,
@@ -131,8 +131,8 @@ NODE_TYPES.update({
         "title": "Si touche enfoncée", "category": "Logique", "icon": "❓", "color": "#93c5fd", "has_in": True,
         "outs": [("yes", "Oui"), ("no", "Non")],
         "defaults": {"sc": 0, "ext": False, "label": ""},
-        "help": "Teste si une touche est en ce moment enfoncée (par vous ou par une macro) : continue par « Oui » "
-                "ou par « Non ». Pratique pour une macro qui change de comportement quand vous tenez Maj, etc.",
+        "help": "Teste si une touche est en ce moment enfoncée (par toi ou par une macro) : continue par « Oui » "
+                "ou par « Non ». Pratique pour une macro qui change de comportement quand tu tiens Maj, etc.",
     },
     "stop": {
         "title": "Arrêter la macro", "category": "Logique", "icon": "⏹", "color": "#fca5a5", "has_in": True,
@@ -239,7 +239,7 @@ def node_rows(node: Node) -> list[tuple[str, str]]:
     elif t == "loop":
         rows.append(("Répétitions", "∞ (infini)" if p["count"] == 0 else f"{p['count']} fois"))
     elif t == "sequence":
-        rows.append(("Ordre", "Then 0 → 1 → 2"))
+        rows.append(("Ordre", "Étapes 1 → 2 → 3"))
     elif t == "parallel":
         rows.append(("Branches", "1 + 2 + 3 en même temps"))
     elif t == "run_macro":

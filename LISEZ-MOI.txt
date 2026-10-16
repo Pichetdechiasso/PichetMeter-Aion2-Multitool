@@ -1,4 +1,4 @@
-﻿PICHETMETER — version 2.9.0 (PichetMeter + Pichet Macro)
+﻿PICHETMETER — version 3.0.0 (PichetMeter + Pichet Macro)
 Compagnon pour Aion 2 : armurerie, timers, DPS meter de groupe, macros, viseur, lecteur vidéo (YouTube, Twitch), carte et ping,
 affichés par-dessus le jeu.
 Créateur : @atomedims · Discord : https://discord.gg/KrkJrjrDJt
@@ -16,6 +16,8 @@ INSTALLER
    (environ 150 Mo) et vérifie son empreinte SHA-256 publiée par Electron.
    Elle installe ensuite PichetMeter.exe dans %LOCALAPPDATA%\Programs\PichetMeter,
    crée un raccourci « PichetMeter » sur le Bureau et dans le menu Démarrer, puis lance l'application.
+   PichetMeter démarre en administrateur : Windows demande ton accord à chaque lancement (FPS, capture
+   réseau, macros dans un jeu lancé en administrateur). Désactivable dans Paramètres > Général.
 4. Mise à jour : PichetMeter propose lui-même les nouvelles versions (Paramètres > Général >
    Mises à jour). Tu peux aussi relancer Installer.cmd de la nouvelle version. Le moteur déjà
    installé est conservé, seule l'application est remplacée. Comptes, réglages et macros restent.
@@ -36,6 +38,17 @@ DANS LE JEU
 - Option « Seulement quand le jeu est au premier plan » (Paramètres > Modules en jeu) :
   les widgets se cachent dès que tu passes sur Discord, ton navigateur, etc.
 - L'icône dans la zone de notification (près de l'horloge) permet aussi d'afficher l'overlay ou de quitter.
+
+NOUVEAUTÉS 3.0.0
+- Nouvelle apparence : anthracite, cartes arrondies, accents rouge et ambre, pour l'interface, les
+  widgets et l'animation de lancement. Nouveau logo : la tête de Sonic.
+- Démarrage en administrateur par défaut, au lancement normal comme après une mise à jour.
+  La fenêtre noire de la mise à jour se ferme maintenant toute seule.
+- Macros : chaque macro peut avoir sa mascotte (réglages de la macro, « Au hasard » par défaut, ou
+  « Aucune »). Plusieurs macros en même temps : plusieurs mascottes à côté du widget.
+- Lecteur vidéo : une petite mascotte posée sur le widget danse au rythme du son de la vidéo.
+- Un module secret se cache derrière Sonic…
+- Textes relus et corrigés (tutoiement partout, « Étape 1, 2, 3 » dans le nœud Séquence).
 
 NOUVEAUTÉS 2.9.0
 - Lecteur vidéo : barre du bas avec la progression (glisser pour avancer ou revenir), le temps écoulé

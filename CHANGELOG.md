@@ -1,5 +1,16 @@
 # Journal des versions
 
+## 3.0.0
+
+- **Direction artistique « Dashboard »** (`app/theme-dash.css`, remplace `theme-cyber.css`) : anthracite mat, cartes arrondies en relief doux (double ombre), champs enfoncés, accents rouge corail et ambre sur les éléments interactifs et les états ; typographie Sora / Nunito Sans (Orbitron et Chakra Petch retirées). Onglets de réglages soulignés, navigation latérale avec repère rouge, widgets, écran de placement, lecteur vidéo, éditeur de macros et animation de lancement assortis.
+- **Logo** : tête de Sonic (fan art existant) pour `icon.ico`, `app/icon.png` (fenêtres, zone de notification, raccourcis, désinstallation) et le logo de la barre du haut.
+- **Administrateur par défaut** (réglage `admin`, Paramètres > Général) : au démarrage, PichetMeter se relance en administrateur (`Start-Process -Verb RunAs`) ; une seule tentative (`--pm-eleve`), verrou d'instance libéré avant la relance et repris si Windows refuse, pour éviter la boucle de l'ancienne option retirée en 1.8.
+- **Console de mise à jour** : `start` exécute un `.cmd` avec `cmd /K`, la fenêtre restait ouverte ; le lanceur se termine par `exit`, l'installeur ferme l'ancienne fenêtre `mise-a-jour.cmd` après une installation réussie et lance l'application avec `ELECTRON_NO_ATTACH_CONSOLE`.
+- **Mascottes des macros** : choix par macro dans ses réglages (au hasard, aucune ou une mascotte précise, gardé dans `macro.mascottes`) ; une mascotte par macro en cours dans le widget (`Mascottes.Troupe`).
+- **Mascotte du lecteur vidéo** : petite fenêtre transparente posée sur le widget, qui réagit au niveau sonore de VLC ou du lecteur intégré (crête des sessions audio de Windows, `PMSon` dans `systeme.ps1`, lue environ dix fois par seconde par un module à part).
+- **Module secret** : à découvrir en cliquant sur Sonic (`app/recre.js`).
+- **Textes** : tutoiement partout (aides des nœuds, exemples), sorties du nœud Séquence nommées « Étape 1 / 2 / 3 », « événement » unifié, page Infos et mentions des connexions à jour, traductions anglaises des réglages de mascottes.
+
 ## 2.9.0
 
 - **Lecteur vidéo** : barre du bas (34 px) avec progression déplaçable, temps écoulé / restant, ±10 s, pause, volume déroulant (molette, clic droit pour couper) et poignée de taille ; réglages de qualité repris au même moment (seek HTTP après relance si `:start-time` n'a pas suffi, position conservée même si VLC ne connaît pas encore la durée). Fenêtres sans coins arrondis Windows 11 (`roundedCorners: false`, sans cadre épais en mode VLC) ; l'image de VLC suit l'opacité du widget.

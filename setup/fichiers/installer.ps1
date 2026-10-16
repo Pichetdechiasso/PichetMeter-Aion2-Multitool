@@ -16,7 +16,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $ElectronVersion = 'v44.5.1'
-$AppVersion = '2.9.0'
+$AppVersion = '3.0.0'
 $AppName = 'PichetMeter'
 $ExeName = 'PichetMeter.exe'
 $Icone = 'PichetMeter.ico'
@@ -207,7 +207,27 @@ try {
     Write-Host ''
     Write-Host 'Installation terminée.' -ForegroundColor Green
     Write-Host "Lance « $AppName » depuis le raccourci du Bureau. Alt + C affiche ou masque l'overlay."
-    if (-not $NoLaunch) { Start-Process -FilePath (Join-Path $Destination $ExeName) -WorkingDirectory $Destination }
+    if (-not $NoLaunch) {
+        # Electron s'attache par défaut à la console qui le lance : la fenêtre de l'installeur resterait ouverte
+        # tant que PichetMeter tourne. Cette variable l'en empêche ; l'application se relance ensuite elle-même
+        # en administrateur (réglage « Démarrer en administrateur », activé par défaut).
+        $env:ELECTRON_NO_ATTACH_CONSOLE = '1'
+        Start-Process -FilePath (Join-Path $Destination $ExeName) -WorkingDirectory $Destination
+    }
+    # Mise à jour lancée par PichetMeter 2.9 ou plus ancien : la fenêtre « mise-a-jour.cmd » (cmd /K) ne se
+    # fermait pas seule. Elle est fermée ici, une fois l'installation réussie.
+    if ($Journal -and $surWindows) {
+        try {
+            $parent = Get-CimInstance Win32_Process -Filter "ProcessId=$PID" -ErrorAction Stop
+            $cmd = Get-CimInstance Win32_Process -Filter ("ProcessId=" + $parent.ParentProcessId) -ErrorAction Stop
+            if ($cmd.Name -ieq 'cmd.exe' -and $cmd.CommandLine -match 'mise-a-jour\.cmd') {
+                if ($Journal) { try { Stop-Transcript | Out-Null } catch { } }
+                Stop-Process -Id $cmd.ProcessId -Force -ErrorAction SilentlyContinue
+                exit 0
+            }
+        }
+        catch { }
+    }
     Fin 0
 }
 catch {

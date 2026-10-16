@@ -227,7 +227,27 @@
     "Régler": "Settings", "Afficher en jeu": "Show in game",
     "Appuie sur la touche d'une compétence suivie, en jeu ou ici : le résultat s'affiche ci-dessous": "Press the key of a tracked skill, in game or here: the result shows below",
     "Le compteur ne démarre que contre un boss (ou un mannequin d'entraînement) ; les monstres normaux sont ignorés": "The meter only starts against a boss (or a training dummy); normal monsters are ignored",
-    "Festival Shugo": "Shugo Festival", "Invasion dimensionnelle": "Dimensional Invasion"
+    "Festival Shugo": "Shugo Festival", "Invasion dimensionnelle": "Dimensional Invasion",
+    // 3.0 : démarrage en administrateur, mascottes, récré (module secret), mises à jour
+    "Démarrer en administrateur": "Start as administrator",
+    "Windows demande ton accord à chaque lancement. Nécessaire pour les FPS, la capture réseau et les macros dans un jeu lancé en administrateur. Pris en compte au prochain démarrage.":
+      "Windows asks for your consent at each launch. Needed for FPS, network capture and macros in a game running as administrator. Applies at the next start.",
+    "Mascottes & animations": "Mascots & animations", "Tes mascottes animées dans les widgets": "Your animated mascots in the widgets", "Mascottes animées": "Animated mascots",
+    "Une mascotte au hasard, jamais deux fois de suite la même": "A random mascot, never the same one twice in a row",
+    "Macros · une par macro en cours": "Macros · one per running macro", "DPS meter · en combat": "DPS meter · in combat", "Lecteur vidéo · réagit au son": "Video player · reacts to sound",
+    "Effets spéciaux": "Special effects", "Explosions, danses, pirouettes, confettis et étoiles": "Explosions, dances, spins, confetti and stars", "Taille des mascottes": "Mascot size",
+    "Animation de lancement": "Launch animation", "Mascotte et barre de chargement au démarrage du logiciel": "Mascot and loading bar when the app starts", "Mes mascottes": "My mascots",
+    "Ajouter des mascottes (.gif, .png)": "Add mascots (.gif, .png)", "Ouvrir le dossier": "Open the folder", "Aucune mascotte trouvée.": "No mascot found.",
+    "GIF animés ou PNG à fond transparent. Survole une mascotte ajoutée pour la retirer (✕).": "Animated GIFs or PNGs with a transparent background. Hover a mascot you added to remove it (✕).",
+    "La récré · module secret": "Playtime · secret module", "Mascottes en bas de l'écran": "Mascots at the bottom of the screen",
+    "Elles se promènent, jouent au ballon, se battent à l'épée, lancent des sorts et discutent": "They stroll, play ball, sword-fight, cast spells and chat",
+    "Nombre de mascottes": "Number of mascots", "Bulles de discussion": "Speech bubbles", "Un ou deux émojis au-dessus de leur tête": "One or two emojis above their heads",
+    "Ballon, épées et sorts": "Ball, swords and spells", "Sinon, elles se contentent de se promener et de danser": "Otherwise they just stroll and dance",
+    "Module secret débloqué": "Secret module unlocked", "La récré": "Playtime", "Les mascottes sont de sortie.": "The mascots are out.", "Les mascottes sont rentrées.": "The mascots went back in.",
+    "C'est la récré ! Les mascottes jouent en bas de l'écran. Re-clique sur Sonic pour les ranger ; réglages dans Paramètres > Mascottes.": "Playtime! The mascots play at the bottom of the screen. Click Sonic again to put them away; settings in Settings > Mascots.",
+    "Mascotte": "Mascot", "Au hasard": "Random", "Aucune": "None", "Mascotte de cette macro": "This macro's mascot",
+    "Apparaît à côté du widget Macros quand cette macro tourne. Plusieurs macros en même temps : plusieurs mascottes.": "Shows next to the Macros widget while this macro runs. Several macros at once: several mascots.",
+    "Mises à jour": "Updates", "Vérifier au lancement": "Check at launch", "Propose d'installer la dernière version publiée sur GitHub": "Offers to install the latest version published on GitHub"
   };
 
   // Phrases dynamiques (nombres, noms) : motifs

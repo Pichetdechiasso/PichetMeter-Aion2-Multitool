@@ -46,7 +46,7 @@ const DOSSIER_APP = path.join(app.getPath("appData"), APP_ID);
 const DOSSIER_ANCIEN = path.join(app.getPath("appData"), ANCIEN_ID);
 app.setPath("userData", DOSSIER_APP);
 // Une seule instance : une deuxième ouverture réaffiche simplement l'overlay de la première
-const PREMIERE_INSTANCE = app.requestSingleInstanceLock();
+let PREMIERE_INSTANCE = app.requestSingleInstanceLock();
 let repris = false;
 try {
   if (PREMIERE_INSTANCE && !fs.existsSync(path.join(DOSSIER_APP, "reglages.json")) && fs.existsSync(path.join(DOSSIER_ANCIEN, "reglages.json"))) { reprendreAncienDossier(DOSSIER_ANCIEN, DOSSIER_APP); repris = true; }
@@ -241,7 +241,7 @@ function ouvrirWidget(kind) {
       S.widgets[kind] = { ...W(kind), size: "custom", w: b.width, h: b.height, pos: "free", x: b.x, y: b.y };
       ecrireReglages(); diffuserReglages();
     });
-    if (video) { win.on("move", placerEcranVideo); win.on("resize", placerEcranVideo); win.on("show", placerEcranVideo); win.on("hide", placerEcranVideo); }
+    if (video) { for (const ev of ["move", "resize", "show", "hide"]) { win.on(ev, placerEcranVideo); win.on(ev, placerMascotteVideo); } }
     win.on("resize", () => { if (o.vue) { const b = win.getContentBounds(); o.vue.setBounds({ x: 0, y: ENTETE_CARTE, width: b.width, height: Math.max(0, b.height - ENTETE_CARTE) }); } });
     if (carte) win.on("focus", () => { if (o.vue) o.vue.webContents.focus(); });
   }
@@ -498,6 +498,57 @@ function placerEcranVideo() {
   const voir = o.win.isVisible() && o.lecture && !o.menu; // menu de qualité ouvert : l'image s'efface pour le laisser voir
   if (voir && !o.ecran.isVisible()) { o.ecran.showInactive(); o.ecran.setAlwaysOnTop(true, "screen-saver"); }
   if (!voir && o.ecran.isVisible()) o.ecran.hide();
+  placerMascotteVideo();
+}
+/* Mascotte du lecteur vidéo : petite, posée au-dessus du widget, elle réagit au son de la vidéo (3.0) */
+let masqueVideo = null; // { win, pret }
+const mascotteVideoActive = () => { const m = S.mascots || {}; return m.on !== false && m.video !== false; };
+const tailleMascotteVideo = () => Math.round(Math.max(48, Math.min(120, (+((S.mascots || {}).size) || 110) * .62)));
+function creerMascotteVideo() {
+  if (masqueVideo && vivante(masqueVideo.win)) return masqueVideo;
+  const t = tailleMascotteVideo();
+  const win = new BrowserWindow({ show: false, frame: false, transparent: true, backgroundColor: "#00000000", resizable: false, movable: false, focusable: false, thickFrame: false, roundedCorners: false,
+    skipTaskbar: true, hasShadow: false, alwaysOnTop: true, width: t + 60, height: t + 46, title: `${APP_NAME} · mascotte vidéo`, webPreferences: PREFS });
+  win.setAlwaysOnTop(true, "screen-saver");
+  win.setIgnoreMouseEvents(true);
+  securiser(win);
+  masqueVideo = { win, pret: false, t };
+  win.loadFile(UI, { hash: "w=vmasc" });
+  win.webContents.on("did-finish-load", () => { masqueVideo.pret = true; placerMascotteVideo(); });
+  return masqueVideo;
+}
+function placerMascotteVideo() {
+  const o = widgets.video, voulu = !!(o && vivante(o.win) && o.win.isVisible() && mascotteVideoActive());
+  if (!voulu) { if (masqueVideo && vivante(masqueVideo.win) && masqueVideo.win.isVisible()) masqueVideo.win.hide(); return; }
+  const mv = creerMascotteVideo(); if (!mv.pret) return;
+  const t = tailleMascotteVideo();
+  if (t !== mv.t) mv.t = t;
+  const W2 = t + 60, H2 = t + 46, b = o.win.getBounds(), wa = screen.getDisplayMatching(b).workArea;
+  // posée sur le bord haut du widget, côté droit ; à l'intérieur s'il n'y a pas la place au-dessus
+  let x = b.x + b.width - W2 - 6, y = b.y - H2 + 12;
+  if (y < wa.y) y = b.y + 2;
+  x = Math.max(wa.x, Math.min(wa.x + wa.width - W2, x));
+  const cible = { x: Math.round(x), y: Math.round(y), width: W2, height: H2 }, a = mv.win.getBounds();
+  if (a.x !== cible.x || a.y !== cible.y || a.width !== cible.width || a.height !== cible.height) mv.win.setBounds(cible);
+  if (!mv.win.isVisible()) { mv.win.showInactive(); mv.win.setAlwaysOnTop(true, "screen-saver"); }
+}
+// Niveau sonore : crête de la session audio de VLC (ou du lecteur intégré) lue dans Windows, environ 10 fois par seconde
+let sonEnCours = false, sonErreurs = 0;
+async function tickSon() {
+  const mv = masqueVideo, o = widgets.video;
+  if (!mv || !vivante(mv.win) || !mv.win.isVisible() || !o || sonEnCours) return;
+  if (!IS_WIN) { pousser(mv.win, { type: "son", niveau: -1, lecture: !!o.lecture }); return; }
+  if (!sonPs.proc) { if (sonErreurs < 3) sonPs.demarrer(); return; }
+  if (!sonPs.pret) return;
+  const pids = [];
+  if (lecteur.proc && lecteur.proc.pid) pids.push(lecteur.proc.pid);
+  if (o.moteur === "web") for (const m of app.getAppMetrics()) pids.push(m.pid); // lecteur intégré : le son sort d'un processus d'Electron
+  sonEnCours = true;
+  try {
+    const r = await sonPs.demande({ cmd: "audio", pids }, 2000);
+    pousser(mv.win, { type: "son", niveau: typeof r.niveau === "number" ? r.niveau : -1, lecture: !!o.lecture || o.moteur === "web" });
+  } catch { sonErreurs++; }
+  finally { sonEnCours = false; }
 }
 const hwnd = w => { const b = w.getNativeWindowHandle(); return (b.length >= 8 ? b.readBigUInt64LE(0) : BigInt(b.readUInt32LE(0))).toString(); };
 let lectureSeq = 0;
@@ -544,6 +595,7 @@ function fermerVideo() {
   try { if (o.vue && !o.vue.webContents.isDestroyed()) o.vue.webContents.close(); } catch { /* déjà fermée */ }
   if (o.ecran && vivante(o.ecran)) o.ecran.destroy();
   if (vivante(o.win)) o.win.destroy();
+  if (masqueVideo && vivante(masqueVideo.win)) masqueVideo.win.hide();
 }
 let sigVideo = "";
 const signatureVideo = () => JSON.stringify([(S.video || {}).url || "", (S.video || {}).mode || "", moteurVideo()]);
@@ -760,7 +812,7 @@ class Assistant {
   }
   demarrer() {
     if (!IS_WIN || this.proc || (this.arrets || 0) > 3) return;
-    const cible = path.join(DATA, this.script);
+    const cible = path.join(DATA, this.copie || this.script); // copie à part : deux modules peuvent lancer le même script
     try { fs.copyFileSync(path.join(__dirname, this.script), cible); }
     catch (e) { this.erreur = "Copie du module impossible : " + e.message; return; }
     const p = spawn("powershell.exe", ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", cible], { windowsHide: true, cwd: DATA });
@@ -807,6 +859,8 @@ const assistant = new Assistant("module Windows", "helper.ps1");
 const touches = new Assistant("détection des touches", "keys.ps1", m => surTouches(m));
 const viseurNatif = new Assistant("viseur (compatibilité)", "viseur.ps1");
 const mesuresPs = new Assistant("mesures système", "systeme.ps1");
+const sonPs = new Assistant("niveau sonore", "systeme.ps1"); // mascotte du lecteur vidéo (tickSon)
+sonPs.copie = "systeme-son.ps1";
 
 /* ════════ Infos système du widget de ping (FPS, CPU, GPU, températures, mémoire) ════════ */
 const cpuPct = creerCpu();
@@ -1038,10 +1092,11 @@ let captureDemandee = false;
 // Niveau d'intégrité du processus (S-1-16-12288 = élevé, 16384 = système) : fiable même si le service
 // « Serveur » de Windows est désactivé (l'ancien test « net session » échouait alors en administrateur).
 let estAdmin = false;
-if (IS_WIN) require("child_process").execFile("whoami", ["/groups"], { windowsHide: true }, (err, sortie) => {
+const verifAdmin = !IS_WIN ? Promise.resolve(false) : new Promise(ok => require("child_process").execFile("whoami", ["/groups"], { windowsHide: true, timeout: 10000 }, (err, sortie) => {
   estAdmin = !err && /S-1-16-(12288|16384)\b/.test(String(sortie || ""));
   log("Droits administrateur :", estAdmin ? "oui" : "non");
-});
+  ok(estAdmin);
+}));
 // Démarre le service Npcap (fenêtre de confirmation Windows), puis relance la capture
 function reparerNpcap() {
   const cmd = "if ((Get-ItemProperty 'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\npcap').Start -eq 4) { sc.exe config npcap start= system }; Start-Service npcap";
@@ -1319,7 +1374,31 @@ function creerTray() {
 }
 
 /* ════════ Après chaque changement de réglages ════════ */
+/* ════════ Module secret : la récré (mascottes qui jouent en bas de l'écran, 3.0) ════════ */
+// Fenêtre transparente sur toute la largeur de l'écran du jeu, au-dessus de la barre des tâches. Les clics la traversent.
+let recre = null;
+const hauteurRecre = () => Math.round(Math.max(50, Math.min(150, +((S.recre || {}).taille) || 78)) * 2.3);
+function synchroniserRecre() {
+  const r = S.recre || {};
+  if (!r.on) { if (vivante(recre)) recre.destroy(); recre = null; return; }
+  const wa = ecran().workArea, h = Math.min(hauteurRecre(), wa.height);
+  const cible = { x: wa.x, y: wa.y + wa.height - h, width: wa.width, height: h };
+  if (!vivante(recre)) {
+    recre = new BrowserWindow({ ...cible, show: false, frame: false, transparent: true, backgroundColor: "#00000000", resizable: false, movable: false, focusable: false, thickFrame: false,
+      roundedCorners: false, skipTaskbar: true, hasShadow: false, alwaysOnTop: true, title: `${APP_NAME} · récré`, webPreferences: PREFS });
+    recre.setAlwaysOnTop(true, "screen-saver");
+    recre.setIgnoreMouseEvents(true);
+    securiser(recre);
+    recre.loadFile(UI, { hash: "w=recre" });
+    recre.once("ready-to-show", () => { if (vivante(recre)) { recre.showInactive(); recre.setAlwaysOnTop(true, "screen-saver"); } });
+    log("Récré : ouverte");
+    return;
+  }
+  const b = recre.getBounds();
+  if (b.x !== cible.x || b.y !== cible.y || b.width !== cible.width || b.height !== cible.height) recre.setBounds(cible);
+}
 function apresReglages() {
+  synchroniserRecre();
   majCartes(false);
   synchroniserVideo();
   synchroniserViseur();
@@ -1599,6 +1678,30 @@ async function installerMaj() {
     throw e;
   } finally { majEnCours = false; }
 }
+/* ════════ Démarrage en administrateur (3.0, activé par défaut) ════════ */
+// Le FPS (PresentMon), la capture réseau et l'envoi de touches à un jeu lancé en administrateur demandent des droits élevés.
+// Garde-fous contre une boucle de relance (le problème de l'option retirée en 1.8) : une seule tentative (argument
+// --pm-eleve), verrou d'instance libéré juste avant la relance et repris si Windows refuse ; dans ce cas,
+// PichetMeter continue normalement sans les droits.
+const ARG_ELEVE = "--pm-eleve";
+function lignArgs(args) { return args.map(a => /[\s"]/.test(a) ? '"' + a.replace(/"/g, '\\"') + '"' : a).join(" "); }
+async function eleverSiBesoin() {
+  if (!IS_WIN || !app.isPackaged || TEST || S.admin === false) return false;
+  if (process.argv.includes(ARG_ELEVE) || process.argv.includes("--relance-admin")) return false;
+  if (await verifAdmin) return false;
+  const q = v => "'" + String(v).replace(/'/g, "''") + "'";
+  const args = lignArgs([...process.argv.slice(1).filter(a => a && a !== ARG_ELEVE), ARG_ELEVE]);
+  const cmd = `try { Start-Process -FilePath ${q(process.execPath)} -ArgumentList ${q(args)} -WorkingDirectory ${q(path.dirname(process.execPath))} -Verb RunAs -ErrorAction Stop; exit 0 } catch { exit 1 }`;
+  app.releaseSingleInstanceLock(); // la nouvelle instance (administrateur) doit pouvoir prendre le verrou
+  const code = await new Promise(ok => {
+    const p = spawn("powershell.exe", ["-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", cmd], { windowsHide: true, stdio: "ignore" });
+    p.on("error", () => ok(1)); p.on("exit", c => ok(c));
+  });
+  if (code === 0) { log("Relance en administrateur"); app.exit(0); return true; }
+  log("Droits administrateur refusés ou indisponibles : PichetMeter continue sans");
+  if (!app.requestSingleInstanceLock()) { app.quit(); return true; } // une autre instance a démarré entre-temps
+  return false;
+}
 function demarrer() {
   Menu.setApplicationMenu(null);
   relireJournalMaj();
@@ -1610,6 +1713,8 @@ function demarrer() {
   assistant.demarrer();
   setInterval(sonder, 1500);
   setInterval(tickSysteme, 1500);
+  setInterval(tickSon, 110);
+  setInterval(placerMascotteVideo, 1000); // réglages changés, widget masqué ou réaffiché
   majSuiviPremierPlan();
   synchroniserTouches();
   boucleDps();
@@ -1617,12 +1722,13 @@ function demarrer() {
   // widgets épinglés préparés en arrière-plan pour un affichage instantané
   setTimeout(() => { for (const k of KINDS) if (W(k).pinned) ouvrirWidget(k); }, 1500);
   if (macrosActives()) setTimeout(() => macros.demarrer(true), splashEnCours ? 0 : 1200);
-  screen.on("display-metrics-changed", () => { appliquerAffichage(); for (const k of KINDS) placer(k); synchroniserViseur(); });
+  screen.on("display-metrics-changed", () => { appliquerAffichage(); for (const k of KINDS) placer(k); synchroniserViseur(); synchroniserRecre(); });
+  setTimeout(synchroniserRecre, 2500);
 }
 if (!PREMIERE_INSTANCE) { log("PichetMeter est déjà lancé : l'instance ouverte est réaffichée"); app.quit(); }
 else {
   app.on("second-instance", () => { if (!mainVisible) basculer(); else if (vivante(main)) main.focus(); });
-  app.whenReady().then(demarrer);
-  app.on("will-quit", () => { lecteur.arreter(); fps.arreter(); mesuresPs.arreter(); globalShortcut.unregisterAll(); macros.arreter(); assistant.arreter(); touches.arreter(); viseurNatif.arreter(); capture.arreter(); });
+  app.whenReady().then(async () => { if (!(await eleverSiBesoin())) demarrer(); });
+  app.on("will-quit", () => { lecteur.arreter(); fps.arreter(); mesuresPs.arreter(); sonPs.arreter(); globalShortcut.unregisterAll(); macros.arreter(); assistant.arreter(); touches.arreter(); viseurNatif.arreter(); capture.arreter(); });
   app.on("window-all-closed", () => app.quit());
 }

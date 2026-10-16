@@ -6,7 +6,7 @@
 <title>PichetMeter</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&family=Chakra+Petch:wght@400;500;600;700&family=Sora:wght@600;700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=JetBrains+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=JetBrains+Mono:wght@500;600&display=swap">
 <script>
 (function () {
   var w = (location.hash.match(/^#w=(\w+)/) || [])[1];
@@ -1007,11 +1007,11 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
 #refreshBtn.tourne svg { animation: tourneRefresh .8s linear infinite; }
 @keyframes tourneRefresh { to { transform: rotate(360deg); } }
 .kpi b.flash { animation: kpiFlash 1.2s ease; }
-@keyframes kpiFlash { 0% { color: #39ff88; text-shadow: 0 0 14px #39ff88; } 100% { color: inherit; text-shadow: none; } }
+@keyframes kpiFlash { 0% { color: #4ade80; text-shadow: 0 0 14px #4ade80; } 100% { color: inherit; text-shadow: none; } }
 </style>
 <link rel="stylesheet" href="macros.css">
 <link rel="stylesheet" href="widgets.css">
-<link rel="stylesheet" href="theme-cyber.css">
+<link rel="stylesheet" href="theme-dash.css">
 </head>
 <body>
 <div id="backdrop" aria-hidden="true"><div class="img" id="backdropImg"></div></div>
@@ -1022,7 +1022,7 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
   <form class="box neu-extruded" id="welcomeForm" autocomplete="off">
     <div id="langWelcome"></div>
     <div style="display:flex;gap:14px;align-items:center">
-      <div class="logo" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4.5v21"/><path d="M13.5 26.5h5"/><path d="M16 10c-3.6-3.2-8.6-3.6-12.5-1.6 3.1.9 5.2 2.9 6.2 5.7-2.2.1-4.1 1.1-5.3 2.9 3.3-.4 6.6.3 9.4 2.2"/><path d="M16 10c3.6-3.2 8.6-3.6 12.5-1.6-3.1.9-5.2 2.9-6.2 5.7 2.2.1 4.1 1.1 5.3 2.9-3.3-.4-6.6.3-9.4 2.2"/><circle cx="16" cy="7" r="1.4" fill="currentColor" stroke="none"/></svg></div>
+      <div class="logo" aria-hidden="true"><img src="icon.png" alt="" draggable="false"></div>
       <div><h2>Bienvenue, Daeva</h2><p class="lead">Quel personnage joues-tu ?</p></div>
     </div>
     <div class="saved" id="welcomeSaved" hidden></div>
@@ -1049,7 +1049,7 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
   <!-- ═════════ Barre supérieure ═════════ -->
   <header class="topbar neu-extruded">
     <div class="brand pywebview-drag-region">
-      <div class="logo" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4.5v21"/><path d="M13.5 26.5h5"/><path d="M16 10c-3.6-3.2-8.6-3.6-12.5-1.6 3.1.9 5.2 2.9 6.2 5.7-2.2.1-4.1 1.1-5.3 2.9 3.3-.4 6.6.3 9.4 2.2"/><path d="M16 10c3.6-3.2 8.6-3.6 12.5-1.6-3.1.9-5.2 2.9-6.2 5.7 2.2.1 4.1 1.1 5.3 2.9-3.3-.4-6.6.3-9.4 2.2"/><circle cx="16" cy="7" r="1.4" fill="currentColor" stroke="none"/></svg></div>
+      <button type="button" class="logo secret" id="logoBtn" aria-label="PichetMeter"><img src="icon.png" alt="" draggable="false"></button>
       <div>
         <span class="aion" aria-hidden="true">AION 2</span><h1>PichetMeter</h1>
         <p class="status-row">Afficher / masquer <kbd id="hotkeyBadge">Alt + C</kbd> <span class="badge warn" id="gameBadge">Jeu fermé</span> <span class="badge info" id="dataBadge" hidden>Données d'exemple</span></p>
@@ -1513,6 +1513,8 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
         <span class="switch"><input type="checkbox" id="optSync" role="switch"><span class="track"></span><span class="knob"></span></span></label>
       <label class="set-item" for="optNotif"><span><span class="t">Alertes d'événements</span><span class="d">Réglages dans l'onglet Timers</span></span>
         <span class="switch"><input type="checkbox" id="optNotif" role="switch"><span class="track"></span><span class="knob"></span></span></label>
+      <label class="set-item" for="optAdmin"><span><span class="t">Démarrer en administrateur</span><span class="d">Windows demande ton accord à chaque lancement. Nécessaire pour les FPS, la capture réseau et les macros dans un jeu lancé en administrateur. Pris en compte au prochain démarrage.</span></span>
+        <span class="switch"><input type="checkbox" id="optAdmin" role="switch"><span class="track"></span><span class="knob"></span></span></label>
     </section>
     <section class="card neu-extruded" data-sec="Général">
       <div class="card-head"><h2>Confidentialité &amp; comptes</h2></div>
@@ -1556,6 +1558,7 @@ body.desktop.ov-out:not(.winmode) #drawerGrip { display: none; }
 
 <script src="mascottes.js"></script>
 <script src="arene.js"></script>
+<script src="recre.js"></script>
 <script src="dps-course.js"></script>
 <script src="macros-ui.js"></script>
 <script src="i18n.js"></script>
@@ -1679,7 +1682,7 @@ function demoChar(name, serverId, cls, cp, il) {
   const slots = ["MainHand","SubHand","Helmet","Shoulder","Torso","Pants","Gloves","Boots","Necklace","Earring1","Earring2","Ring1","Ring2","Bracelet","Belt","Arcana1","Arcana2","Arcana3"];
   return {
     info: { profile: { characterName: name, characterLevel: 45, className: cls, raceName: srv.raceId === 1 ? "Élyséen" : "Asmodien", serverName: srv.serverName,
-        regionName: "Légion d'exemple", combatPower: cp, titleName: "Titre d'exemple", profileImage: "" },
+        regionName: "Aube d'Atréia", combatPower: cp, titleName: "Titre d'exemple", profileImage: "" },
       stat: { statList: [{ type: "ItemLevel", name: "Niveau d'objet", value: il }] },
       ranking: { rankingList: [{ rankingContentsType: 1, rankingContentsName: "Abysses", rank: 128, rankChange: 4, point: 2410, gradeName: "Officier 3" }] },
       daevanion: { boardList: [["Nezekan",114,152],["Zikel",62,152],["Vaizel",40,140],["Triniel",18,140]].map(([n, o, t], i) => ({ id: 71 + i, name: n, icon: "", open: 1, openNodeCount: o, totalNodeCount: t, openPercent: Math.round(o / t * 100) })) } },
@@ -2009,7 +2012,7 @@ function renderProfile() {
       <div><small>${esc(r.rankingContentsName || (RANK_TYPES.find(t => t[0] === r.rankingContentsType) || [0, "Classement"])[1])}</small>
       <b>${r.rank ? "#" + fmt(r.rank) : "—"}</b> ${r.rank ? moveTxt(r.rankChange) : ""}
       <div class="note">${esc(r.gradeName || "")}${r.point ? " · " + fmt(r.point) + " pts" : ""}</div></div></div>`).join("")
-    : '<p class="note">Aucun classement publié pour ce personnage. NCSoft suspend parfois les classements entre deux saisons.</p>';
+    : '<p class="note">Aucun classement publié pour ce personnage. NCSOFT suspend parfois les classements entre deux saisons.</p>';
   renderCompare();
 }
 function renderCompare() {
@@ -3174,7 +3177,7 @@ function renderKeyTest() {
     if (t.erreur) items.push(row(false, L("Détection des touches", "Key detection"), t.erreur));
     else if (avecTouche.length) items.push(row(t.pret ? true : null, L("Détection des touches", "Key detection"), t.pret ? L(`Active · ${avecTouche.length} touche(s) suivie(s)`, `Active · ${avecTouche.length} key(s) watched`) : L("Démarrage…", "Starting…")));
     if (KEYS.bloque) items.push(row(false, L("Clavier isolé par Windows pendant le jeu", "Keyboard isolated by Windows while in game"),
-      L("Aion 2 tourne sans doute en administrateur : la lecture de secours prend le relais. Si les cooldowns ne démarrent toujours pas, relance le HUD en administrateur.", "Aion 2 probably runs as administrator: the fallback reading takes over. If the cooldowns still don't start, relaunch the HUD as administrator."),
+      L("Aion 2 tourne sans doute en administrateur : la lecture de secours prend le relais. Si les cooldowns ne démarrent toujours pas, relance PichetMeter en administrateur.", "Aion 2 probably runs as administrator: the fallback reading takes over. If the cooldowns still don't start, relaunch PichetMeter as administrator."),
       DIAG.admin === false ? `<button type="button" class="btn sm primary" data-relaunch>${esc(L("Relancer en administrateur", "Relaunch as administrator"))}</button>` : ""));
     if (jeu && jeu.admin === 1 && DIAG.admin === false) items.push(row(false, L("Aion 2 tourne en administrateur", "Aion 2 runs as administrator"),
       L("Windows cache alors le clavier du jeu à PichetMeter : relance-le en administrateur.", "Windows then hides the game keyboard from PichetMeter: relaunch it as administrator."),
@@ -3331,7 +3334,7 @@ hotkeyField($("#xhKey"), () => S.crosshair.hotkey, async combo => {
 function renderParams() {
   if (WIDGET) return;
   $("#optMajAuto").checked = S.maj.auto !== false;
-  $("#optSync").checked = S.autosync; $("#optNotif").checked = S.notif; $("#optStreamer").checked = S.streamer;
+  $("#optSync").checked = S.autosync; $("#optNotif").checked = S.notif; $("#optStreamer").checked = S.streamer; $("#optAdmin").checked = S.admin !== false;
   $("#hotkeyInput").value = S.hotkey; $("#hotkeyBadge").textContent = S.hotkey; $("#hkFoot").textContent = S.hotkey;
   $$("#fpsSeg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === S.fps)));
   $$("#dispMode button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === S.display.mode)));
@@ -3345,6 +3348,7 @@ function renderParams() {
 }
 $("#optSync").addEventListener("change", e => { S.autosync = e.target.checked; save(); });
 $("#optNotif").addEventListener("change", e => { S.notif = e.target.checked; save(); });
+$("#optAdmin").addEventListener("change", e => { S.admin = e.target.checked; save(); });
 $("#optStreamer").addEventListener("change", e => { S.streamer = e.target.checked; save(); renderParams(); });
 $("#optMajAuto").addEventListener("change", e => { S.maj = { ...S.maj, auto: e.target.checked }; save(); });
 
@@ -3406,6 +3410,18 @@ $$("#dispMode button").forEach(b => b.addEventListener("click", () => { S.displa
 $("#dispOp").addEventListener("input", e => { S.display.opacity = +e.target.value; $("#dispOpV").textContent = e.target.value + " %"; clearTimeout(e.target._t); e.target._t = setTimeout(() => saveNow().then(() => api()?.display_update()), 120); });
 $("#dispBlur").addEventListener("input", e => { S.display.flou = +e.target.value; renderParams(); save(); });
 $("#themeBtn").addEventListener("click", () => { S.theme = isDark() ? "light" : "dark"; save(); applyTheme(); });
+/* Module secret : un clic sur Sonic lance (ou range) la récré des mascottes en bas de l'écran */
+function majLogo() { const b = $("#logoBtn"); if (b) b.classList.toggle("on", !!(S.recre || {}).on); }
+$("#logoBtn").addEventListener("click", () => {
+  const r = S.recre || {}, on = !r.on, premiere = !r.decouvert;
+  S.recre = { nombre: 5, taille: 78, bulles: true, objets: true, ...r, on, decouvert: true };
+  save(); majLogo(); renderMascSettings();
+  const b = $("#logoBtn"); b.classList.remove("boing"); void b.offsetWidth; b.classList.add("boing");
+  if (premiere) notify("Module secret débloqué", "C'est la récré ! Les mascottes jouent en bas de l'écran. Re-clique sur Sonic pour les ranger ; réglages dans Paramètres > Mascottes.");
+  else notify("La récré", on ? "Les mascottes sont de sortie." : "Les mascottes sont rentrées.");
+});
+onSettingsChanged.push(majLogo); majLogo();
+document.addEventListener("click", e => { if (!WIDGET && e.target.closest(".info-hero .logo-xl")) $("#logoBtn").click(); }); // le grand Sonic de l'onglet Infos aussi
 
 /* Diagnostic */
 let DIAG = null;
@@ -3661,6 +3677,44 @@ function bootVideo(wr) {
   });
 }
 
+/* ════════ Mascotte du lecteur vidéo : réagit au son de la vidéo ════════ */
+function bootVmasc() {
+  document.body.classList.add("widget", "vmasc");
+  $("#app").hidden = true; $("#welcome").hidden = true;
+  const r = $("#widgetRoot"); r.hidden = false;
+  r.innerHTML = '<div class="vm" id="vm"><div class="vm-fx" id="vmFx"></div><img class="vm-img" id="vmImg" alt="" draggable="false"><i class="vm-ombre"></i></div>';
+  const img = $("#vmImg"), vm = $("#vm"), fx = $("#vmFx");
+  const sprite = () => { const A = window.Arene; return (A && A.dessinerImage(Math.random() < .5 ? "chevalier" : "magicien")) || ""; };
+  const choisir = () => { const u = window.Mascottes.auHasard(); if (u) img.src = u; else { img.src = sprite(); img.classList.add("pixel"); } };
+  window.Mascottes.charger(api()).then(choisir);
+  // sans mascotte installée (version publique) : le chevalier ou le magicien en pixel art
+  img.addEventListener("error", () => { if (img.classList.contains("pixel")) return; img.src = sprite(); img.classList.add("pixel"); });
+  let niveau = 0, lisse = 0, fond = 0, dernierPic = 0, dernierSon = Date.now(), lecture = false, mesure = true, t0 = performance.now();
+  window.__son = m => { mesure = m.niveau >= 0; niveau = Math.max(0, Math.min(1, +m.niveau || 0)); lecture = !!m.lecture; if (niveau > .02) dernierSon = Date.now(); };
+  const NOTES = ["♪", "♫", "♬", "♩"];
+  const note = () => {
+    if (document.body.classList.contains("no-anim") || fx.childElementCount > 6) return;
+    const n = document.createElement("span"); n.className = "vm-note"; n.textContent = NOTES[Math.floor(Math.random() * NOTES.length)];
+    n.style.left = (20 + Math.random() * 60) + "%"; n.style.setProperty("--dx", ((Math.random() - .5) * 50).toFixed(0) + "px");
+    n.style.color = ["#f2453d", "#f9b934", "#ffffff", "#ff8a80"][Math.floor(Math.random() * 4)];
+    fx.appendChild(n); setTimeout(() => n.remove(), 1300);
+  };
+  (function image(now) {
+    // niveau lissé (réaction) et niveau moyen (pour repérer les temps forts : batterie, explosions, voix)
+    lisse += (niveau - lisse) * (niveau > lisse ? .55 : .18);
+    fond += (niveau - fond) * .04;
+    const t = (now - t0) / 1000, dort = Date.now() - dernierSon > 5000 && !(lecture && !mesure);
+    const pic = niveau > .18 && niveau > fond * 1.45 && now - dernierPic > 260;
+    if (pic) { dernierPic = now; vm.classList.remove("hop"); void vm.offsetWidth; vm.classList.add("hop"); if (Math.random() < .7) note(); }
+    vm.classList.toggle("dort", dort);
+    let a = lisse;
+    if (!mesure && lecture) a = .25 + .15 * Math.sin(t * 6); // Windows ne donne pas le niveau : petite danse régulière
+    const sy = 1 - a * .08, sx = 1 + a * .1, rot = Math.sin(t * 7.5) * a * 9, dy = -a * 10;
+    img.style.transform = `translateY(${dy.toFixed(1)}px) rotate(${rot.toFixed(1)}deg) scale(${sx.toFixed(3)}, ${sy.toFixed(3)})`;
+    requestAnimationFrame(image);
+  })(performance.now());
+}
+
 /* ════════ Mode widget (fenêtre épinglée) ════════ */
 function bootWidget(kind) {
   document.body.classList.add("widget");
@@ -3788,9 +3842,16 @@ const mascOn = k => !!(S.mascots && S.mascots.on !== false && S.mascots[k] !== f
 const wEchelle = k => { const c = k === "toast" ? (S.alerts || {}) : (S.widgets[k] || {}); return Math.max(.4, Math.min(3, +c.scale || SCALE[c.size] || 1)); };
 const wCorps = () => $("#wBody") || $("#widgetRoot");
 let SCENE = null;
+/** Mascotte d'une macro : celle choisie dans ses réglages, aucune, ou une au hasard (différente de celles déjà à l'écran). */
+function urlMascotteMacro(id, deja = []) {
+  const choix = (((S.macro || {}).mascottes) || {})[id] || "";
+  if (choix === "aucune") return "";
+  if (choix) { const m = window.Mascottes.liste.find(x => x.nom === choix); if (m) return m.url; }
+  return window.Mascottes.auHasard(deja);
+}
 function installerMascotte(kind) {
   const wrap = $("#wWrap");
-  SCENE = new window.Mascottes.Scene($("#wSlot"));
+  SCENE = kind === "macro" ? new window.Mascottes.Troupe($("#wSlot"), urlMascotteMacro) : new window.Mascottes.Scene($("#wSlot"));
   window.Mascottes.fx = () => !S.mascots || S.mascots.fx !== false;
   window.Mascottes.charger(api());
   const maj = () => {
@@ -3833,6 +3894,25 @@ function mascotteTimers() {
   }
   else if (SCENE.visible) SCENE.fete(true); // le timer est arrivé au bout
 }
+/* Module secret « la récré » : réglages, visibles une fois découvert (clic sur Sonic) */
+function recreHTML() {
+  const r = { nombre: 5, taille: 78, ...(S.recre || {}) };
+  const sw = (k, t, d, v) => `<label class="set-item"><span><span class="t">${t}</span><span class="d">${d}</span></span><span class="switch"><input type="checkbox" data-rc="${k}" role="switch" ${v ? "checked" : ""}><span class="track"></span><span class="knob"></span></span></label>`;
+  return `<h3 class="reg-t">La récré · module secret</h3>
+    ${sw("on", "Mascottes en bas de l'écran", "Elles se promènent, jouent au ballon, se battent à l'épée, lancent des sorts et discutent", !!r.on)}
+    <div class="form-row"><span class="label">Nombre de mascottes</span><div class="slider-row"><input type="range" min="2" max="10" step="1" value="${+r.nombre || 5}" data-rc="nombre" aria-label="Nombre de mascottes"><span class="mono" id="rcNb">${+r.nombre || 5}</span></div></div>
+    <div class="form-row"><span class="label">Taille</span><div class="slider-row"><input type="range" min="50" max="150" step="5" value="${+r.taille || 78}" data-rc="taille" aria-label="Taille des mascottes de la récré"><span class="mono" id="rcT">${+r.taille || 78} px</span></div></div>
+    ${sw("bulles", "Bulles de discussion", "Un ou deux émojis au-dessus de leur tête", r.bulles !== false)}
+    ${sw("objets", "Ballon, épées et sorts", "Sinon, elles se contentent de se promener et de danser", r.objets !== false)}`;
+}
+document.addEventListener("change", e => {
+  const t = e.target; if (!t.dataset || !t.dataset.rc || WIDGET) return;
+  S.recre = { ...(S.recre || {}), [t.dataset.rc]: t.type === "checkbox" ? t.checked : +t.value }; save(); majLogo();
+});
+document.addEventListener("input", e => {
+  const t = e.target; if (!t.dataset || !["nombre", "taille"].includes(t.dataset.rc) || WIDGET) return;
+  const el = $(t.dataset.rc === "nombre" ? "#rcNb" : "#rcT"); if (el) el.textContent = t.value + (t.dataset.rc === "taille" ? " px" : "");
+});
 /* Paramètres : carte « Mascottes & animations » */
 async function renderMascSettings() {
   const box = $("#mascCard");
@@ -3859,7 +3939,7 @@ async function renderMascSettings() {
   box.innerHTML = `<div class="card-head"><div><h2>Mascottes &amp; animations</h2><span class="sub">Tes mascottes animées dans les widgets</span></div></div>
     <label class="set-item"><span><span class="t">Mascottes animées</span><span class="d">Une mascotte au hasard, jamais deux fois de suite la même</span></span>
       <span class="switch"><input type="checkbox" data-msc="on" role="switch" ${m.on !== false ? "checked" : ""}><span class="track"></span><span class="knob"></span></span></label>
-    <div class="form-row"><span class="label">Widgets</span><div class="chips">${tg("macro", "Macros · à l'appui")}${tg("dps", "DPS meter · en combat")}</div></div>
+    <div class="form-row"><span class="label">Widgets</span><div class="chips">${tg("macro", "Macros · une par macro en cours")}${tg("dps", "DPS meter · en combat")}${tg("video", "Lecteur vidéo · réagit au son")}</div></div>
     <label class="set-item"><span><span class="t">Effets spéciaux</span><span class="d">Explosions, danses, pirouettes, confettis et étoiles</span></span>
       <span class="switch"><input type="checkbox" data-msc="fx" role="switch" ${m.fx !== false ? "checked" : ""}><span class="track"></span><span class="knob"></span></span></label>
     <div class="form-row"><span class="label">Taille des mascottes</span><div class="slider-row"><input type="range" min="60" max="220" step="5" value="${m.size || 110}" data-msc="size" aria-label="Taille des mascottes"><span class="mono" id="mscSzV">${m.size || 110} px</span></div></div>
@@ -3868,7 +3948,8 @@ async function renderMascSettings() {
     <h3 class="reg-t">Mes mascottes</h3>
     <div class="msc-grid" id="mscGrid"></div>
     <div class="chips"><button type="button" class="btn sm primary" id="mscAdd">Ajouter des mascottes (.gif, .png)</button><button type="button" class="btn sm" id="mscDir">Ouvrir le dossier</button><button type="button" class="btn sm" id="mscRef">Actualiser</button></div>
-    <p class="note">GIF animés ou PNG à fond transparent. Survole une mascotte ajoutée pour la retirer (✕).</p>`;
+    <p class="note">GIF animés ou PNG à fond transparent. Survole une mascotte ajoutée pour la retirer (✕).</p>
+    ${(S.recre || {}).decouvert ? recreHTML() : ""}`;
   const liste = await window.Mascottes.charger(api());
   const g = $("#mscGrid"); if (g) g.innerHTML = liste.map(x => `<figure><img src="${esc(x.url)}" alt="" loading="lazy"><figcaption>${esc(x.nom)}</figcaption>${x.perso ? `<button type="button" class="msc-del" data-mscdel="${esc(x.url)}" title="Retirer" aria-label="Retirer ${esc(x.nom)}">✕</button>` : ""}</figure>`).join("") || '<p class="note">Aucune mascotte trouvée.</p>';
 }
@@ -4119,7 +4200,7 @@ function renderInfos() {
   <section class="card neu-extruded span-4 info-hero">
     <img class="logo-xl" src="img/logo.png" alt="${esc(L("Logo de PichetMeter", "PichetMeter logo"))}" draggable="false">
     <div><h2>PichetMeter</h2><span class="ver">Version ${esc(ver)}</span></div>
-    <p class="muted">${esc(L("Compagnon gratuit pour Aion 2 : armurerie, DPS meter de groupe, timers, cooldowns, viseur et carte, directement par-dessus le jeu.", "Free companion for Aion 2: armory, party DPS meter, timers, cooldowns, crosshair and map, right over the game."))}</p>
+    <p class="muted">${esc(L("Compagnon gratuit pour Aion 2 : armurerie, DPS meter de groupe, timers, macros, viseur, lecteur vidéo et carte, directement par-dessus le jeu.", "Free companion for Aion 2: armory, party DPS meter, timers, macros, crosshair, video player and map, right over the game."))}</p>
     <div class="info-who"><span class="label">${esc(L("Créateur", "Creator"))}</span><b>@atomedims</b>
       <button type="button" class="btn icon xs" data-copy="@atomedims" title="${esc(L("Copier le pseudo Discord", "Copy the Discord name"))}" aria-label="${esc(L("Copier le pseudo Discord", "Copy the Discord name"))}">${svg("copy")}</button></div>
     <div class="info-links"><a class="btn discord" href="${DISCORD}" target="_blank" rel="noopener">${svg("chat")}${esc(L("Rejoindre le Discord", "Join the Discord"))}</a>
@@ -4130,9 +4211,9 @@ function renderInfos() {
     <div class="card-head"><h2>${esc(L("Mentions légales", "Legal notice"))}</h2></div>
     <div class="legal-cols">
       ${sec(L("Logiciel non officiel", "Unofficial software"), `<p>${esc(L("PichetMeter est un outil communautaire gratuit et non officiel. Il n'est ni développé, ni approuvé, ni soutenu par NCSOFT. AION et AION 2 sont des marques de NCSOFT Corporation ; les noms, icônes et images du jeu restent la propriété de leurs détenteurs.", "PichetMeter is a free, unofficial community tool. It is not developed, endorsed or supported by NCSOFT. AION and AION 2 are trademarks of NCSOFT Corporation; game names, icons and images belong to their owners."))}</p>`)}
-      ${sec(L("Fonctionnement", "How it works"), `<p>${esc(L("PichetMeter ne modifie pas le jeu et n'injecte rien dans son processus : il affiche ses propres fenêtres par-dessus. Le DPS meter lit passivement le trafic réseau avec Npcap, sans rien envoyer. La détection des cooldowns écoute uniquement les touches choisies, sans jamais les bloquer. Seul le module Macros envoie des touches et des clics, par le driver Interception, quand tu lances une macro.", "PichetMeter does not modify the game or inject anything into it: it shows its own windows on top. The DPS meter passively reads network traffic with Npcap and sends nothing. Cooldown tracking only listens to the keys you chose and never blocks them. Only the Macros module sends keys and clicks, through the Interception driver, when you run a macro."))}</p>`)}
+      ${sec(L("Fonctionnement", "How it works"), `<p>${esc(L("PichetMeter ne modifie pas le jeu et n'injecte rien dans son processus : il affiche ses propres fenêtres par-dessus. Le DPS meter lit passivement le trafic réseau avec Npcap, sans rien envoyer. La détection des cooldowns écoute uniquement les touches choisies, sans jamais les bloquer. Seul le module Macros envoie des touches et des clics, par le driver Interception, quand tu lances une macro. Les FPS et les infos système viennent des compteurs publics de Windows et de PresentMon (outil d'Intel), sans toucher au jeu.", "PichetMeter does not modify the game or inject anything into it: it shows its own windows on top. The DPS meter passively reads network traffic with Npcap and sends nothing. Cooldown tracking only listens to the keys you chose and never blocks them. Only the Macros module sends keys and clicks, through the Interception driver, when you run a macro. FPS and system info come from public Windows counters and PresentMon (an Intel tool), without touching the game."))}</p>`)}
       ${sec(L("Responsabilité", "Responsibility"), `<p>${esc(L("Les règles de l'éditeur sur les outils tiers peuvent évoluer : chaque joueur utilise PichetMeter sous sa propre responsabilité. Le logiciel est fourni « tel quel », sans garantie ; l'auteur ne peut être tenu responsable d'un dommage, d'une perte de données ou d'une sanction liée à son utilisation.", "The publisher's rules on third-party tools may change: each player uses PichetMeter at their own risk. The software is provided “as is”, without warranty; the author cannot be held liable for any damage, data loss or sanction resulting from its use."))}</p>`)}
-      ${sec(L("Données personnelles", "Personal data"), `<p>${esc(L("Aucune donnée n'est collectée ni envoyée à l'auteur. Comptes, réglages et historiques restent sur ton PC, dans", "No data is collected or sent to the author. Accounts, settings and history stay on your PC, in"))} <code>%APPDATA%\\PichetMeter</code>. ${esc(L("Connexions : services officiels de NCSOFT (fiches, classements, images), carte communautaire choisie, polices Google Fonts, GitHub pendant l'installation. Le ping ouvre une simple connexion vers le serveur, sans échange de données.", "Connections: NCSOFT official services (profiles, rankings, images), the community map you picked, Google Fonts, GitHub during setup. The ping opens a plain connection to the server, with no data exchanged."))}</p>`)}
+      ${sec(L("Données personnelles", "Personal data"), `<p>${esc(L("Aucune donnée n'est collectée ni envoyée à l'auteur. Comptes, réglages et historiques restent sur ton PC, dans", "No data is collected or sent to the author. Accounts, settings and history stay on your PC, in"))} <code>%APPDATA%\\PichetMeter</code>. ${esc(L("Connexions : services officiels de NCSOFT (fiches, classements, images), carte communautaire choisie, polices Google Fonts, GitHub (installation, mises à jour, yt-dlp et PresentMon), YouTube ou Twitch quand tu lis une vidéo. Le ping ouvre une simple connexion vers le serveur, sans échange de données.", "Connections: NCSOFT official services (profiles, rankings, images), the community map you picked, Google Fonts, GitHub (setup, updates, yt-dlp and PresentMon), YouTube or Twitch when you play a video. The ping opens a plain connection to the server, with no data exchanged."))}</p>`)}
       ${sec(L("Logo", "Logo"), `<p>${esc(L("Le logo de PichetMeter est un fan art. Sonic the Hedgehog est une marque de SEGA, sans lien avec ce logiciel.", "The PichetMeter logo is fan art. Sonic the Hedgehog is a trademark of SEGA, unrelated to this software."))}</p>`)}
     </div>
   </section>
@@ -4186,6 +4267,7 @@ window.__onPush = msg => {
     case "viseur": VISEUR = msg; renderXhState(); break;
     case "macro": window.MacrosUI.push(msg); break;
     case "systeme": if (window.__systeme) window.__systeme(msg.infos, msg.opts); break;
+    case "son": if (window.__son) window.__son(msg); break;
     case "video": if (window.__videoTitre) window.__videoTitre(msg); break;
     case "maj": majPush(msg); break;
     case "layout": LAYOUT_INFO = msg; if (window.__layoutPret) window.__layoutPret(); break;
@@ -4220,6 +4302,8 @@ onSettingsChanged.push(() => window.MacrosUI.onSettings());
 
 async function boot() {
   if (WIDGET === "layout") { bootLayout(); flushPush(); return; }
+  if (WIDGET === "vmasc") { bootVmasc(); flushPush(); return; }
+  if (WIDGET === "recre") { window.Recre.demarrer(api(), () => S); flushPush(); return; }
   if (WIDGET) { bootWidget(WIDGET); flushPush(); return; }
   if (DESKTOP) {
     document.body.classList.add("desktop"); if (animOn()) document.body.classList.add("ov-out"); saveNow();

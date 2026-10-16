@@ -1,5 +1,5 @@
 """Macros d'exemple : chacune montre l'usage de différents nœuds. Aucune n'a de raccourci (pas de déclenchement
-accidentel) : sélectionnez-la puis « Lancer », ou donnez-lui un raccourci."""
+accidentel) : sélectionne-la puis « Lancer », ou donne-lui un raccourci."""
 from __future__ import annotations
 
 from graph import Graph, Node
@@ -48,8 +48,8 @@ def type_text() -> Macro:
     enter = g.add_node("key", 2 * DX, 0, {"sc": 0x1C, "label": "Entrée", "action": "press"})
     _chain(g, [text, enter])
     return Macro(name="Exemple 3 · Saisir un texte", graph=g, notes=(
-        "Ouvrez le Bloc-notes et cliquez dans la zone de texte pendant le délai de démarrage, "
-        "puis lancez : le texte est tapé selon votre disposition (AZERTY, QWERTY…).\n"
+        "Ouvre le Bloc-notes et clique dans la zone de texte pendant le délai de démarrage, "
+        "puis lance : le texte est tapé selon ta disposition (AZERTY, QWERTY…).\n"
         "Nœuds : Saisir du texte → Touche clavier (Entrée)."))
 
 
@@ -69,9 +69,9 @@ def draw_square() -> Macro:
     g.connect(left.id, "out", top.id)
     g.connect(top.id, "out", up.id)
     return Macro(name="Exemple 4 · Dessiner un carré", graph=g, notes=(
-        "Ouvrez Paint, placez le curseur sur la zone de dessin pendant le délai de démarrage, puis lancez.\n"
+        "Ouvre Paint, place le curseur sur la zone de dessin pendant le délai de démarrage, puis lance.\n"
         "Nœuds : Bouton souris (Maintenir) → Séquence (3 branches) → Déplacer la souris (relatif, fluide) "
-        "→ Bouton souris (Relâcher).\nCoupez l'interrupteur « Mouvements souris » pour voir la différence."))
+        "→ Bouton souris (Relâcher).\nCoupe l'interrupteur « Souris » pour voir la différence."))
 
 
 def reading_scroll() -> Macro:
@@ -101,7 +101,7 @@ def select_and_copy() -> Macro:
     _chain(g, [rec, copy])
     return Macro(name="Exemple 6 · Sélectionner 5 caractères et copier", graph=g, notes=(
         "Une « Séquence enregistrée » (Maj + 5 × flèche droite) sélectionne 5 caractères, puis "
-        "Ctrl + C les copie. Sélectionnez la séquence pour voir et modifier chaque évènement et son délai."))
+        "Ctrl + C les copie. Sélectionne la séquence pour voir et modifier chaque événement et son délai."))
 
 
 def mmo_rotation() -> Macro:
@@ -139,7 +139,7 @@ def filler_macro() -> Macro:
     g.connect(key.id, "out", wait_free.id)
     g.connect(filler.id, "busy", wait_busy.id)
     return Macro(name="Exemple 8 · Remplissage (filler)", graph=g, notes=(
-        "Appuie sur « 3 » toutes les ~0,6 s, mais seulement quand aucune autre macro ne tourne : lancez-la, "
+        "Appuie sur « 3 » toutes les ~0,6 s, mais seulement quand aucune autre macro ne tourne : lance-la, "
         "puis une autre macro avec son raccourci — le remplissage se met en pause le temps qu'elle finisse.\n"
         "Nœuds : Boucle → Remplissage (Libre / Occupé) → Touche → Attendre."))
 

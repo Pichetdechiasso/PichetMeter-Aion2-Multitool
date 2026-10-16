@@ -69,7 +69,7 @@ function nodeRows(n) {
     case "start": r.push(["Lance", "la macro"]); break;
     case "wait": r.push(["Durée", ms(p.ms)], ["Aléa", p.random ? `± ${Math.round(p.random)} ms` : "aucun"]); break;
     case "loop": r.push(["Répétitions", +p.count === 0 ? "∞ (infini)" : `${p.count} fois`]); break;
-    case "sequence": r.push(["Ordre", "Then 0 → 1 → 2"]); break;
+    case "sequence": r.push(["Ordre", "Étapes 1 → 2 → 3"]); break;
     case "parallel": r.push(["Branches", "1 + 2 + 3 en même temps"]); break;
     case "run_macro": {
       if (!p.macro) r.push(["Macro", "⚠ aucune choisie"]);
@@ -212,7 +212,7 @@ function push(m) {
     case "standalone": ETAT.standalone = !!m.on; renderStatut(); break;
     case "state": RUNNING = m.running || []; RECORDING = m.recording || ""; INSTALLING = !!m.installing; renderBarre(); renderListe(); renderStatut(); break;
     case "say": dire(m.text); break;
-    case "rec": REC_COUNT = m.count; dire(`Enregistrement… ${m.count} évènements (arrêt : ${raccAffiche(SETTINGS.hotkey_record || "F8")})`); break;
+    case "rec": REC_COUNT = m.count; dire(`Enregistrement… ${m.count} événements (arrêt : ${raccAffiche(SETTINGS.hotkey_record || "F8")})`); break;
     case "record_done": finEnregistrement(m.id, m.events || []); break;
     case "captured": if (captureCle) { const c = captureCle; captureCle = null; c.done(m.sc, m.ext, m.label); } break;
     case "node": if (m.id === SEL) eclairer(m.node); break;
@@ -697,6 +697,22 @@ function champTouche(p, k = "") {
     <button type="button" class="btn sm" data-cap="key">${ic("key")}${captureCle ? "Appuie sur une touche…" : "Capturer"}</button>
     <select class="field sm" data-special aria-label="Touche spéciale"><option value="">Touche spéciale…</option>${Object.keys(sp).map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join("")}</select></div></div>`;
 }
+/* Mascotte affichée à côté du widget quand cette macro tourne (réglage gardé dans les réglages de PichetMeter) */
+const choixMascotte = id => ((((C.S().macro || {}).mascottes) || {})[id]) || "";
+let mascChargees = false;
+function champMascotte(m) {
+  const M = window.Mascottes;
+  if (!M) return "";
+  if (!mascChargees) { mascChargees = true; M.charger(C.api()).then(() => renderDetails()); }
+  const v = choixMascotte(m.id), liste = M.liste || [];
+  const img = v && v !== "aucune" ? (liste.find(x => x.nom === v) || {}).url : "";
+  const opts = [["", "Au hasard"], ["aucune", "Aucune"], ...liste.map(x => [x.nom, x.nom])];
+  if (v && v !== "aucune" && !liste.some(x => x.nom === v)) opts.push([v, v + " (introuvable)"]);
+  return `<div class="form-row"><span class="label">Mascotte</span><div class="mc-masc">
+    <span class="apercu" aria-hidden="true">${img ? `<img src="${esc(img)}" alt="">` : v === "aucune" ? "∅" : "?"}</span>
+    <select class="field sm" data-masc aria-label="Mascotte de cette macro">${opts.map(([k, t]) => `<option value="${esc(k)}" ${k === v ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></div>
+    <span class="note">Apparaît à côté du widget Macros quand cette macro tourne. Plusieurs macros en même temps : plusieurs mascottes.</span></div>`;
+}
 function renderDetails() {
   const el = $("#mcDetails");
   if (!el) return;
@@ -705,13 +721,14 @@ function renderDetails() {
   const n = nodeOf(m, SEL_NODE);
   if (!n || n.type === "start") {
     const nb = m.graph.nodes.length - 1, ev = m.graph.nodes.filter(x => x.type === "recorded").reduce((a, x) => a + (x.props.events || []).length, 0);
-    el.innerHTML = `<div class="card-head"><div><h2>Réglages de la macro</h2><span class="sub">${nb} nœud${nb > 1 ? "s" : ""}${ev ? ` · ${ev} évènements enregistrés` : ""}</span></div></div>
+    el.innerHTML = `<div class="card-head"><div><h2>Réglages de la macro</h2><span class="sub">${nb} nœud${nb > 1 ? "s" : ""}${ev ? ` · ${ev} événements enregistrés` : ""}</span></div></div>
       <div class="mc-form" data-scope="macro">
         ${num("repeat", m.repeat, "Répétitions (0 = à l'infini)", "", 'min="0" max="999999"')}
         ${num("speed", m.speed, "Vitesse", "×", 'min="0.05" max="20" step="0.05"')}
         ${num("jitter", m.jitter, "Variation aléatoire des délais", "%", 'min="0" max="90"')}
         ${num("loop_delay", m.loop_delay, "Pause entre deux répétitions", "ms", 'min="0" step="10"')}
         <div class="form-row"><span class="label">Souris des séquences enregistrées</span>${seg("mouse_mode", m.mouse_mode, { absolute: "Absolu", relative: "Relatif (jeux 3D)" })}</div>
+        ${champMascotte(m)}
         <label class="form-row"><span class="label">Description</span><textarea class="field sm" data-p="notes" rows="5" maxlength="5000">${esc(m.notes)}</textarea></label>
       </div>
       <p class="note">${esc(T("start").help)}</p>`;
@@ -744,8 +761,8 @@ function renderDetails() {
     case "recorded": {
       const ev = p.events || [], max = 400;
       f = `<div class="mc-evs"><div class="mc-evh"><span>#</span><span>Action</span><span>Délai (ms)</span><span></span></div>${ev.slice(0, max).map((e, i) => { const [a, dt] = decrireEv(e); return `<div class="mc-ev"><span class="mono">${i + 1}</span><span title="${esc(dt)}"><b>${esc(a)}</b> <small>${esc(dt)}</small></span>
-        <input class="field sm mono" type="number" min="0" data-ev="${i}" value="${e.d}"><button type="button" class="btn icon xs danger" data-evdel="${i}" aria-label="Supprimer l'évènement" title="Supprimer">${ic("trash")}</button></div>`; }).join("")}</div>
-        ${ev.length > max ? `<p class="note">${ev.length - max} évènements de plus (non affichés).</p>` : ""}` + delai(p);
+        <input class="field sm mono" type="number" min="0" data-ev="${i}" value="${e.d}"><button type="button" class="btn icon xs danger" data-evdel="${i}" aria-label="Supprimer l'événement" title="Supprimer">${ic("trash")}</button></div>`; }).join("")}</div>
+        ${ev.length > max ? `<p class="note">${ev.length - max} événements de plus (non affichés).</p>` : ""}` + delai(p);
       break;
     }
     case "cooldown": f = num("ms", p.ms, "Recharge", "ms", 'min="0" step="100"') + sw("wait", p.wait, "Attendre la fin de la recharge", "Sinon : sortie « En recharge »"); break;
@@ -796,6 +813,12 @@ function brancherDetails() {
   });
   el.addEventListener("change", e => {
     const t = e.target, scope = t.closest("[data-scope]"); if (!scope) return;
+    if (t.matches("select[data-masc]")) {
+      const m = cur(), S = C.S(); if (!m) return;
+      const choix = { ...((S.macro || {}).mascottes || {}) };
+      if (t.value) choix[m.id] = t.value; else delete choix[m.id];
+      S.macro = { ...(S.macro || {}), mascottes: choix }; C.save(); renderDetails(); return;
+    }
     if (t.matches("select[data-p]")) { appliquer(t.dataset.p, t.value, scope.dataset.scope); renderDetails(); }
     if (t.type === "checkbox" && t.dataset.p) renderDetails();
     if (t.matches("[data-special]") && t.value) {
@@ -981,7 +1004,7 @@ function finEnregistrement(id, events) {
   appendNode(m, n);
   if (id === SEL) { SEL_NODE = n.id; renderEditeur(); renderDetails(); }
   enregistrer(m, 0);
-  dire(`${events.length} évènements enregistrés dans un nœud « Séquence enregistrée ».`);
+  dire(`${events.length} événements enregistrés dans un nœud « Séquence enregistrée ».`);
 }
 
 /* Champs de la barre d'outils */
@@ -1084,29 +1107,33 @@ function brancherReglages() {
 }
 let rrT; const renderReglagesBientot = () => { clearTimeout(rrT); rrT = setTimeout(renderReglages, 120); };
 
-/* ════════ Widget en jeu : macros en cours, touches envoyées, mascotte ════════ */
-let WR = null, SCENE = null, MASC_ON = () => false, SEQ_T = 0;
+/* ════════ Widget en jeu : macros en cours, touches envoyées, une mascotte par macro ════════ */
+let WR = null, TROUPE = null, MASC_ON = () => false, SEQ_T = 0;
 const FINIS = {}; // id → macro terminée il y a moins d'une seconde (ligne « ✓ terminée »)
 function pushWidget(m) {
-  if (m.ev === "snapshot") { for (const k in ACTIVES) delete ACTIVES[k]; for (const a of m.active || []) ACTIVES[a.id] = a; }
+  if (m.ev === "snapshot") {
+    for (const k in ACTIVES) delete ACTIVES[k];
+    for (const a of m.active || []) ACTIVES[a.id] = a;
+    if (TROUPE && MASC_ON()) for (const a of m.active || []) TROUPE.entrer(a.id);
+  }
   if (m.ev === "macro_state") {
     if (m.running) {
       ACTIVES[m.id] = { id: m.id, name: m.name, since: Date.now() }; delete FINIS[m.id];
-      if (SCENE && MASC_ON()) { const deja = SCENE.visible; SCENE.montrer(); if (!deja) setTimeout(() => SCENE.effet("explosion"), 260); else SCENE.effet("tourne"); } // une mascotte au hasard apparaît à l'appui de la macro
+      if (TROUPE && MASC_ON()) TROUPE.entrer(m.id); // sa mascotte (choisie dans les réglages de la macro, ou au hasard) apparaît
     } else if (ACTIVES[m.id]) {
       FINIS[m.id] = { ...ACTIVES[m.id], fin: Date.now() }; delete ACTIVES[m.id];
-      if (!Object.keys(ACTIVES).length && SCENE) SCENE.fete(true);
+      if (TROUPE) TROUPE.partir(m.id); // saut de joie, puis elle repart
     }
   }
   if (m.ev === "keys") {
     const l = TOUCHES[m.id] || (TOUCHES[m.id] = []);
     for (const x of m.labels) l.push({ l: x, t: Date.now(), k: ++SEQ_T });
     TOUCHES[m.id] = l.slice(-7);
-    if (SCENE) { SCENE.sautiller(); if (SEQ_T % 12 === 0) SCENE.effet(SEQ_T % 24 === 0 ? "danse" : "etoiles"); }
+    if (TROUPE) { TROUPE.sautiller(m.id); if (SEQ_T % 12 === 0) TROUPE.effet(m.id, SEQ_T % 24 === 0 ? "danse" : "etoiles"); }
   }
   if ((m.ev === "state" && !(m.running || []).length) || (m.ev === "phase" && m.phase !== "ready")) {
     for (const k in ACTIVES) { FINIS[k] = { ...ACTIVES[k], fin: Date.now() }; delete ACTIVES[k]; }
-    if (SCENE && SCENE.visible) SCENE.fete(true);
+    if (TROUPE) TROUPE.toutPartir();
   }
   peindreWidget();
 }
@@ -1140,7 +1167,7 @@ function peindreWidget() {
     for (const c of zone.children) { const x = tk.find(y => String(y.k) === c.dataset.k); if (x) c.style.opacity = Math.max(.15, 1 - (now - x.t) / 2600).toFixed(2); }
   }
 }
-function bootWidget(body, scene, mascotteActive) { WR = body; SCENE = scene || null; MASC_ON = mascotteActive || (() => false); peindreWidget(); setInterval(peindreWidget, 200); }
+function bootWidget(body, troupe, mascotteActive) { WR = body; TROUPE = troupe || null; MASC_ON = mascotteActive || (() => false); peindreWidget(); setInterval(peindreWidget, 200); }
 /** Aperçu statique du widget (écran de placement). */
 function apercuWidget() {
   return `<div class="wbox wmc"><div class="wmc-m"><div class="wmc-h"><i class="hb">♥</i><b>Rotation Clerc</b><span class="mono">12 s</span></div><div class="wmc-flux"></div>

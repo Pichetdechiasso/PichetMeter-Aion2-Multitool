@@ -1,0 +1,329 @@
+/* PichetMeter 3.0 · Direction artistique « Dashboard »
+   Anthracite mat, cartes arrondies légèrement en relief (ombre sombre en bas à droite, reflet discret en haut à gauche),
+   champs enfoncés, accents rouge corail et ambre réservés aux éléments interactifs et aux états.
+   Chargé en dernier : il remplace les couleurs et les formes des thèmes précédents. */
+
+:root:root:root {
+  --rouge: #f2453d; --rouge-2: #ff6b61; --rouge-f: rgba(242, 69, 61, .16);
+  --ambre: #f9b934; --ambre-f: rgba(249, 185, 52, .16);
+  --vert: #4ade80; --vert-f: rgba(74, 222, 128, .14);
+  --encre: #1c1e21;      /* fonds enfoncés : champs, jauges, puits */
+  --coque: #26282c;      /* fond de la fenêtre */
+  --carte: #2e3035;      /* cartes */
+  --relief: #393c42;     /* boutons, éléments en relief */
+  --relief-2: #43464d;   /* survol */
+  --trait: rgba(255, 255, 255, .07);
+  --page: #1c1e21;
+  --panel: var(--coque);
+  --solid: #2b2d32;
+  --bg: var(--carte); --fg: #f4f5f7; --muted: #9a9fa8; --line: rgba(255, 255, 255, .07); --edge: rgba(255, 255, 255, .06);
+  --sd: rgba(0, 0, 0, .42); --sl: rgba(255, 255, 255, .035);
+  --cyan: var(--rouge); --cyan-glow: var(--rouge); --amber: var(--ambre); --amber-glow: var(--ambre); --green: var(--vert); --green-glow: var(--vert); --rose: var(--rouge-2);
+  --bleu: var(--rouge); --blanc: #ffffff;
+  --cy: var(--rouge); --mg: var(--rouge-2); --mx: var(--vert); --jaune: var(--ambre);
+  --well: var(--encre);
+  --f-display: "Sora", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Nunito Sans", "Segoe UI", system-ui, sans-serif;
+  --f-data: "JetBrains Mono", ui-monospace, "Cascadia Mono", monospace;
+  --f-chiffre: "Sora", "Segoe UI", system-ui, sans-serif;
+  --r-lg: 18px; --r-md: 14px; --r-sm: 12px;
+  /* Relief double : ombre sombre en bas à droite, reflet en haut à gauche */
+  --extruded: 8px 8px 22px rgba(0, 0, 0, .38), -6px -6px 18px rgba(255, 255, 255, .022), inset 0 1px 0 rgba(255, 255, 255, .045);
+  --extruded-sm: 4px 4px 10px rgba(0, 0, 0, .34), -3px -3px 8px rgba(255, 255, 255, .025), inset 0 1px 0 rgba(255, 255, 255, .06);
+  --inset: inset 3px 3px 8px rgba(0, 0, 0, .45), inset -2px -2px 6px rgba(255, 255, 255, .025);
+  --inset-sm: inset 2px 2px 5px rgba(0, 0, 0, .42), inset -1px -1px 4px rgba(255, 255, 255, .025);
+  --game-bg: #24262a; --game-cell: #1c1e21; --game-line: #3a3d43; --game-fg: #f1f2f4; --game-muted: #9a9fa8;
+  --game-title-a: #ff8a80; --game-title-b: var(--ambre);
+  color-scheme: dark;
+}
+#themeBtn { display: none !important; }
+body { letter-spacing: 0; -webkit-font-smoothing: antialiased; }
+::selection { background: rgba(242, 69, 61, .45); color: #fff; }
+:focus-visible { outline: 2px solid var(--rouge); outline-offset: 2px; }
+html, body { background: var(--page); }
+
+/* ── Typographie : titres géométriques blancs, chiffres en Sora ── */
+h1, h2, h3, h4 { font-family: var(--f-display); letter-spacing: -.01em; text-transform: none; }
+.card-head h2, .welcome h2 { font: 600 16.5px var(--f-display); color: var(--fg); background: none; -webkit-background-clip: border-box; background-clip: border-box; filter: none; text-transform: none; letter-spacing: -.005em; }
+.card-head .sub, .note { color: var(--muted); }
+.label { color: var(--muted); letter-spacing: .06em; font: 700 11px var(--f-body); text-transform: uppercase; }
+.reg-t { font: 700 11px var(--f-body); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); border-top-color: var(--trait); }
+kbd { font: 600 11.5px var(--f-data); background: var(--relief); color: var(--fg); border: 1px solid var(--trait); border-radius: 7px; box-shadow: 0 2px 0 rgba(0, 0, 0, .35); padding: 2px 7px; }
+.kpi b, .ping-pill strong, #pingCard .ping-val, .info-hero .ver { font-family: var(--f-chiffre); font-weight: 700; letter-spacing: -.01em; }
+.mono { font-variant-numeric: tabular-nums; }
+.err { color: var(--rouge-2); }
+.note.warn-note { color: var(--ambre); }
+
+/* ── Coque ── */
+.shell, body.desktop:not(.winmode):not(.widget) .shell { background: var(--coque); }
+:root:not([data-theme="light"]) body.desktop:not(.winmode):not(.widget) .shell { background: var(--coque); border: 1px solid var(--trait); border-left: 0;
+  box-shadow: 18px 0 60px rgba(0, 0, 0, .55), inset -1px 0 0 rgba(255, 255, 255, .05); }
+.shell { position: relative; }
+.shell::before { display: none; }
+.shell > .side { z-index: 1; }
+.arene { position: absolute; left: 0; bottom: 0; width: 228px; height: 110px; pointer-events: none; z-index: 0; opacity: .85; image-rendering: pixelated;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+body.no-anim .arene { opacity: .45; }
+#backdrop { background: rgba(10, 11, 13, .35) !important; }
+#drawerGrip::after { background: rgba(255, 255, 255, .16); }
+#drawerGrip:hover::after, #drawerGrip.on::after { background: var(--rouge); box-shadow: none; }
+
+/* ── Cartes : même famille de gris, relief doux ── */
+.neu-extruded, .card, :root:not([data-theme="light"]) .card.neu-extruded { background: var(--carte); border: 1px solid var(--trait); box-shadow: var(--extruded); }
+.card { position: relative; border-radius: var(--r-lg); padding: 20px 22px; }
+.card::after { display: none; }
+.card-head { gap: 10px 12px; }
+.well, .seg, .kpi, .ping-pill, .gauge, .switch .track, .field, input[type="range"], .xh-state, .solo-note, .map-host, .acct-av { background: var(--encre); }
+.well { box-shadow: var(--inset); border: 1px solid rgba(0, 0, 0, .2); }
+.kpi { border: 0; box-shadow: var(--inset-sm); border-radius: 14px; }
+.kpi b { color: #fff; font-size: 21px; }
+.set-item { background: var(--carte); border: 1px solid var(--trait); border-radius: var(--r-md); box-shadow: var(--extruded-sm); }
+.set-item .t { color: var(--fg); font-weight: 700; }
+.welcome .box { background: var(--carte); border: 1px solid var(--trait); border-radius: 20px; box-shadow: 0 30px 80px rgba(0, 0, 0, .55); }
+body.desktop:not(.winmode):not(.widget) .welcome { background: rgba(10, 11, 13, .6); }
+.menu { background: #313338; border: 1px solid var(--trait); border-radius: 16px; box-shadow: 0 18px 46px rgba(0, 0, 0, .55); }
+.menu .row:hover { background: var(--relief); box-shadow: none; }
+.menu .row.active { box-shadow: none; background: var(--rouge-f); color: var(--rouge-2); }
+.tip { background: #313338; border: 1px solid var(--trait); color: var(--fg); box-shadow: 0 10px 28px rgba(0, 0, 0, .5); }
+.toast { background: #313338 !important; border: 1px solid var(--trait) !important; box-shadow: 0 14px 36px rgba(0, 0, 0, .55) !important; }
+
+/* ── Barre du haut : logo, titre, statut ── */
+.topbar, .topbar.neu-extruded, :root:not([data-theme="light"]) .topbar.neu-extruded { background: transparent; border: 0; box-shadow: none; padding: 6px 4px 14px; border-radius: 0;
+  border-bottom: 1px solid var(--trait); }
+.logo { width: 48px; height: 48px; border-radius: 15px; overflow: hidden; background: var(--encre); border: 0; box-shadow: var(--extruded-sm); padding: 0; color: #fff; }
+.logo::after { display: none; }
+.logo img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+.logo.secret { cursor: pointer; transition: transform .35s var(--ease-spring), box-shadow .25s; }
+.logo.secret:hover { transform: rotate(-8deg) scale(1.06); }
+.logo.secret:active { transform: scale(.92); }
+.logo.secret.on { box-shadow: 0 0 0 3px var(--ambre), 0 0 18px rgba(249, 185, 52, .45); }
+.brand h1 { font: 700 21px var(--f-display); color: #fff; background: none; -webkit-background-clip: border-box; background-clip: border-box; filter: none; text-transform: none; letter-spacing: -.015em; }
+.brand .aion { font: 800 10.5px var(--f-body); letter-spacing: .28em; color: var(--rouge); text-shadow: none; margin-bottom: 2px; }
+.status-row { gap: 8px; }
+.ping-pill { border-radius: 99px; padding: 7px 8px 7px 16px; box-shadow: var(--inset-sm); border: 1px solid rgba(0, 0, 0, .2); }
+.ping-pill strong { font-size: 15px; color: #fff; }
+.acct-btn { border-radius: 99px !important; padding: 5px 14px 5px 5px !important; }
+.acct-av { border-radius: 50%; box-shadow: none; background: var(--rouge); color: #fff; font-family: var(--f-display); }
+.acct-btn .who small { color: var(--muted); }
+.winctl .btn.icon { border-radius: 50%; width: 38px; height: 38px; }
+
+/* ── Navigation latérale : texte gris, onglet actif rouge avec trait ── */
+.side { background: transparent; box-shadow: none; border: 0; border-radius: 0; padding: 4px 0 10px; gap: 4px; }
+.side button { font: 600 14.5px var(--f-body); color: var(--muted); border-radius: 12px; letter-spacing: 0; padding: 11px 14px; }
+.side button:hover { background: rgba(255, 255, 255, .04); color: var(--fg); box-shadow: none; }
+.side button[aria-selected="true"], .side.glide > button[aria-selected="true"] { color: #fff; background: transparent; box-shadow: none; }
+.side button[aria-selected="true"] svg { color: var(--rouge); filter: none; }
+.side .glider { background: var(--carte); border-radius: 12px; box-shadow: var(--extruded-sm), inset 0 0 0 1px var(--trait); }
+.side .glider::before { content: ""; position: absolute; left: -1px; top: 50%; width: 4px; height: 22px; margin-top: -11px; border-radius: 0 4px 4px 0; background: var(--rouge); }
+.side button .mdot { background: rgba(255, 255, 255, .14); }
+.side button .mdot.on, .mdot.on { background: var(--vert); box-shadow: 0 0 0 3px var(--vert-f); }
+.side .nbadge { background: var(--ambre-f); color: var(--ambre); box-shadow: none; }
+.side-foot { color: var(--muted); }
+.sig { opacity: .75; }
+
+/* ── Boutons : relief gris, primaire rouge plein ── */
+.btn, .chip { background: var(--relief); color: var(--fg); border: 1px solid var(--trait); font-family: var(--f-body); font-weight: 700; letter-spacing: 0; border-radius: 12px;
+  box-shadow: var(--extruded-sm); transition: box-shadow .22s, background .2s, color .2s, transform .2s var(--ease-spring); }
+.chip { border-radius: 99px; font-weight: 600; }
+.btn:hover, .chip:hover { background: var(--relief-2); color: #fff; border-color: var(--trait); box-shadow: var(--extruded-sm); }
+.btn:active, .btn[aria-pressed="true"], .chip:active { background: #33363b; box-shadow: var(--inset-sm); color: #fff; transform: translateY(1px); }
+.btn[aria-pressed="true"] { color: var(--rouge-2); }
+.chip[aria-pressed="true"] { background: var(--rouge-f); color: #ff8a80; border-color: rgba(242, 69, 61, .35); box-shadow: var(--inset-sm); }
+.btn.primary { color: #fff; background: var(--rouge); border: 1px solid rgba(255, 255, 255, .12); text-shadow: none; filter: none;
+  box-shadow: 0 8px 18px rgba(242, 69, 61, .3), inset 0 1px 0 rgba(255, 255, 255, .22); }
+.btn.primary:hover { background: var(--rouge-2); color: #fff; filter: none; box-shadow: 0 10px 22px rgba(242, 69, 61, .38), inset 0 1px 0 rgba(255, 255, 255, .25); }
+.btn.primary:active { background: #d9362f; box-shadow: inset 2px 2px 6px rgba(0, 0, 0, .3); filter: none; }
+.btn.icon { border-radius: 12px; }
+.btn.icon.sm, .btn.icon.xs { border-radius: 10px; }
+.btn.icon.danger:hover, .btn.icon.danger:focus-visible { color: #fff; background: var(--rouge); border-color: transparent; box-shadow: 0 6px 14px rgba(242, 69, 61, .3); }
+.btn.danger-btn { background: var(--rouge) !important; }
+.btn.discord { background: #5865f2; }
+#refreshBtn { border-color: transparent; box-shadow: 0 8px 18px rgba(242, 69, 61, .3); }
+
+/* ── Champs enfoncés, recherche en pilule ── */
+.field { background: var(--encre); border: 1px solid rgba(0, 0, 0, .25); color: #fff; border-radius: var(--r-md); font-family: var(--f-body); box-shadow: var(--inset-sm); }
+.field::placeholder { color: #7d828b; }
+.field:focus { border-color: rgba(242, 69, 61, .7); box-shadow: var(--inset-sm), 0 0 0 3px rgba(242, 69, 61, .18); }
+input[type="search"].field { border-radius: 99px; padding-left: 18px; }
+select.field option, select.field optgroup { background: #2b2d32; color: #fff; }
+
+/* ── Segments : pilule enfoncée, choix actif en relief ── */
+.seg { background: var(--encre); border: 1px solid rgba(0, 0, 0, .2); border-radius: 14px; box-shadow: var(--inset-sm); }
+.seg button { font-family: var(--f-body); font-weight: 700; color: var(--muted); border-radius: 10px; }
+.seg button:hover { color: var(--fg); }
+.seg button[aria-pressed="true"] { color: #fff; background: var(--relief); box-shadow: var(--extruded-sm); }
+.lang-seg { background: var(--encre); box-shadow: var(--inset-sm); }
+.lang-seg button[aria-pressed="true"] { color: #fff; background: var(--relief); box-shadow: var(--extruded-sm); }
+
+/* ── Onglets de réglages : texte, souligné rouge (comme « Overview ») ── */
+.reg-nav { background: transparent; border: 0; border-bottom: 1px solid var(--trait); border-radius: 0; padding: 0 2px; gap: 4px 18px; }
+.reg-nav button { position: relative; font: 600 14px var(--f-body); color: var(--muted); padding: 10px 2px 12px; border-radius: 0; background: transparent !important; box-shadow: none !important; }
+.reg-nav button:hover { color: var(--fg); }
+.reg-nav button svg { width: 15px; height: 15px; opacity: .8; }
+.reg-nav button[aria-selected="true"] { color: #fff; }
+.reg-nav button[aria-selected="true"]::after { content: ""; position: absolute; left: 50%; bottom: -1px; width: 26px; height: 3px; margin-left: -13px; border-radius: 3px; background: var(--rouge); }
+.reg-nav button[aria-selected="true"] svg { color: var(--rouge); opacity: 1; }
+
+/* ── Curseurs, interrupteurs ── */
+input[type="range"] { accent-color: var(--rouge); box-shadow: var(--inset-sm); border: 0; height: 10px; }
+input[type="range"]::-webkit-slider-thumb { width: 20px; height: 20px; background: #fff; border: 0; box-shadow: 0 0 0 4px var(--rouge), 0 3px 8px rgba(0, 0, 0, .5); }
+.switch .track { border: 1px solid rgba(0, 0, 0, .25); background: var(--encre); box-shadow: var(--inset-sm); }
+.switch .knob { background: #c9ccd2; box-shadow: 2px 2px 5px rgba(0, 0, 0, .5); }
+.switch input:checked ~ .track { background: var(--rouge); border-color: rgba(255, 255, 255, .12); box-shadow: inset 0 1px 3px rgba(0, 0, 0, .25), 0 0 0 3px var(--rouge-f); }
+.switch input:checked ~ .knob { background: #fff; box-shadow: 0 2px 6px rgba(0, 0, 0, .35); }
+.switch .track::before { color: #fff; text-shadow: none; font-family: var(--f-body); font-weight: 800; }
+.switch .track::after { color: #7d828b; font-family: var(--f-body); font-weight: 800; }
+
+/* ── Badges : pastille teintée + point ── */
+.badge { font: 700 10.5px var(--f-body); letter-spacing: .05em; border: 0; border-radius: 99px; padding: 5px 10px; box-shadow: none; background: rgba(255, 255, 255, .06); }
+.badge::before { box-shadow: none; }
+.badge.ok { color: var(--vert); background: var(--vert-f); }
+.badge.info { color: #ff8a80; background: var(--rouge-f); }
+.badge.hot { color: var(--rouge-2); background: var(--rouge-f); }
+.badge.warn { color: var(--ambre); background: var(--ambre-f); }
+
+/* ── Jauges : barres épaisses arrondies ── */
+.gauge { background: var(--encre); border: 0; box-shadow: var(--inset-sm); }
+.gauge.cyan > span { background: var(--rouge); box-shadow: none; }
+.gauge.green > span { background: var(--vert); box-shadow: none; }
+.gauge.amber > span { background: var(--ambre); box-shadow: none; }
+
+/* ── Barre « Afficher en jeu » ── */
+.modbar { border-left: 0; }
+.modbar.on { box-shadow: var(--extruded); }
+.modbar .mi, .mod-list .mi { background: var(--encre); border: 1px solid rgba(0, 0, 0, .2); border-radius: 14px; color: var(--muted); box-shadow: var(--inset-sm); }
+.modbar.on .mi, .mod-list .on .mi { color: #fff; background: var(--rouge); border-color: transparent; box-shadow: 0 8px 18px rgba(242, 69, 61, .32); }
+.modbar .tx b { font: 600 15.5px var(--f-display); text-transform: none; letter-spacing: -.005em; }
+.modbar.ping-mod { border: 1px solid var(--trait); border-radius: var(--r-md); background: var(--carte); }
+
+/* ── Personnage, timers, DPS ── */
+.portrait { background: var(--encre); border: 0; box-shadow: var(--inset); color: var(--rouge); border-radius: 50%; }
+.hero-txt .title { color: var(--ambre); }
+.rank-chip { background: var(--carte); border: 1px solid var(--trait); }
+.result { background: var(--carte); border: 1px solid var(--trait); }
+.result:hover { background: var(--relief); }
+.game { background: var(--game-bg); border: 1px solid var(--trait); box-shadow: var(--inset); }
+.doll { background: radial-gradient(circle at 50% 35%, #34363b, #1f2124 70%); }
+.board[aria-pressed="true"] { border-color: var(--rouge); box-shadow: 0 0 0 1px var(--rouge); }
+.board .bar span { background: linear-gradient(90deg, var(--rouge), var(--ambre)); }
+.timer { background: var(--carte); }
+.timer.live .ring .fg { stroke: var(--vert); }
+.timer .tag { color: #ff8a80; border-color: rgba(242, 69, 61, .45); font-family: var(--f-body); }
+.dm-row { background: var(--carte); }
+.dm-row.moi { box-shadow: inset 0 0 0 1.5px rgba(242, 69, 61, .8), var(--extruded-sm); }
+.wprev { background: radial-gradient(circle at 30% 20%, #3a3c41, #1f2124); }
+.mc-item.sel { background: var(--rouge-f); border-color: rgba(242, 69, 61, .35); box-shadow: inset 3px 0 0 var(--rouge); }
+.lang-seg .fl { box-shadow: 0 0 0 1px rgba(0, 0, 0, .3); }
+.legal a, .legal h3 { color: #ff8a80; }
+.info-who { background: var(--encre); }
+.kt-last { background: var(--encre); }
+@keyframes kpiFlash { 0% { color: var(--ambre); text-shadow: 0 0 12px rgba(249, 185, 52, .6); } 100% { color: inherit; text-shadow: none; } }
+
+/* ── Bandeau de mise à jour ── */
+.maj-ban { display: flex; align-items: center; gap: 14px 18px; flex-wrap: wrap; margin: 0 0 18px; padding: 14px 18px; border-radius: var(--r-lg);
+  background: var(--carte); border: 1px solid var(--trait); box-shadow: var(--extruded), inset 4px 0 0 var(--vert); animation: majIn .45s cubic-bezier(.2, .8, .2, 1); }
+.maj-ban[data-etat="erreur"] { box-shadow: var(--extruded), inset 4px 0 0 var(--rouge); }
+.maj-tx { flex: 1 1 320px; display: grid; gap: 4px; min-width: 0; }
+.maj-tx b { font: 600 15px var(--f-display); color: #fff; }
+.maj-tx small { color: var(--muted); font-size: 13px; }
+.maj-notes summary { cursor: pointer; color: #ff8a80; font-size: 13px; font-weight: 700; margin-top: 2px; }
+.maj-notes div { white-space: pre-wrap; font-size: 12.5px; color: var(--fg); max-height: 180px; overflow: auto; margin-top: 6px; padding: 8px 10px; border-radius: 10px; background: var(--encre); border: 1px solid var(--trait); }
+@keyframes majIn { from { opacity: 0; transform: translateY(-8px); } }
+/* ── Ping (Paramètres > Widgets) ── */
+#pingCard .ping-val { font-size: 22px; color: #fff; text-shadow: none; }
+#pingCard .spark { height: 54px; }
+
+/* ════════ Widgets en jeu : cartes anthracite translucides ════════ */
+.wbox, :root[data-theme="light"] .wbox { background: rgba(38, 40, 44, .93); color: #f4f5f7; border: 1px solid rgba(255, 255, 255, .08); border-radius: 14px;
+  box-shadow: 6px 6px 16px rgba(0, 0, 0, .45), -2px -2px 8px rgba(255, 255, 255, .02), inset 0 1px 0 rgba(255, 255, 255, .05); }
+.wping b { color: #fff; text-shadow: none; font-family: var(--f-chiffre); }
+.wrow .dot, .wrow .wbar span { background: var(--rouge); box-shadow: none; }
+.wq, .wbox.wmc { background: rgba(38, 40, 44, .95); border: 1px solid rgba(255, 255, 255, .08); }
+.wq::before, .wbox.wmc::before { background: linear-gradient(90deg, var(--rouge), var(--ambre), var(--rouge)) !important; background-size: 200% 100% !important; height: 2px; left: 0 !important; right: 0; width: auto !important; box-shadow: none; }
+.wq-big { background: none; -webkit-background-clip: border-box; background-clip: border-box; color: #fff; font-family: var(--f-chiffre); text-shadow: none; }
+.wq-big small { -webkit-text-fill-color: #9a9fa8; }
+.wq-row.moi { box-shadow: inset 0 0 0 1.5px rgba(242, 69, 61, .85); } .wq-row.moi .nm { color: #fff; }
+.wq-reset:hover, .wq-insp:hover { background: rgba(242, 69, 61, .45); }
+.wmc-h .mono { color: #9a9fa8; }
+.wmc-h .hb { color: var(--rouge-2); text-shadow: none; }
+.wmc-flux { background: rgba(255, 255, 255, .08); }
+.wmc-flux::after { background: linear-gradient(90deg, transparent, var(--rouge), var(--ambre), transparent); }
+.wmc-k kbd { background: var(--relief); border-color: rgba(255, 255, 255, .1); color: #fff; box-shadow: 0 2px 0 rgba(0, 0, 0, .4); }
+.wmc-k kbd:last-child { background: var(--rouge); border-color: transparent; }
+.lw.sel .lw-tag { background: var(--rouge); color: #fff; border-color: transparent; }
+.dps-ban { background: linear-gradient(90deg, var(--ambre), #ffe08a, var(--ambre)); }
+
+/* ── Écran de placement des widgets ── */
+#layoutRoot { background-color: rgba(16, 17, 19, .5); background-image: linear-gradient(rgba(255, 255, 255, .045) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, .045) 1px, transparent 1px); }
+#layoutRoot .lt-wa { border-color: rgba(255, 255, 255, .18); }
+.lt-bar, .lt-insp { background: rgba(43, 45, 50, .97); border: 1px solid var(--trait); border-radius: 18px; box-shadow: 0 22px 60px rgba(0, 0, 0, .6); color: var(--fg); }
+.lt-bar h2, .lt-insp h3 { font: 600 15px var(--f-display); text-transform: none; letter-spacing: -.005em; background: none; -webkit-background-clip: border-box; background-clip: border-box; color: #fff; }
+.lt-bar small, .lt-insp .note { color: var(--muted); }
+.lt-bar .sep { background: var(--trait); }
+.lw::after { border-color: rgba(255, 255, 255, .35); }
+.lw:hover::after { border-color: rgba(255, 255, 255, .7); }
+.lw.sel::after { border: 2px solid var(--rouge); box-shadow: 0 0 0 4px rgba(242, 69, 61, .2); }
+.lw-tag { background: rgba(43, 45, 50, .95); border-color: var(--trait); font-family: var(--f-body); }
+.lw-tag i { color: #ff8a80; }
+.lw-tag em { color: var(--ambre); }
+.lw-grip { background: var(--rouge); border-color: #fff; }
+.lt-guide { background: var(--ambre); box-shadow: none; }
+.lt-hint { background: rgba(43, 45, 50, .92); border-color: var(--trait); color: var(--fg); }
+
+/* ── Lecteur vidéo ── */
+.wbox.wvid, :root[data-theme] .wbox.wvid { border: 1px solid rgba(255, 255, 255, .12) !important; background: #000 !important; }
+.wvh, .wvb { background: #26282c; border-color: rgba(255, 255, 255, .08); color: #e9eaed; }
+.wvh .t svg { color: var(--rouge); }
+.wvh .t i { color: #ff8a80; }
+.wvh input { background: var(--encre); border-color: rgba(255, 255, 255, .1); border-radius: 99px; }
+.wvh input:focus { border-color: var(--rouge); box-shadow: 0 0 0 2px rgba(242, 69, 61, .25); }
+.wvh input.bad { border-color: var(--ambre); }
+.wvh button, .wvb button { background: var(--relief); border-color: rgba(255, 255, 255, .08); border-radius: 7px; }
+.wvh button:hover, .wvb button:hover { border-color: rgba(255, 255, 255, .2); background: var(--relief-2); box-shadow: none; }
+.wvh button[data-wv="off"]:hover { background: var(--rouge); border-color: transparent; box-shadow: none; }
+.wvh button.wv-q, .wvb .wv-pp { color: #fff; }
+.wvh button.wv-q[aria-expanded="true"], .wvb .wv-son[aria-expanded="true"] { border-color: transparent; background: var(--rouge); color: #fff; }
+.wvb.direct #wvEcoule { color: var(--rouge-2); text-shadow: none; }
+.wvb .wv-son.off, .wvh button.off { color: var(--rouge-2); }
+.wv-seek::-webkit-slider-runnable-track, .wv-vol::-webkit-slider-runnable-track { background: linear-gradient(90deg, var(--rouge) var(--p, 0%), rgba(255, 255, 255, .16) var(--p, 0%)); box-shadow: none; }
+.wv-seek::-webkit-slider-thumb, .wv-vol::-webkit-slider-thumb, .wvh input.wv-vol::-webkit-slider-thumb { box-shadow: 0 0 0 2px var(--rouge), 0 1px 4px rgba(0, 0, 0, .6) !important; }
+.wv-volpop i { color: #ff8a80; }
+.wv-grip { background: linear-gradient(135deg, transparent 50%, rgba(255, 255, 255, .5) 50% 58%, transparent 58% 70%, rgba(255, 255, 255, .5) 70% 78%, transparent 78%); }
+.wv-menu { background: rgba(43, 45, 50, .98); border: 1px solid var(--trait); border-radius: 12px; box-shadow: 0 14px 34px rgba(0, 0, 0, .6); }
+.wv-menu button:hover { background: rgba(255, 255, 255, .06); }
+.wv-menu button[aria-checked="true"] { background: var(--rouge-f); box-shadow: inset 3px 0 0 var(--rouge); }
+.wv-menu button[aria-checked="true"] b::before { color: var(--rouge); }
+.wv-msg { background: radial-gradient(circle at 50% 45%, #2e3035, #121315 75%); color: var(--muted); }
+.wv-msg.err { color: #ff8a80; }
+.wvid-ph { background: radial-gradient(circle at 50% 45%, #2e3035, #121315 70%); }
+.wvid-ph svg { color: var(--rouge); filter: none; }
+.vid-now, .vid-rec { background: var(--carte); border-color: var(--trait); border-radius: 14px; }
+.vid-now img { border-color: var(--trait); border-radius: 10px; }
+.vid-rec:hover { border-color: rgba(242, 69, 61, .45); box-shadow: none; background: var(--relief); }
+.vid-ic { background: var(--encre); border-radius: 10px; }
+.vid-ic svg { color: var(--rouge); }
+
+/* ── Widget de ping : tuiles système ── */
+.ws-c { background: rgba(255, 255, 255, .045); border: 1px solid rgba(255, 255, 255, .06); border-radius: 9px; }
+.ws-c span { color: #9a9fa8; }
+.ws-c b { color: #fff; font-family: var(--f-chiffre); }
+.ws-c.wide b { color: var(--vert); text-shadow: none; }
+.ws-c b i { color: var(--ambre); }
+.ws-c b i.hot { color: var(--rouge-2); } .ws-c b i.warn { color: var(--ambre); }
+.ws-c.warn { border-color: rgba(249, 185, 52, .45); } .ws-c.warn b { color: var(--ambre); }
+.ws-c.hot { border-color: rgba(242, 69, 61, .55); } .ws-c.hot b { color: var(--rouge-2); }
+.ws-c.wide.warn b { color: var(--ambre); } .ws-c.wide.hot b { color: var(--rouge-2); }
+
+/* ── Éditeur de macros : nœuds anthracite ── */
+.mg-canvas { background-color: var(--encre) !important; background-image: radial-gradient(circle, rgba(255, 255, 255, .09) 1px, transparent 1.2px) !important; box-shadow: var(--inset); border-color: rgba(0, 0, 0, .25) !important; }
+.mg-node { background: #2e3035; color: #f4f5f7; border: 1px solid color-mix(in srgb, var(--nc) 38%, rgba(255, 255, 255, .08)); box-shadow: 6px 6px 16px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .05); }
+.mg-nh { background: linear-gradient(90deg, color-mix(in srgb, var(--nc) 30%, transparent), transparent); }
+.mg-nh .ic { color: #1c1e21; }
+.mg-row span { color: #9a9fa8; }
+.mg-out { color: #d6d8dc; }
+.sys-opts { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.logo.secret.boing { animation: logoBoing .6s cubic-bezier(.3, 1.45, .5, 1); }
+@keyframes logoBoing { 30% { transform: rotate(-14deg) scale(1.15); } 60% { transform: rotate(8deg) scale(.95); } }
+.dm-row.moi .nm { color: #fff; }
+.dm-row .who em { background: rgba(0, 0, 0, .35); color: #fff; border: 0; }
+.dm-row.moi .who em { background: var(--rouge); color: #fff; }

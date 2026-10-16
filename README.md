@@ -36,10 +36,10 @@
 | **Lecteur vidéo** | YouTube ou Twitch (direct, rediffusion, clip) dans un widget redimensionnable par-dessus le jeu, lu par VLC (flux trouvé par yt-dlp) ou par le navigateur intégré. |
 | **Viseur** | Viseur personnalisable dessiné au centre de l'écran, avec aperçu sur une scène du jeu. |
 | **Carte** | Carte interactive AION2.run en grand dans l'interface. |
-| **Ping** | Latence réelle vers le serveur de jeu, en widget (réglage dans Paramètres > Widgets). |
+| **Ping & système** | Latence réelle vers le serveur de jeu, FPS, CPU, GPU, températures et RAM, dans un seul widget (Paramètres > Widgets). |
 | **Mises à jour** | Au lancement, PichetMeter vérifie la dernière version publiée ici et propose de l'installer en un clic. |
 
-Chaque module a un interrupteur **Afficher en jeu** et peut ne s'afficher que lorsque le jeu est au premier plan. Une page de placement montre tous les widgets par-dessus le jeu pour les déplacer et les redimensionner. Interface en français ou en anglais, style Y2K × Cyberpunk, mascottes animées (tes propres GIF ou PNG), animations désactivables.
+Chaque module a un interrupteur **Afficher en jeu** et peut ne s'afficher que lorsque le jeu est au premier plan. Une page de placement montre tous les widgets par-dessus le jeu pour les déplacer et les redimensionner. Interface en français ou en anglais, style tableau de bord anthracite (accents rouge et ambre), mascottes animées (tes propres GIF ou PNG) : une par macro en cours, une qui danse sur le son du lecteur vidéo. Animations désactivables. PichetMeter démarre en administrateur (désactivable).
 
 ### Aperçu
 
@@ -126,7 +126,7 @@ Les contributions sont les bienvenues : ouvre une *issue* ou une *pull request*,
 
 - Créé par **@atomedims** · [Discord](https://discord.gg/KrkJrjrDJt)
 - Décodage réseau et table des monstres : d'après [RATmeter](https://github.com/Kuroukihime/AIon2-Dps-Meter) (GPL-3.0)
-- [Electron](https://www.electronjs.org) (MIT), [rcedit](https://github.com/electron/rcedit) (MIT), polices Orbitron, Chakra Petch, Nunito Sans et JetBrains Mono (SIL Open Font License)
+- [Electron](https://www.electronjs.org) (MIT), [rcedit](https://github.com/electron/rcedit) (MIT), polices Sora, Nunito Sans et JetBrains Mono (SIL Open Font License)
 - AION et AION 2 sont des marques de NCSOFT Corporation ; icônes de classe et images du jeu © NCSOFT
 - Le logo est un fan art ; Sonic the Hedgehog est une marque de SEGA, sans lien avec ce projet
 
@@ -138,7 +138,7 @@ PichetMeter est un logiciel libre distribué sous licence **GNU GPL version 3** 
 
 ## English
 
-**PichetMeter** is a free overlay companion for **Aion 2** on Windows: party DPS meter (passive network reading through Npcap, per-player skill breakdown, world bosses), armory and player lookup, EU event timers, node-based macros, crosshair, interactive map and ping. It checks GitHub for new versions at launch and offers a one-click update. Everything sits on top of the game, toggled with <kbd>Alt</kbd> + <kbd>C</kbd>. The interface is available in English (Settings > Display > Language).
+**PichetMeter** is a free overlay companion for **Aion 2** on Windows: party DPS meter (passive network reading through Npcap, per-player skill breakdown, world bosses), armory and player lookup, EU event timers, node-based macros (with one mascot per running macro), YouTube / Twitch video player, crosshair, interactive map, ping and system info (FPS, CPU, GPU, RAM). It checks GitHub for new versions at launch and offers a one-click update. Everything sits on top of the game, toggled with <kbd>Alt</kbd> + <kbd>C</kbd>. The interface is available in English (Settings > Display > Language).
 
 **Install:** download [PichetMeter-Installation.zip](https://github.com/Pichetdechiasso/PichetMeter-Aion2-Multitool/releases/latest/download/PichetMeter-Installation.zip), extract it, run `Installer.cmd`. The first install downloads the official Electron runtime (~150 MB) and verifies its SHA-256. No admin rights needed. For the DPS meter, install [Npcap](https://npcap.com). Run the game in windowed or borderless mode.
 

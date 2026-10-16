@@ -102,5 +102,13 @@
     lancer();
     return { lancer, arreter };
   }
-  window.Arene = { demarrer, CHEV, MAGE };
+  /** Image (PNG) d'un personnage, tourné vers la droite : remplaçant des mascottes dans la récré. */
+  function dessinerImage(nom) {
+    const spr = nom === "magicien" ? MAGE.repos : CHEV.repos, e = 6;
+    const c = document.createElement("canvas"); c.width = spr[0].length * e; c.height = spr.length * e;
+    const ctx = c.getContext("2d"); if (!ctx) return "";
+    dessiner(ctx, spr, 0, 0, e, { miroir: nom === "magicien" });
+    try { return c.toDataURL("image/png"); } catch { return ""; }
+  }
+  window.Arene = { demarrer, dessinerImage, CHEV, MAGE };
 })();

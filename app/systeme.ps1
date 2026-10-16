@@ -1,6 +1,6 @@
 # PichetMeter — mesures système pour le widget de ping
 # Utilisation du GPU (compteurs Windows « GPU Engine », ou nvidia-smi), températures (nvidia-smi pour le GPU,
-# zones thermiques ACPI de Windows pour le CPU), mémoire utilisée par le jeu.
+# zones thermiques ACPI de Windows pour le CPU), mémoire utilisée par le jeu, niveau sonore du lecteur vidéo.
 # Aucune lecture de la mémoire du jeu : seulement les compteurs publics de Windows.
 # Protocole : une commande JSON par ligne sur l'entrée standard, une réponse JSON par ligne en sortie.
 
@@ -12,6 +12,7 @@ $source = @'
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 public static class PMSysteme
 {
@@ -55,6 +56,108 @@ public static class PMSysteme
         if (pid <= 0) return -1;
         try { using (Process p = Process.GetProcessById(pid)) { return p.WorkingSet64; } }
         catch { return -1; }
+    }
+}
+
+// Niveau sonore d'une application (VLC, lecteur intégré) : crête des sessions audio de Windows (Core Audio),
+// comme les vumètres du mélangeur de volume. Lecture seule : rien n'est modifié.
+public static class PMSon
+{
+    [ComImport, Guid("BCDE0395-E52F-467C-8E3D-C4579291692E")] class MMDeviceEnumerator { }
+
+    [ComImport, Guid("A95664D2-9614-4F35-A746-DE8DB63617E6"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    interface IMMDeviceEnumerator
+    {
+        [PreserveSig] int EnumAudioEndpoints(int flux, int etats, out IntPtr appareils);
+        [PreserveSig] int GetDefaultAudioEndpoint(int flux, int role, out IMMDevice appareil);
+    }
+
+    [ComImport, Guid("D666063F-1587-4E43-81F1-B948E807363F"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    interface IMMDevice
+    {
+        [PreserveSig] int Activate(ref Guid iid, int contexte, IntPtr parametres, [MarshalAs(UnmanagedType.IUnknown)] out object objet);
+    }
+
+    [ComImport, Guid("77AA99A0-1BD6-484F-8BC7-2C654C9A9B6F"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    interface IAudioSessionManager2
+    {
+        [PreserveSig] int GetAudioSessionControl(IntPtr a, int b, out IntPtr c);
+        [PreserveSig] int GetSimpleAudioVolume(IntPtr a, int b, out IntPtr c);
+        [PreserveSig] int GetSessionEnumerator(out IAudioSessionEnumerator sessions);
+    }
+
+    [ComImport, Guid("E2F5BB11-0570-40CA-ACDD-3AA01277DEE8"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    interface IAudioSessionEnumerator
+    {
+        [PreserveSig] int GetCount(out int n);
+        [PreserveSig] int GetSession(int i, out IAudioSessionControl2 session);
+    }
+
+    [ComImport, Guid("bfb7ff88-7239-4fc9-8fa2-07c950be9c6d"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    interface IAudioSessionControl2
+    {
+        [PreserveSig] int GetState(out int etat);
+        [PreserveSig] int GetDisplayName(out IntPtr nom);
+        [PreserveSig] int SetDisplayName(IntPtr a, IntPtr b);
+        [PreserveSig] int GetIconPath(out IntPtr chemin);
+        [PreserveSig] int SetIconPath(IntPtr a, IntPtr b);
+        [PreserveSig] int GetGroupingParam(out Guid groupe);
+        [PreserveSig] int SetGroupingParam(IntPtr a, IntPtr b);
+        [PreserveSig] int RegisterAudioSessionNotification(IntPtr a);
+        [PreserveSig] int UnregisterAudioSessionNotification(IntPtr a);
+        [PreserveSig] int GetSessionIdentifier(out IntPtr id);
+        [PreserveSig] int GetSessionInstanceIdentifier(out IntPtr id);
+        [PreserveSig] int GetProcessId(out uint pid);
+    }
+
+    [ComImport, Guid("C02216F6-8C67-4B5B-9D00-D008E73E0064"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    interface IAudioMeterInformation
+    {
+        [PreserveSig] int GetPeakValue(out float crete);
+    }
+
+    static List<KeyValuePair<uint, IAudioMeterInformation>> compteurs = new List<KeyValuePair<uint, IAudioMeterInformation>>();
+    static DateTime liste = DateTime.MinValue;
+
+    static void Lister()
+    {
+        compteurs.Clear();
+        IMMDeviceEnumerator enumerateur = (IMMDeviceEnumerator)new MMDeviceEnumerator();
+        IMMDevice appareil;
+        if (enumerateur.GetDefaultAudioEndpoint(0, 1, out appareil) != 0 || appareil == null) return; // sortie, multimédia
+        Guid iid = typeof(IAudioSessionManager2).GUID;
+        object objet;
+        if (appareil.Activate(ref iid, 23, IntPtr.Zero, out objet) != 0 || objet == null) return;
+        IAudioSessionEnumerator sessions;
+        if (((IAudioSessionManager2)objet).GetSessionEnumerator(out sessions) != 0 || sessions == null) return;
+        int n;
+        if (sessions.GetCount(out n) != 0) return;
+        for (int i = 0; i < n; i++)
+        {
+            IAudioSessionControl2 session;
+            if (sessions.GetSession(i, out session) != 0 || session == null) continue;
+            uint pid;
+            if (session.GetProcessId(out pid) < 0) continue;
+            IAudioMeterInformation compteur = session as IAudioMeterInformation;
+            if (compteur != null) compteurs.Add(new KeyValuePair<uint, IAudioMeterInformation>(pid, compteur));
+        }
+    }
+
+    // Crête (0 à 1) des sessions audio des processus donnés ; -1 si Windows ne donne pas l'information
+    public static double Niveau(int[] pids)
+    {
+        if ((DateTime.Now - liste).TotalSeconds > 2)
+        {
+            liste = DateTime.Now;
+            try { Lister(); } catch { compteurs.Clear(); return -1; }
+        }
+        float max = 0;
+        foreach (KeyValuePair<uint, IAudioMeterInformation> c in compteurs)
+        {
+            if (Array.IndexOf(pids, (int)c.Key) < 0) continue;
+            try { float crete; if (c.Value.GetPeakValue(out crete) == 0 && crete > max) max = crete; } catch { }
+        }
+        return max;
     }
 }
 '@
@@ -127,6 +230,10 @@ while ($true) {
                 if ($cmd.temp) { $out.cpuTemp = TempCpu }
                 if ($cmd.pid) { $r = [PMSysteme]::RamProcessus([int]$cmd.pid); if ($r -ge 0) { $out.jeuRam = $r } }
                 Send $out
+            }
+            'audio' {
+                $pids = [int[]]@($cmd.pids | ForEach-Object { [int]$_ })
+                Send @{ type = 'audio'; id = $cmd.id; niveau = [math]::Round([PMSon]::Niveau($pids), 3) }
             }
             'quit' { exit 0 }
             default { Send @{ type = 'error'; id = $cmd.id; error = 'Commande inconnue' } }

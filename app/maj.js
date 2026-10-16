@@ -99,7 +99,8 @@ function scriptLanceur(ps1, journal, page = PAGE) {
     `  echo La mise a jour n'a pas abouti. Detail : ${journal}`,
     `  echo Tu peux installer la nouvelle version a la main : ${page}`,
     "  pause",
-    ")", ""].join("\r\n");
+    ")",
+    "exit", ""].join("\r\n"); // « start » lance un .cmd avec cmd /K : sans « exit », la fenêtre resterait ouverte
 }
 function lancerInstalleur(ps1, journal) {
   const lanceur = path.join(dossierTemp(), "mise-a-jour.cmd");

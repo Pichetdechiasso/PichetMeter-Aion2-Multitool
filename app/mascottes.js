@@ -1,6 +1,6 @@
 "use strict";
 /**
- * PichetMeter · mascottes animées des widgets (Macros, DPS meter, Timers) et de l'animation de lancement.
+ * PichetMeter · mascottes animées des widgets (Macros, DPS meter, lecteur vidéo), de l'animation de lancement et de la récré.
  * Les images (GIF animés ou PNG transparents) viennent de %APPDATA%\PichetMeter\mascottes, de la version perso
  * (app\mascottes) et de Pichet Macro. Une mascotte est tirée au hasard, jamais deux fois de suite la même.
  */
@@ -10,12 +10,15 @@ window.Mascottes = (() => {
 
   async function charger(api) {
     try { LISTE = (api && await api.mascots_list()) || []; } catch { LISTE = []; }
-    if (!Array.isArray(LISTE) || !LISTE.length) LISTE = ["rem-ram", "yukari", "chika", "frieren", "reze", "sparkle", "yor", "chibi-blonde", "danseuse"].map(n => ({ nom: n, url: `mascottes/${n}.gif` })); // aperçu hors application
+    if (!Array.isArray(LISTE)) LISTE = [];
+    if (!LISTE.length && !window.__DESKTOP__) LISTE = ["rem-ram", "yukari", "chika", "frieren", "reze", "sparkle", "yor", "chibi-blonde", "danseuse"].map(n => ({ nom: n, url: `mascottes/${n}.gif` })); // aperçu hors application
     return LISTE;
   }
-  function auHasard() {
+  function auHasard(exclure = []) {
     if (!LISTE.length) return "";
-    const choix = LISTE.length > 1 ? LISTE.filter(m => m.url !== derniere) : LISTE;
+    const libres = LISTE.filter(m => !exclure.includes(m.url));
+    const base = libres.length ? libres : LISTE;
+    const choix = base.length > 1 ? base.filter(m => m.url !== derniere) : base;
     derniere = choix[Math.floor(Math.random() * choix.length)].url;
     return derniere;
   }
@@ -107,5 +110,43 @@ window.Mascottes = (() => {
       this.minuteur = setTimeout(() => { this.etat = "off"; this.classes(); this.slot.classList.remove("on"); this.img.removeAttribute("src"); if (apres) apres(); }, reduit() ? 10 : 420);
     }
   }
-  return { charger, auHasard, Scene, fx: null, get liste() { return LISTE; } };
+  /**
+   * Troupe : plusieurs mascottes côte à côte dans un même emplacement, une par clé (par exemple une par macro en cours).
+   * `choisir(cle, dejaAffichees)` renvoie l'image de la mascotte, ou rien pour ne pas en afficher.
+   */
+  class Troupe {
+    constructor(conteneur, choisir) {
+      this.el = conteneur; this.choisir = choisir || ((_, deja) => auHasard(deja)); this.scenes = new Map();
+      conteneur.classList.add("troupe"); conteneur.innerHTML = "";
+    }
+    get visible() { for (const s of this.scenes.values()) if (s.visible) return true; return false; }
+    majOn() { this.el.classList.toggle("on", this.scenes.size > 0); }
+    entrer(cle) {
+      let s = this.scenes.get(cle);
+      if (s) {
+        if (!s.depart) return s; // déjà là
+        s.depart = false; clearTimeout(s.minuteur); // revient pendant son départ : elle reste
+        if (s.visible) { s.etat = "idle"; s.classes("idle"); s.effet("tourne"); return s; }
+        s.montrer(s.url); return s;
+      }
+      const deja = [...this.scenes.values()].map(x => x.url);
+      const url = this.choisir(cle, deja);
+      if (!url) return null;
+      const slot = document.createElement("div"); slot.className = "wm-slot"; this.el.appendChild(slot);
+      s = new Scene(slot); s.url = url; this.scenes.set(cle, s); this.majOn();
+      s.montrer(url); setTimeout(() => s.effet("explosion"), 260);
+      return s;
+    }
+    sautiller(cle) { const s = this.scenes.get(cle); if (s) s.sautiller(); }
+    effet(cle, nom) { const s = this.scenes.get(cle); if (s) s.effet(nom); }
+    partir(cle, vite = false) {
+      const s = this.scenes.get(cle); if (!s || s.depart) return;
+      s.depart = true;
+      const fin = () => { if (this.scenes.get(cle) !== s || s.visible) return; s.slot.remove(); this.scenes.delete(cle); this.majOn(); };
+      if (vite) s.cacher(fin); else s.fete(true, fin);
+    }
+    toutPartir(vite = false) { for (const cle of [...this.scenes.keys()]) this.partir(cle, vite); }
+    cacher() { this.toutPartir(true); }
+  }
+  return { charger, auHasard, Scene, Troupe, fx: null, get liste() { return LISTE; } };
 })();
